@@ -8,13 +8,13 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="description" content="Dimzz Prozet — musik, unduh video, adzan, Al-Quran, berita, dan puluhan tools dalam satu aplikasi." />
+  <script>(function(){try{var s=localStorage.getItem('dimzz_lite');var low=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)||(navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.connection&&navigator.connection.saveData);if(s==null?low:s==='1')document.documentElement.classList.add('lite')}catch(e){}})();</script>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="app.css?v=3.0" />
+  <link rel="stylesheet" href="app.css?v=3.3" />
 </head>
 <body>
   <!-- wallpaper (bisa diganti lewat fitur Wallpaper) -->
@@ -24,7 +24,7 @@
 
   <!-- ====================== MASUK / DAFTAR ====================== -->
   <section id="auth" class="hidden" aria-label="Masuk atau daftar">
-    <video id="auth-video" class="bg" loop playsinline webkit-playsinline preload="auto" src="https://files.catbox.moe/hnfdro.mp4"></video>
+    <video id="auth-video" class="bg" loop playsinline webkit-playsinline preload="metadata" src="https://files.catbox.moe/hnfdro.mp4"></video>
     <div class="shade"></div>
     <button id="auth-sound" type="button" class="sound-fab"><i class="fa-solid fa-volume-xmark"></i><span>Ketuk untuk suara</span></button>
     <div class="auth-panel">
@@ -60,7 +60,7 @@
 
   <!-- animasi masuk dasbor (layar penuh + suara) -->
   <section id="intro" class="hidden" aria-label="Animasi pembuka">
-    <video id="intro-video" playsinline webkit-playsinline preload="auto" src="https://files.catbox.moe/96bxec.mp4"></video>
+    <video id="intro-video" playsinline webkit-playsinline preload="metadata" src="https://files.catbox.moe/96bxec.mp4"></video>
     <div class="bar"><div id="intro-bar"></div></div>
     <button class="skip" id="intro-skip" type="button">Lewati <i class="fa-solid fa-forward"></i></button>
     <button class="btn btn-acc tap hidden" id="intro-tap" type="button" style="padding:1rem 1.6rem;font-size:14px"><i class="fa-solid fa-play"></i> Ketuk untuk memutar</button>
@@ -89,7 +89,7 @@
     <div id="announce" class="banner hidden" style="margin-bottom:12px"><i class="fa-solid fa-bullhorn" style="margin-top:2px"></i><div id="announce-text" style="flex:1"></div></div>
 
     <section class="hero">
-      <video id="hero-video" muted loop playsinline preload="auto" src="https://files.catbox.moe/son20v.mp4"></video>
+      <video id="hero-video" muted loop playsinline preload="metadata" src="https://files.catbox.moe/son20v.mp4"></video>
       <div class="row" style="justify-content:space-between;align-items:flex-start">
         <div><div id="clock" class="clock">00:00</div><div id="date" style="font-size:12px;opacity:.8;font-weight:600;margin-top:6px"></div></div>
         <button class="btn btn-sm" id="loc-chip" onclick="Features.open('adzan')" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)!important"><i class="fa-solid fa-location-dot"></i><span id="loc-name">Atur lokasi</span></button>
@@ -102,6 +102,7 @@
       </div>
     </section>
 
+    <div class="searchbar"><i class="fa-solid fa-magnifying-glass"></i><input id="f-q" type="search" placeholder="Cari fitur…" autocomplete="off" enterkeyhint="search"/></div>
     <div class="tabs" id="cat-tabs"></div>
     <div id="tiles"></div>
   </main>
@@ -134,19 +135,19 @@
   <audio id="a-adzan" preload="auto" playsinline></audio>
   <div id="yt-hidden" style="position:fixed;left:-9999px;top:0;width:200px;height:120px;opacity:0;pointer-events:none"></div>
 
-  <script src="00-config.js?v=3.0"></script>
-  <script src="01-core.js?v=3.0"></script>
-  <script src="02-firebase.js?v=3.0"></script>
-  <script src="03-app.js?v=3.0"></script>
-  <script src="04-adzan.js?v=3.0"></script>
-  <script src="05-music.js?v=3.0"></script>
-  <script src="06-media.js?v=3.0"></script>
-  <script src="07-quran-news.js?v=3.0"></script>
-  <script src="08-photos-camera.js?v=3.0"></script>
-  <script src="09-tools.js?v=3.0"></script>
-  <script src="10-social.js?v=3.0"></script>
-  <script src="11-anime-manga.js?v=3.0"></script>
-  <script src="12-dev.js?v=3.0"></script>
+  <script src="00-config.js?v=3.1"></script>
+  <script src="01-core.js?v=3.1"></script>
+  <script src="02-firebase.js?v=3.1"></script>
+  <script src="03-app.js?v=3.3"></script>
+  <script src="04-adzan.js?v=3.1"></script>
+  <script src="05-music.js?v=3.1"></script>
+  <script src="06-media.js?v=3.1"></script>
+  <script src="07-quran-news.js?v=3.1"></script>
+  <script src="08-photos-camera.js?v=3.1"></script>
+  <script src="09-tools.js?v=3.1"></script>
+  <script src="10-social.js?v=3.1"></script>
+  <script src="11-anime-manga.js?v=3.1"></script>
+  <script src="12-dev.js?v=3.1"></script>
   <script src="13-chat.js?v=3.1"></script>
   <script>App.boot();</script>
 </body>

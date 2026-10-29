@@ -1,6 +1,17 @@
 /* ==== 03-app.js — aplikasi: login/daftar, intro, beranda, daftar fitur, musik latar, wallpaper, menu ==== */
 
 /* ---------- daftar fitur ---------- */
+/* Video latar kartu jam: tetap tampil, tapi otomatis dijeda saat tidak terlihat / ada halaman terbuka / tab disembunyikan (hemat baterai & mulus) */
+const HeroVid = {
+  on: null, vis: true,
+  init() {
+    const v = $('hero-video'), h = document.querySelector('.hero'); if (!v || !h) return;
+    v.muted = true; if (navigator.connection && navigator.connection.saveData) return;
+    const upd = () => { const go = this.vis && !document.hidden && !(window.Sheet && Sheet.stack.length); if (go === this.on) return; this.on = go; if (go) v.play().catch(() => {}); else v.pause(); };
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => { this.vis = es[0].isIntersecting; upd(); }, { threshold: .15 }).observe(h);
+    document.addEventListener('visibilitychange', upd); setInterval(upd, 1000); upd();
+  }
+};
 const CATS = [['semua', 'Semua'], ['media', 'Media'], ['islami', 'Islami'], ['info', 'Info'], ['sosmed', 'Sosmed'], ['alat', 'Alat'], ['kreasi', 'Kreasi']];
 const Features = {
   list: [], flags: {},
@@ -172,8 +183,8 @@ const App = {
     $('u-name').textContent = this.user.username; $('u-role').textContent = this.user.role;
     $('btn-dev').classList.toggle('hidden', !this.isDev());
     const h = new Date().getHours(); $('u-greet').textContent = h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam';
-    const hv = $('hero-video'); hv.muted = true; hv.play().catch(() => {});
-    this.renderTabs(); this.renderTiles(); this.tickClock(); setInterval(() => this.tickClock(), 1000);
+    HeroVid.init();
+    this.renderTabs(); this.renderTiles(); { const fq = $('f-q'); if (fq) fq.oninput = e => { this.q = e.target.value.trim(); this.renderTiles(); }; } this.tickClock(); setInterval(() => this.tickClock(), 1000);
     Adzan.init(); this.pollCfg(); setInterval(() => this.pollCfg(), 60000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this.pollCfg(); });
     Bgm.start();
@@ -184,10 +195,11 @@ const App = {
   cat: 'semua',
   renderTabs() { $('cat-tabs').innerHTML = CATS.map(([k, l]) => `<button class="chip ${k === this.cat ? 'on' : ''}" data-c="${k}">${l}</button>`).join(''); $('cat-tabs').querySelectorAll('button').forEach(b => b.onclick = () => { this.cat = b.dataset.c; this.renderTabs(); this.renderTiles(); }); },
   renderTiles() {
-    const list = Features.list.filter(f => !f.dev && (this.cat === 'semua' || f.cat === this.cat));
+    const q = String(this.q || '').toLowerCase(); $('tiles').classList.toggle('searching', !!q);
+    const list = Features.list.filter(f => !f.dev && (q ? String(f.name).toLowerCase().includes(q) : (this.cat === 'semua' || f.cat === this.cat)));
     const usage = LS.get('usage', {});
     const sorted = this.cat === 'semua' ? [...list] : list;
-    $('tiles').innerHTML = (this.cat === 'semua' ? '<div class="sec-title"><i class="fa-solid fa-sparkles" style="color:#f59e0b"></i>Semua fitur</div>' : '') + `<div class="tile-grid">${sorted.map(f => `<button class="tile ${Features.enabled(f) ? '' : 'off'}" data-f="${f.id}"><div class="ic" style="background:${f.grad}"><i class="fa-solid ${f.icon}"></i></div><span>${esc(f.name)}</span></button>`).join('')}</div>`;
+    $('tiles').innerHTML = (this.cat === 'semua' ? '<div class="sec-title"><i class="fa-solid fa-sparkles" style="color:#f59e0b"></i>Semua fitur</div>' : '') + `<div class="tile-grid">${sorted.map(f => `<button class="tile ${Features.enabled(f) ? '' : 'off'}" data-f="${f.id}" style="--c:${(String(f.grad).match(/#[0-9a-fA-F]{3,8}/) || ['#6366f1'])[0]}"><div class="ic" style="background:${f.grad}"><i class="fa-solid ${f.icon}"></i></div><span>${esc(f.name)}</span></button>`).join('')}</div>`;
     $('tiles').querySelectorAll('.tile').forEach(t => t.onclick = () => Features.open(t.dataset.f));
   },
 
@@ -221,6 +233,7 @@ const App = {
       <div class="card" style="padding:16px;display:flex;gap:12px;align-items:center"><div class="avatar" style="width:54px;height:54px;font-size:22px">${esc(u.username.charAt(0).toUpperCase())}</div><div><b style="font-size:16px">${esc(u.username)}</b><div class="row" style="margin-top:4px"><span class="tag">${esc(u.role)}</span>${this.isDev() ? '<span class="dev-badge">Akses penuh</span>' : ''}</div></div></div>
       <div class="card" style="padding:6px 14px">
         <div class="kv" style="align-items:center"><span><i class="fa-solid fa-music"></i>&nbsp; Musik latar</span><button class="switch ${Bgm.wanted ? 'on' : ''}" id="m-bgm"></button></div>
+        <div class="kv" style="align-items:center"><span><i class="fa-solid fa-bolt"></i>&nbsp; Mode ringan (lebih mulus)</span><button class="switch ${document.documentElement.classList.contains('lite') ? 'on' : ''}" id="m-lite"></button></div>
       </div>
       <button class="btn" id="m-wall" style="justify-content:flex-start"><i class="fa-regular fa-image"></i> Ganti wallpaper</button>
       <button class="btn" id="m-adzan" style="justify-content:flex-start"><i class="fa-solid fa-bell"></i> Pengaturan adzan & lokasi</button>
@@ -231,6 +244,7 @@ const App = {
       <div class="muted" style="text-align:center;font-size:11px;font-weight:700;margin-top:4px">Dimzz Prozet v${CONFIG.VERSION}</div>`,
       onOpen: el => {
         el.querySelector('#m-bgm').onclick = e => { Bgm.toggle(); e.currentTarget.classList.toggle('on', Bgm.wanted); };
+        el.querySelector('#m-lite').onclick = e => { const r = document.documentElement.classList, on = !r.contains('lite'); r.toggle('lite', on); try { localStorage.setItem('dimzz_lite', on ? '1' : '0'); } catch (x) {} e.currentTarget.classList.toggle('on', on); UI.toast(on ? 'Mode ringan aktif' : 'Mode ringan mati (efek penuh)', 'ok'); };
         el.querySelector('#m-wall').onclick = () => Features.open('wallpaper'); el.querySelector('#m-adzan').onclick = () => Features.open('adzan');
         el.querySelector('#m-pass').onclick = () => this.changePass(); el.querySelector('#m-out').onclick = () => this.logout();
         const i = el.querySelector('#m-install'); if (i) i.onclick = () => { this.installEv.prompt(); };
