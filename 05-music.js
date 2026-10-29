@@ -2,7 +2,7 @@
 const MOODS = [['Hits Indonesia', 'lagu indonesia terpopuler', '#f43f5e'], ['Pop Santai', 'pop indonesia santai', '#8b5cf6'], ['Galau', 'lagu galau indonesia', '#0ea5e9'], ['Semangat', 'lagu semangat workout', '#f59e0b'], ['Dangdut', 'dangdut terpopuler', '#10b981'], ['Religi', 'lagu religi islami', '#14b8a6'], ['Lo-fi', 'lofi chill beats', '#6366f1'], ['K-Pop', 'kpop hits', '#ec4899'], ['Barat', 'top english hits', '#ef4444'], ['Akustik', 'akustik cover indonesia', '#a16207']];
 
 const Music = {
-  q: [], i: -1, shuffle: false, repeat: 0 /*0 off,1 all,2 one*/, tok: 0, mode: 'audio', yt: null, ytTimer: null, fails: 0, cache: new Map(), lyr: null,
+  q: [], i: -1, shuffle: false, repeat: 0 /*0 off,1 all,2 one*/, tok: 0, mode: 'audio', yt: null, ytTimer: null, fails: 0, srvDown: 0, cache: new Map(), lyr: null,
   el() { return $('a-music'); },
   fav() { return LS.get('fav', []); }, hist() { return LS.get('hist', []); },
   isFav(id) { return this.fav().some(t => t.id === id); },
@@ -25,18 +25,25 @@ const Music = {
     Sound.play('music'); this.showMini(t); this.ui(false); this.renderNow(); this.setMeta(t);
     const hist = this.hist().filter(x => x.id !== t.id); hist.unshift(t); LS.set('hist', hist.slice(0, 40));
     try {
-      let d = t.url ? { url: t.url } : this.cache.get(t.id); if (!d) { d = (await API.get('yt', { a: 'audio', id: t.id }, 45000)); this.cache.set(t.id, d); }
+      let d = t.url ? { url: t.url } : this.cache.get(t.id);
+      if (!d) {
+        /* Server Vercel sering diblokir YouTube. Jika begitu, ingat 10 menit dan langsung pakai pemutar YouTube di browser (IP-mu sendiri, tidak diblokir). */
+        if (Date.now() < this.srvDown) return this.fallbackYt(t, my);
+        try { d = await API.get('yt', { a: 'audio', id: t.id }, 12000); this.cache.set(t.id, d); this.srvDown = 0; }
+        catch (e) { if (my !== this.tok) return; this.srvDown = Date.now() + 10 * 60 * 1000; ErrLog.push('server audio gagal: ' + (e.message || e).toString().slice(0, 120), 'music'); return this.fallbackYt(t, my); }
+      }
       if (my !== this.tok) return;
       const a = this.el(); this.mode = 'audio'; a.src = API.abs(d.url); a.referrerPolicy = 'no-referrer';
-      await a.play(); this.fails = 0; this.preload(i + 1);
+      await Promise.race([a.play(), new Promise((_, rej) => setTimeout(() => rej(new Error('stuck')), 10000))]); if (my !== this.tok) return; this.fails = 0; this.preload(i + 1);
     } catch (e) {
       if (my !== this.tok) return;
       if (e && e.name === 'NotAllowedError') { UI.toast('Ketuk tombol putar untuk memulai', 'info'); return; }
       ErrLog.push('audio ' + t.id + ': ' + (e.message || e), 'music');
+      if (e && e.message === 'stuck') { this.srvDown = Date.now() + 10 * 60 * 1000; this.cache.delete(t.id); }
       this.fallbackYt(t, my);
     }
   },
-  preload(i) { const t = this.q[i % this.q.length]; if (t && !this.cache.has(t.id)) API.get('yt', { a: 'audio', id: t.id }, 45000).then(d => this.cache.set(t.id, d)).catch(() => {}); },
+  preload(i) { const t = this.q[i % this.q.length]; if (t && !this.cache.has(t.id) && Date.now() >= this.srvDown) API.get('yt', { a: 'audio', id: t.id }, 12000).then(d => this.cache.set(t.id, d)).catch(() => {}); },
   fail() { const t = this.cur(); if (!t) return; ErrLog.push('stream error ' + t.id, 'music'); this.cache.delete(t.id); this.fallbackYt(t, this.tok); },
 
   /* cadangan terakhir: pemutar tersembunyi (hanya suara; tampilan tetap pemutar musik) */
@@ -141,10 +148,17 @@ const Music = {
   home() {
     const fav = this.fav(), hist = this.hist(), out = $('mu-out'); if (!out) return;
     out.innerHTML = `<div class="sec-title" style="margin-top:4px">Suasana & genre</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${MOODS.map(([n, q, c], k) => `<button class="mood" style="--c:${c}" data-m="${k}">${n}</button>`).join('')}</div>
-      ${hist.length ? `<div class="sec-title">Terakhir diputar</div><div id="mu-hist" class="space-y-2"></div>` : ''}${fav.length ? `<div class="sec-title">Favoritmu <i class="fa-solid fa-heart" style="color:#f43f5e"></i></div><div id="mu-fav"></div>` : ''}`;
+      ${hist.length ? `<div class="sec-title">Terakhir diputar</div><div id="mu-hist" class="space-y-2"></div>` : ''}${fav.length ? `<div class="sec-title">Favoritmu <i class="fa-solid fa-heart" style="color:#f43f5e"></i></div><div id="mu-fav"></div>` : ''}
+      <div class="sec-title">Musik Bebas <span class="chip" style="font-size:9px;padding:2px 7px;vertical-align:1px">Resmi · putar terus walau layar mati</span></div><div class="muted" style="font-size:11px;font-weight:600;margin:-6px 0 8px">Musik berlisensi Creative Commons dari Jamendo. Bukan lagu chart, tapi tidak akan putus saat layar HP mati.</div><div id="mu-jm">' + loadingHtml('Memuat…') + '</div>`;
     out.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { const m = MOODS[+b.dataset.m]; $('mu-q').value = m[0]; this.search(m[1]); });
+    this.loadJamendo();
     if (hist.length) this.renderList($('mu-hist'), hist.slice(0, 8)); if (fav.length) this.renderList($('mu-fav'), fav.slice(0, 30));
     this.loadCharts();
+  },
+  async loadJamendo() {
+    const box = $('mu-jm'); if (!box) return;
+    try { const r = await API.get('jamendo', {}, 15000); if (!r.items || !r.items.length) throw 0; this.renderList(box, r.items.slice(0, 20)); }
+    catch (e) { box.innerHTML = `<div class="muted" style="font-size:11px;font-weight:600">Belum aktif. Tambahkan JAMENDO_CLIENT_ID (gratis di developer.jamendo.com) di Environment Variables Vercel.</div>`; }
   },
   async loadCharts() {
     try {

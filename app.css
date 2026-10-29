@@ -297,3 +297,38 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 .dark-wall .searchbar input::placeholder{color:rgba(255,255,255,.7)}
 .searchbar+.tabs{margin-top:12px}
 .hero video{will-change:auto}
+
+/* ===== Polesan UI v3.11 — sheet, tombol, item, input, scrollbar ===== */
+.sheet>.panel{box-shadow:0 -24px 60px -20px rgba(15,23,42,.45)}
+.sheet-head{position:relative}
+.sheet-head::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(15,23,42,.08) 20%,rgba(15,23,42,.08) 80%,transparent)}
+.sheet-head .gi{background-image:var(--gi,linear-gradient(135deg,var(--pri),var(--pri2)));box-shadow:0 6px 16px -6px color-mix(in srgb,var(--pri) 70%,transparent),inset 0 1px 0 rgba(255,255,255,.4)}
+.sheet-head h3{letter-spacing:-.01em}
+
+.btn,.neo-btn{position:relative;overflow:hidden;transition:transform .14s cubic-bezier(.2,.8,.2,1),box-shadow .14s,filter .14s}
+.btn:active,.neo-btn:active{filter:brightness(.96)}
+.btn-pri,.btn-acc{background-size:160% 160%;transition:transform .14s,box-shadow .14s,background-position .4s}
+.btn-pri:active,.btn-acc:active{transform:translateY(1px) scale(.98);background-position:100% 100%}
+.btn-pri::before,.btn-acc::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%);pointer-events:none}
+
+.item{transition:transform .14s cubic-bezier(.2,.8,.2,1),box-shadow .14s,border-color .14s;animation:rise .32s cubic-bezier(.2,.8,.2,1) both}
+.item:active{transform:scale(.98)}
+.item:hover{box-shadow:0 10px 20px -14px rgba(15,23,42,.35)}
+.item img.th{box-shadow:inset 0 0 0 1px rgba(15,23,42,.06)}
+.dark-wall .item{background:var(--glass,linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.04)));border-color:var(--glass-b,rgba(255,255,255,.2));color:#fff}
+.dark-wall .item .s{color:rgba(255,255,255,.7)}
+
+.chip{transition:transform .12s,background .15s,color .15s}
+.chip:active{transform:scale(.95)}
+
+.inp,.sheet input[type=text],.sheet input[type=number],.sheet input[type=password],.sheet textarea,.sheet select{transition:border-color .15s,box-shadow .15s}
+
+.sheet-body::-webkit-scrollbar{width:6px}
+.sheet-body::-webkit-scrollbar-thumb{background:rgba(15,23,42,.18);border-radius:99px}
+.dark-wall .sheet-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22)}
+
+.toast{box-shadow:0 14px 30px -14px rgba(15,23,42,.5),inset 0 1px 0 rgba(255,255,255,.5)}
+
+/* Transisi lembut saat dock/tab berpindah status */
+.dock button,.tabs .chip{transition:background .18s,color .18s,box-shadow .18s,transform .12s}
+.dock button:active,.tabs .chip:active{transform:scale(.94)}
