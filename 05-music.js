@@ -64,8 +64,18 @@ const Music = {
   onEnd() { if (this.repeat === 2) { this.seek(0); this.mode === 'yt' ? this.yt.playVideo() : this.el().play(); return; } this.next(true); },
   next(auto) {
     if (!this.q.length) return; let n;
-    if (this.shuffle && this.q.length > 1) { do { n = Math.floor(Math.random() * this.q.length); } while (n === this.i); } else { n = this.i + 1; if (n >= this.q.length) { if (this.repeat === 1 || !auto) n = 0; else { this.ui(false); Sound.release('music'); return; } } }
+    if (this.shuffle && this.q.length > 1) { do { n = Math.floor(Math.random() * this.q.length); } while (n === this.i); } else { n = this.i + 1; if (n >= this.q.length) { if (this.repeat === 1 || !auto) n = 0; else { return this.autoRadio(); } } }
     this.playAt(n);
+  },
+  async autoRadio() {
+    const t = this.cur(), my = this.tok;
+    try {
+      if (!t || t.url || this.radioBusy) throw 0; this.radioBusy = true;
+      const r = await API.get('ytm', { a: 'radio', id: t.id }, 20000), have = new Set(this.q.map(x => x.id)), add = (r.items || []).filter(x => !have.has(x.id));
+      if (!add.length || my !== this.tok) throw 0;
+      const at = this.q.length; this.q.push(...add); UI.toast('Memutar lagu serupa…', 'info', 2200); this.playAt(at);
+    } catch (e) { if (my === this.tok) { this.ui(false); Sound.release('music'); } }
+    finally { this.radioBusy = false; }
   },
   prev() { if (!this.q.length) return; const c = this.mode === 'yt' && this.yt ? this.yt.getCurrentTime() : this.el().currentTime; if (c > 4) return this.seek(0); this.playAt((this.i - 1 + this.q.length) % this.q.length); },
   stop() { this.tok++; this.stopYt(); try { const a = this.el(); a.pause(); a.removeAttribute('src'); a.load(); } catch (e) {} this.q = []; this.i = -1; $('mini').classList.add('hidden'); document.body.classList.remove('has-mini'); const n = $('np'); if (n) n.remove(); Sound.release('music'); if ('mediaSession' in navigator) try { navigator.mediaSession.metadata = null; } catch (e) {} },
@@ -108,7 +118,14 @@ const Music = {
       if (!r) throw new Error('none');
       if (r.syncedLyrics) { this.lyr = r.syncedLyrics.split('\n').map(l => { const m = l.match(/^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/); return m ? { t: +m[1] * 60 + +m[2], x: m[3].trim() } : null; }).filter(l => l && l.x); main.innerHTML = this.lyr.map((l, k) => `<div class="ly" data-k="${k}" style="font-size:20px;font-weight:800;line-height:1.5;padding:6px 0;opacity:.4;transition:.25s">${esc(l.x)}</div>`).join(''); }
       else { this.lyr = null; main.innerHTML = `<div style="white-space:pre-wrap;font-weight:700;line-height:1.8;font-size:16px;text-align:center">${esc(r.plainLyrics)}</div>`; }
-    } catch (e) { main.innerHTML = '<div class="empty" style="color:#fff"><i class="fa-solid fa-align-left"></i>Lirik lagu ini belum tersedia.</div>'; }
+    } catch (e) {
+      try {
+        const r = await API.get('ytm', { a: 'lyrics', id: t.id }, 15000);
+        if (r.synced && r.synced.length) { this.lyr = r.synced; main.innerHTML = this.lyr.map((l, k) => `<div class="ly" data-k="${k}" style="font-size:20px;font-weight:800;line-height:1.5;padding:6px 0;opacity:.4;transition:.25s">${esc(l.x)}</div>`).join(''); return; }
+        if (r.plain) { this.lyr = null; main.innerHTML = `<div style="white-space:pre-wrap;font-weight:700;line-height:1.8;font-size:16px;text-align:center">${esc(r.plain)}</div>`; return; }
+      } catch (x) {}
+      main.innerHTML = '<div class="empty" style="color:#fff"><i class="fa-solid fa-align-left"></i>Lirik lagu ini belum tersedia.</div>';
+    }
   },
   syncLyrics(c) { if (!this.lyr || !$('np-main')) return; let k = 0; for (let j = 0; j < this.lyr.length; j++) if (this.lyr[j].t <= c + .2) k = j; const rows = $('np-main').querySelectorAll('.ly'); rows.forEach((r, j) => { const on = j === k; r.style.opacity = on ? 1 : .4; r.style.transform = on ? 'scale(1.03)' : ''; if (on && r._on !== true) r.scrollIntoView({ block: 'center', behavior: 'smooth' }); r._on = on; }); },
 
@@ -118,6 +135,8 @@ const Music = {
     Sheet.open({ id: 'music', title: 'Musik', icon: 'fa-circle-play', grad: 'linear-gradient(135deg,#f43f5e,#be123c)', full: true, onOpen: () => this.home(),
       body: `<div class="ym-hero"><div style="font-weight:800;font-size:19px">Dengarkan apa saja</div><div style="opacity:.8;font-size:12px;font-weight:600;margin:3px 0 12px">Jutaan lagu, hanya audio — hemat kuota & baterai.</div>${searchBar('mu-q', 'Cari lagu, artis, atau album…')}</div><div id="mu-out"></div>` });
     bindSearch('mu-q', () => this.search($('mu-q').value.trim()));
+    { const qi = $('mu-q'); if (qi) { const dl = document.createElement('datalist'); dl.id = 'mu-dl'; qi.parentNode.appendChild(dl); qi.setAttribute('list', 'mu-dl'); let tm;
+      qi.addEventListener('input', () => { clearTimeout(tm); const v = qi.value.trim(); if (v.length < 2) return; tm = setTimeout(async () => { try { const r = await API.get('ytm', { a: 'suggest', q: v }, 8000); dl.innerHTML = (r.items || []).map(x => `<option value="${esc(x)}"></option>`).join(''); } catch (e) {} }, 350); }); } }
   },
   home() {
     const fav = this.fav(), hist = this.hist(), out = $('mu-out'); if (!out) return;
@@ -125,11 +144,25 @@ const Music = {
       ${hist.length ? `<div class="sec-title">Terakhir diputar</div><div id="mu-hist" class="space-y-2"></div>` : ''}${fav.length ? `<div class="sec-title">Favoritmu <i class="fa-solid fa-heart" style="color:#f43f5e"></i></div><div id="mu-fav"></div>` : ''}`;
     out.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { const m = MOODS[+b.dataset.m]; $('mu-q').value = m[0]; this.search(m[1]); });
     if (hist.length) this.renderList($('mu-hist'), hist.slice(0, 8)); if (fav.length) this.renderList($('mu-fav'), fav.slice(0, 30));
+    this.loadCharts();
+  },
+  async loadCharts() {
+    try {
+      if (!this.charts) this.charts = await API.get('ytm', { a: 'charts', c: 'ID' }, 20000);
+      const out = $('mu-out'); if (!out || !this.charts.items || !this.charts.items.length || $('mu-charts') || out.querySelector('#mu-res')) return;
+      out.insertAdjacentHTML('beforeend', `<div class="sec-title">${esc(this.charts.title || 'Tangga lagu')}</div><div id="mu-charts"></div>`);
+      this.renderList($('mu-charts'), this.charts.items.slice(0, 15));
+    } catch (e) { this.charts = null; }
   },
   renderList(el, list) {
     el.innerHTML = list.map((t, k) => `<div class="item" data-k="${k}" style="margin-bottom:8px"><img class="th" src="${esc(t.thumb)}" loading="lazy" alt="" onerror="this.style.visibility='hidden'"/><div style="min-width:0;flex:1"><div class="t">${esc(t.title)}</div><div class="s">${esc(t.artist || '')}${t.duration ? ' · ' + esc(t.duration) : ''}${t.kind === 'Video' ? ' · Video' : ''}</div></div><button class="btn btn-icon btn-ghost" data-fav="${k}" style="color:${this.isFav(t.id) ? '#f43f5e' : '#94a3b8'}"><i class="fa-${this.isFav(t.id) ? 'solid' : 'regular'} fa-heart"></i></button></div>`).join('');
     el.querySelectorAll('.item').forEach(r => r.onclick = e => { if (e.target.closest('[data-fav]')) return; this.playList(list, +r.dataset.k); });
     el.querySelectorAll('[data-fav]').forEach(b => b.onclick = () => { this.toggleFav(list[+b.dataset.fav]); this.renderList(el, list); });
+  },
+  /* Pencarian lagu lewat ytmusicapi (api/ytm.py). Jika belum aktif / gagal, otomatis pakai API lama agar tetap jalan. */
+  async ytmSearch(q) {
+    try { const r = await API.get('ytm', { a: 'search', q }, 25000); if (r && r.items && r.items.length) return r.items; } catch (e) { ErrLog.push('ytmusicapi: ' + (e.message || e), 'music'); }
+    return (await API.get('yt', { a: 'music', q }, 30000)).items;
   },
   async search(q) {
     if (!q) return this.home(); const out = $('mu-out'); out.innerHTML = loadingHtml('Mencari lagu…');
@@ -137,8 +170,8 @@ const Music = {
       let items;
       const yid = (q.match(/(?:youtu\.be\/|v=|shorts\/)([\w-]{11})/) || [])[1];
       if (yid) { const d = await API.get('yt', { a: 'dl', id: yid }, 40000).catch(() => null); items = [{ id: yid, title: (d && d.title) || 'Video YouTube', artist: (d && d.author) || '', duration: '', seconds: (d && d.duration) || 0, thumb: `https://i.ytimg.com/vi/${yid}/hqdefault.jpg`, kind: 'Lagu' }]; }
-      else if (/open\.spotify\.com\/.*track/.test(q)) { const m = await fetchJSON('https://open.spotify.com/oembed?url=' + encodeURIComponent(q), {}, 8000); const r = await API.get('yt', { a: 'music', q: m.title }, 30000); items = r.items; }
-      else items = (await API.get('yt', { a: 'music', q }, 30000)).items;
+      else if (/open\.spotify\.com\/.*track/.test(q)) { const m = await fetchJSON('https://open.spotify.com/oembed?url=' + encodeURIComponent(q), {}, 8000); items = await this.ytmSearch(m.title); }
+      else items = await this.ytmSearch(q);
       if (!items.length) return void (out.innerHTML = emptyHtml('fa-face-sad-tear', 'Lagu tidak ditemukan. Coba kata kunci lain.'));
       out.innerHTML = `<div class="row" style="justify-content:space-between;margin:2px 0 8px"><div class="sec-title" style="margin:0">Hasil untuk “${esc(q.length > 30 ? q.slice(0, 30) + '…' : q)}”</div><button class="btn btn-sm btn-dark" id="mu-all"><i class="fa-solid fa-play"></i> Putar semua</button></div><div id="mu-res"></div>`;
       this.renderList($('mu-res'), items); $('mu-all').onclick = () => this.playList(items, 0);
