@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Dimzz Prozet</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="description" content="Dimzz Prozet — musik, unduh video, adzan, Al-Quran, berita, dan puluhan tools dalam satu aplikasi." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app.css?v=3.0" />
+</head>
+<body>
+  <!-- wallpaper (bisa diganti lewat fitur Wallpaper) -->
+  <div id="wallpaper"></div><div id="wallpaper-dim"></div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <!-- ====================== MASUK / DAFTAR ====================== -->
+  <section id="auth" class="hidden" aria-label="Masuk atau daftar">
+    <video id="auth-video" class="bg" loop playsinline webkit-playsinline preload="auto" src="https://files.catbox.moe/hnfdro.mp4"></video>
+    <div class="shade"></div>
+    <button id="auth-sound" type="button" class="sound-fab"><i class="fa-solid fa-volume-xmark"></i><span>Ketuk untuk suara</span></button>
+    <div class="auth-panel">
+      <div class="auth-brand">
+        <div class="auth-logo"><img src="profile.jpg" alt="Dimzz Prozet"/></div>
+        <div><div style="font-weight:800;font-size:20px;letter-spacing:-.01em">Dimzz Prozet</div><div style="font-size:12px;opacity:.75;font-weight:600">Semua tools favoritmu, satu aplikasi.</div></div>
+      </div>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" id="tab-login" class="on" role="tab">Masuk</button>
+        <button type="button" id="tab-register" role="tab">Daftar</button>
+      </div>
+      <div id="auth-err" class="auth-err hidden"></div>
+      <form id="auth-form" autocomplete="on" novalidate>
+        <div class="auth-field"><i class="fa-regular fa-user lead"></i><input id="a-user" type="text" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Username" maxlength="20" required /></div>
+        <div class="auth-field"><i class="fa-solid fa-lock lead"></i><input id="a-pass" type="password" name="password" autocomplete="current-password" data-lpignore="true" data-1p-ignore placeholder="Kata sandi" required /><button type="button" class="eye" id="a-eye" aria-label="Tampilkan sandi"><i class="fa-regular fa-eye"></i></button></div>
+        <div class="auth-field hidden" id="a-pass2-wrap"><i class="fa-solid fa-shield-halved lead"></i><input id="a-pass2" type="text" class="pw-mask" name="konfirmasi_sandi" autocomplete="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="Ulangi kata sandi" /></div>
+        <p id="a-hint" style="font-size:11px;opacity:.7;font-weight:600;margin:-2px 2px 12px" class="hidden">Username 3–20 karakter (huruf, angka, garis bawah). Sandi minimal 4 karakter.</p>
+        <button type="submit" class="auth-btn" id="a-submit"><span>Masuk</span><i class="fa-solid fa-arrow-right"></i></button>
+      </form>
+      <p style="text-align:center;font-size:11px;opacity:.6;margin:14px 0 0;font-weight:600">Dengan melanjutkan, kamu setuju memakai layanan ini dengan wajar dan sesuai hukum.</p>
+    </div>
+  </section>
+
+  <!-- layar sukses setelah daftar / masuk -->
+  <section id="welcome" class="hidden"><div class="confetti" id="confetti"></div>
+    <div class="welcome-card">
+      <div class="check"><svg viewBox="0 0 52 52"><path d="M12 27l10 10 19-21"/></svg></div>
+      <h2 id="w-title" style="font-size:24px;font-weight:800;margin:0 0 6px">Selamat datang!</h2>
+      <p id="w-sub" style="font-size:14px;opacity:.8;font-weight:500;margin:0 0 4px"></p>
+      <p style="font-size:12px;opacity:.6;font-weight:600;margin:14px 0 0"><i class="fa-solid fa-circle-notch spin"></i> Menyiapkan dasbor…</p>
+    </div>
+  </section>
+
+  <!-- animasi masuk dasbor (layar penuh + suara) -->
+  <section id="intro" class="hidden" aria-label="Animasi pembuka">
+    <video id="intro-video" playsinline webkit-playsinline preload="auto" src="https://files.catbox.moe/96bxec.mp4"></video>
+    <div class="bar"><div id="intro-bar"></div></div>
+    <button class="skip" id="intro-skip" type="button">Lewati <i class="fa-solid fa-forward"></i></button>
+    <button class="btn btn-acc tap hidden" id="intro-tap" type="button" style="padding:1rem 1.6rem;font-size:14px"><i class="fa-solid fa-play"></i> Ketuk untuk memutar</button>
+  </section>
+
+  <!-- layar pemeliharaan (dikontrol Developer) -->
+  <section id="maint" class="hidden"><div><div style="font-size:54px">🛠️</div><h2 style="font-size:22px;font-weight:800;margin:10px 0 6px">Sedang pemeliharaan</h2><p id="maint-msg" style="opacity:.8;font-size:14px;max-width:320px;margin:0 auto 18px">Kami sedang memperbarui layanan. Coba lagi sebentar lagi.</p><button class="btn btn-acc" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Muat ulang</button> <button class="btn" onclick="App.logout()">Keluar</button></div></section>
+
+  <section id="banned" class="hidden" style="position:fixed;inset:0;z-index:9650;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(circle at 50% 25%,#7f1d1d,#1c0a0a 70%);color:#fff"><div style="max-width:340px"><div style="width:84px;height:84px;margin:0 auto 16px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:38px;color:#fecaca"><i class="fa-solid fa-ban"></i></div><h2 style="font-size:22px;font-weight:800;margin:0 0 8px">Akun dibatasi</h2><p style="opacity:.85;font-size:14px;line-height:1.6;margin:0 0 6px">Akunmu diblokir oleh Developer.</p><p id="ban-reason" style="background:rgba(255,255,255,.1);border-radius:14px;padding:.7rem .9rem;font-size:13px;font-weight:600;margin:10px 0 18px"></p><a class="btn btn-acc" id="ban-wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Hubungi admin</a> <button class="btn" onclick="App.leave()">Keluar</button></div></section>
+
+  <!-- ====================== APLIKASI ====================== -->
+  <main id="app" class="hidden">
+    <div class="topbar">
+      <div class="row" style="min-width:0">
+        <div class="avatar" id="u-avatar"><img src="profile.jpg" alt=""/></div>
+        <div style="min-width:0"><div class="muted" style="font-size:11px;font-weight:700" id="u-greet">Selamat datang</div>
+          <div class="row" style="gap:6px"><b id="u-name" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">…</b><span class="tag" id="u-role">Gratis</span></div></div>
+      </div>
+      <div class="row">
+        <button class="btn btn-icon" id="btn-dev" onclick="Features.open('dev')" title="Panel Developer" style="background:linear-gradient(135deg,#ffe27a,#f59e0b)"><i class="fa-solid fa-user-shield"></i></button>
+        <button class="btn btn-icon" onclick="Features.open('wallpaper')" title="Ganti wallpaper"><i class="fa-regular fa-image"></i></button>
+        <button class="btn btn-icon" onclick="App.openMenu()" title="Menu"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+      </div>
+    </div>
+
+    <div id="announce" class="banner hidden" style="margin-bottom:12px"><i class="fa-solid fa-bullhorn" style="margin-top:2px"></i><div id="announce-text" style="flex:1"></div></div>
+
+    <section class="hero">
+      <video id="hero-video" muted loop playsinline preload="auto" src="https://files.catbox.moe/son20v.mp4"></video>
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div><div id="clock" class="clock">00:00</div><div id="date" style="font-size:12px;opacity:.8;font-weight:600;margin-top:6px"></div></div>
+        <button class="btn btn-sm" id="loc-chip" onclick="Features.open('adzan')" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)!important"><i class="fa-solid fa-location-dot"></i><span id="loc-name">Atur lokasi</span></button>
+      </div>
+      <div style="margin-top:14px;font-size:12px;font-weight:600;opacity:.9" id="next-line">Memuat jadwal sholat…</div>
+      <div class="pray-grid" id="pray-grid"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-sm" id="alarm-btn" onclick="Adzan.toggle()" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)!important;flex:1"><i class="fa-solid fa-bell"></i><span id="alarm-label">Alarm adzan</span></button>
+        <button class="btn btn-sm" onclick="Features.open('adzan')" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)!important"><i class="fa-solid fa-sliders"></i></button>
+      </div>
+    </section>
+
+    <div class="tabs" id="cat-tabs"></div>
+    <div id="tiles"></div>
+  </main>
+
+  <!-- kaset berputar: musik latar -->
+  <button id="cassette" class="hidden" type="button" aria-label="Putar atau hentikan musik latar">
+    <div class="disc"><div class="hub"><i class="fa-solid fa-music"></i></div></div>
+    <div class="st"><i class="fa-solid fa-play" id="cassette-ic"></i></div>
+    <div class="wave"><i></i><i></i><i></i><i></i></div>
+  </button>
+
+  <!-- mini player musik -->
+  <div id="mini" class="hidden">
+    <img id="mini-art" alt="" /><div style="flex:1;min-width:0" onclick="Music.openNow()"><div id="mini-title" style="font-weight:800;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">-</div><div id="mini-artist" class="muted" style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div></div>
+    <button class="btn btn-icon btn-ghost" onclick="Music.prev()"><i class="fa-solid fa-backward-step"></i></button>
+    <button class="btn btn-icon btn-dark" onclick="Music.toggle()"><i class="fa-solid fa-play" id="mini-ic"></i></button>
+    <button class="btn btn-icon btn-ghost" onclick="Music.next()"><i class="fa-solid fa-forward-step"></i></button>
+    <button class="btn btn-icon btn-ghost" onclick="Music.stop()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <nav class="dock hidden" id="dock">
+    <button class="on" data-nav="home"><i class="fa-solid fa-house"></i>Beranda</button>
+    <button data-nav="music"><i class="fa-solid fa-circle-play"></i>Musik</button>
+    <button data-nav="news"><i class="fa-regular fa-newspaper"></i>Berita</button>
+    <button data-nav="menu"><i class="fa-solid fa-user"></i>Akun</button>
+  </nav>
+
+  <audio id="a-bgm" preload="auto" loop playsinline src="https://files.catbox.moe/r4yjpe.mp3"></audio>
+  <audio id="a-music" preload="auto" playsinline></audio>
+  <audio id="a-adzan" preload="auto" playsinline></audio>
+  <div id="yt-hidden" style="position:fixed;left:-9999px;top:0;width:200px;height:120px;opacity:0;pointer-events:none"></div>
+
+  <script src="00-config.js?v=3.0"></script>
+  <script src="01-core.js?v=3.0"></script>
+  <script src="02-firebase.js?v=3.0"></script>
+  <script src="03-app.js?v=3.0"></script>
+  <script src="04-adzan.js?v=3.0"></script>
+  <script src="05-music.js?v=3.0"></script>
+  <script src="06-media.js?v=3.0"></script>
+  <script src="07-quran-news.js?v=3.0"></script>
+  <script src="08-photos-camera.js?v=3.0"></script>
+  <script src="09-tools.js?v=3.0"></script>
+  <script src="10-social.js?v=3.0"></script>
+  <script src="11-anime-manga.js?v=3.0"></script>
+  <script src="12-dev.js?v=3.0"></script>
+  <script src="13-chat.js?v=3.1"></script>
+  <script>App.boot();</script>
+</body>
+</html>

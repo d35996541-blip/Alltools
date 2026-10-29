@@ -1,0 +1,7 @@
+{
+  "name": "dimzz-alltools",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Dimzz Prozet — kumpulan tools (web + API Vercel)",
+  "engines": { "node": ">=20" }
+}

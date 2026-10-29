@@ -1,0 +1,75 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['u','role']) || !newData.exists()"
+      }
+    },
+    "keys": {
+      "$k": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists()"
+      }
+    },
+    "config": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'Developer'"
+    },
+    "bans": {
+      ".read": "auth != null",
+      "$k": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'Developer'"
+      }
+    },
+    "chat": {
+      "global": {
+        ".read": "auth != null",
+        ".indexOn": [
+          "ts"
+        ],
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'Developer'",
+        "$id": {
+          ".write": "auth != null && ((!data.exists() && !root.child('bans').child(newData.child('k').val()).exists()) || root.child('users').child(auth.uid).child('role').val() === 'Developer')",
+          ".validate": "newData.hasChildren(['u','k','r','ts']) && (newData.hasChild('t') || newData.hasChild('s') || newData.hasChild('im')) && newData.child('k').val() === root.child('users').child(auth.uid).child('u').val().toLowerCase() && newData.child('r').val() === root.child('users').child(auth.uid).child('role').val()",
+          "u": {
+            ".validate": "newData.isString() && newData.val().length <= 30"
+          },
+          "k": {
+            ".validate": "newData.isString()"
+          },
+          "r": {
+            ".validate": "newData.isString()"
+          },
+          "ts": {
+            ".validate": "newData.isNumber()"
+          },
+          "t": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300"
+          },
+          "s": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 16"
+          },
+          "im": {
+            ".validate": "newData.isString() && newData.val().length >= 10 && newData.val().length <= 40"
+          },
+          "ty": {
+            ".validate": "newData.isString() && newData.val().length === 1"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "chatimg": {
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'Developer'",
+      "$id": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && !root.child('bans').child(root.child('users').child(auth.uid).child('u').val().toLowerCase()).exists()",
+        ".validate": "newData.isString() && newData.val().length <= 200000 && newData.val().matches(/^data:image\\/(jpeg|webp|png);base64,/)"
+      }
+    }
+  }
+}

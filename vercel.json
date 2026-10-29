@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "headers": [
+    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/(.*)", "headers": [{ "key": "Permissions-Policy", "value": "geolocation=(self), camera=(self), microphone=(self), autoplay=(self)" }] }
+  ],
+  "rewrites": [
+    { "source": "/api/:fn", "destination": "/api/index?fn=:fn" }
+  ]
+}
