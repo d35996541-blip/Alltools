@@ -99,12 +99,12 @@ const Sheet = {
     this.stack = this.stack.filter(s => s !== it);
     try { it.onClose && it.onClose(); } catch (e) {}
     it.el.remove();
-    if (!fromPop && history.state && history.state.sheet) history.back();
+    if (!fromPop && history.state && history.state.sheet) { this.skip = (this.skip || 0) + 1; history.back(); }
   },
   $(id) { return $('sb-' + id); },
   isOpen(id) { return this.stack.some(s => s.id === id); }
 };
-window.addEventListener('popstate', () => { if (Sheet.stack.length) Sheet.close(null, true); });
+window.addEventListener('popstate', () => { if (Sheet.skip > 0) { Sheet.skip--; return; } if (Sheet.stack.length) Sheet.close(null, true); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && Sheet.stack.length && !$('dialog')) Sheet.close(); });
 
 /* ---------- pengatur suara: satu sumber aktif; musik latar mengalah ---------- */

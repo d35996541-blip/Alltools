@@ -3,7 +3,7 @@ const Dev = {
   tab: 'ringkas',
   open() {
     if (!App.isDev()) return UI.toast('Khusus Developer', 'warn');
-    Sheet.open({ id: 'dev', title: 'Panel Developer', icon: 'fa-user-shield', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', head: '<span class="dev-badge">DEV</span>', body: `<div class="h-scroll" id="dv-tabs">${[['ringkas', 'Ringkasan'], ['api', 'Kesehatan API'], ['fitur', 'Fitur'], ['umum', 'Pengumuman'], ['maint', 'Pemeliharaan'], ['user', 'Pengguna'], ['tester', 'Uji API'], ['log', 'Log & Cache']].map(([k, l]) => `<button class="chip ${k === this.tab ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div><div id="dv-box"></div>` });
+    Sheet.open({ id: 'dev', title: 'Panel Developer', icon: 'fa-user-shield', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', head: '<span class="dev-badge">DEV</span>', body: `<div class="h-scroll" id="dv-tabs">${[['ringkas', 'Ringkasan'], ['api', 'Kesehatan API'], ['fitur', 'Fitur'], ['umum', 'Pengumuman'], ['maint', 'Pemeliharaan'], ['user', 'Pengguna'], ['centang', 'Centang Biru'], ['tester', 'Uji API'], ['log', 'Log & Cache']].map(([k, l]) => `<button class="chip ${k === this.tab ? 'on' : ''}" data-k="${k}">${l}</button>`).join('')}</div><div id="dv-box"></div>` });
     $('dv-tabs').querySelectorAll('button').forEach(b => b.onclick = () => this.go(b.dataset.k)); this.go(this.tab);
   },
   go(k) { this.tab = k; $('dv-tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); $('dv-box').innerHTML = loadingHtml(); try { this['t_' + k]($('dv-box')); } catch (e) { $('dv-box').innerHTML = errHtml(e.message); } },
