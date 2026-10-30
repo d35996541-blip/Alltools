@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="app.css?v=3.11" />
+  <link rel="stylesheet" href="app.css?v=3.17" />
 </head>
 <body>
   <!-- wallpaper (bisa diganti lewat fitur Wallpaper) -->
@@ -73,11 +73,12 @@
 
   <!-- ====================== APLIKASI ====================== -->
   <main id="app" class="hidden">
+  <div class="cyberbg" aria-hidden="true"></div>
     <div class="topbar">
       <div class="row" style="min-width:0">
         <div class="avatar" id="u-avatar"><img src="profile.jpg" alt=""/></div>
         <div style="min-width:0"><div class="muted" style="font-size:11px;font-weight:700" id="u-greet">Selamat datang</div>
-          <div class="row" style="gap:6px"><b id="u-name" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">…</b><span class="tag" id="u-role">Gratis</span></div></div>
+          <div class="row" style="gap:6px"><b id="u-name" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">…</b><span class="rk-tag rk-user" id="u-role">Gratis</span></div></div>
       </div>
       <div class="row">
         <button class="btn btn-icon" id="btn-dev" onclick="Features.open('dev')" title="Panel Developer" style="background:linear-gradient(135deg,#ffe27a,#f59e0b)"><i class="fa-solid fa-user-shield"></i></button>
@@ -102,7 +103,7 @@
       </div>
     </section>
 
-    <div class="searchbar"><i class="fa-solid fa-magnifying-glass"></i><input id="f-q" type="search" placeholder="Cari fitur…" autocomplete="off" enterkeyhint="search"/></div>
+    <div class="searchbar"><i class="fa-solid fa-magnifying-glass"></i><input id="f-q" type="search" placeholder="Cari fitur…" autocomplete="off" enterkeyhint="search"/><button class="ai-go" id="ai-go" title="Tanya Asisten AI" onclick="Features.open('ai')">AI</button></div>
     <div class="tabs" id="cat-tabs"></div>
     <div id="tiles"></div>
   </main>
@@ -138,17 +139,19 @@
   <script src="00-config.js?v=3.1"></script>
   <script src="01-core.js?v=3.1"></script>
   <script src="02-firebase.js?v=3.1"></script>
-  <script src="03-app.js?v=3.3"></script>
-  <script src="04-adzan.js?v=3.1"></script>
+  <script src="03-app.js?v=3.16"></script>
+  <script src="04-adzan.js?v=3.15"></script>
   <script src="05-music.js?v=3.10"></script>
   <script src="06-media.js?v=3.1"></script>
   <script src="07-quran-news.js?v=3.1"></script>
   <script src="08-photos-camera.js?v=3.1"></script>
   <script src="09-tools.js?v=3.1"></script>
   <script src="10-social.js?v=3.4"></script>
-  <script src="11-anime-manga.js?v=3.10"></script>
+  <script src="11-anime-manga.js?v=3.12"></script>
   <script src="12-dev.js?v=3.1"></script>
-  <script src="13-chat.js?v=3.1"></script>
+  <script src="13-chat.js?v=3.16"></script>
+  <script src="14-boost.js?v=3.16"></script>
+  <script src="15-roles.js?v=3.18"></script>
   <script>App.boot();</script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // Service worker ringan: berkas statis di-cache (cepat & bisa dibuka cepat), /api tidak pernah di-cache.
-const V = 'dimzz-v3.11.0';
-const STATIC = ['./', 'index.html', 'app.css', 'manifest.webmanifest', 'icon-192.png'];
+const V = 'dimzz-v3.18.0';
+const STATIC = ['./', 'index.html', 'app.css', '14-boost.js', '15-roles.js', '13-chat.js', 'manifest.webmanifest', 'icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(STATIC).catch(() => {})).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

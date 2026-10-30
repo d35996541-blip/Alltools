@@ -61,8 +61,10 @@ const Adzan = {
     $('loc-name').textContent = this.s.city || 'Lokasi';
   },
   renderGrid() {
-    $('loc-name').textContent = (this.s && this.s.city) || 'Atur lokasi';
-    $('pray-grid').innerHTML = PRAYERS.map(([k, n]) => `<div class="pray" id="pr-${k}"><small>${n}</small><b>${(this.times && this.times[k]) || '--:--'}</b></div>`).join('');
+    const ll = this.s && this.s.lat != null ? `<small style="opacity:.65;font-weight:700"> (${this.s.lat}°, ${this.s.lng}°)</small>` : '';
+    $('loc-name').innerHTML = esc((this.s && this.s.city) || 'Atur lokasi') + ll;
+    const PC = { subuh: '#a855f7', dzuhur: '#f59e0b', ashar: '#14b8a6', maghrib: '#22c55e', isya: '#3b82f6' };
+    $('pray-grid').innerHTML = PRAYERS.map(([k, n]) => `<div class="pray" id="pr-${k}" style="--pc:${PC[k]}"><small>${n}</small><b>${(this.times && this.times[k]) || '--:--'}</b><i class="wv"></i></div>`).join('');
   },
   nextPrayer() {
     if (!this.times) return null; const now = new Date(), nm = now.getHours() * 60 + now.getMinutes();

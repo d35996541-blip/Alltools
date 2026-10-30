@@ -332,3 +332,135 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 /* Transisi lembut saat dock/tab berpindah status */
 .dock button,.tabs .chip{transition:background .18s,color .18s,box-shadow .18s,transform .12s}
 .dock button:active,.tabs .chip:active{transform:scale(.94)}
+
+/* ===== Tema "Cyber" v3.13 — latar sirkuit neon, ikon makin hidup, tanpa angka bohongan ===== */
+.cyberbg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .4s}
+.dark-wall .cyberbg{opacity:1}
+.cyberbg::before{content:"";position:absolute;inset:-10%;
+  background:
+    radial-gradient(60% 40% at 15% 10%,rgba(56,189,248,.16),transparent 60%),
+    radial-gradient(55% 45% at 85% 20%,rgba(168,85,247,.18),transparent 60%),
+    radial-gradient(70% 50% at 50% 95%,rgba(245,158,11,.10),transparent 60%),
+    repeating-linear-gradient(115deg,rgba(255,255,255,.035) 0 1px,transparent 1px 64px),
+    repeating-linear-gradient(25deg,rgba(255,255,255,.03) 0 1px,transparent 1px 64px);
+  background-color:#070914;
+  animation:cyberdrift 26s linear infinite;
+}
+.cyberbg::after{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(1.5px 1.5px at 20% 30%,rgba(255,255,255,.55) 50%,transparent 52%),
+    radial-gradient(1.5px 1.5px at 70% 15%,rgba(255,255,255,.4) 50%,transparent 52%),
+    radial-gradient(1px 1px at 85% 60%,rgba(255,255,255,.45) 50%,transparent 52%),
+    radial-gradient(1px 1px at 40% 80%,rgba(255,255,255,.35) 50%,transparent 52%),
+    radial-gradient(1.5px 1.5px at 10% 70%,rgba(255,255,255,.4) 50%,transparent 52%),
+    radial-gradient(1px 1px at 60% 45%,rgba(255,255,255,.3) 50%,transparent 52%);
+  background-size:220px 220px;opacity:.9;
+}
+@keyframes cyberdrift{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-48px,-48px,0)}}
+.lite .cyberbg::before{animation:none}
+#app>*:not(.cyberbg){position:relative;z-index:1}
+
+.dark-wall .hero{border-image:none;position:relative}
+.dark-wall .hero::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(120deg,rgba(56,189,248,.65),rgba(245,158,11,.5) 45%,rgba(168,85,247,.6));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.hero .clock{text-shadow:0 0 22px rgba(255,210,99,.55)}
+
+.dark-wall .tile{position:relative}
+.dark-wall .tile::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(145deg,color-mix(in srgb,var(--c) 85%,white 15%),transparent 60%);opacity:.8;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.dark-wall .tile .ic{box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -3px 0 rgba(0,0,0,.2),0 0 22px -4px var(--c),0 10px 18px -8px rgba(0,0,0,.6)}
+.tile .dot{position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 6px 1px #34d399}
+.lite .tile .dot{animation:none}
+@keyframes dotpulse{0%,100%{opacity:1}50%{opacity:.35}}
+.tile .dot{animation:dotpulse 2.2s ease-in-out infinite}
+
+.dark-wall .searchbar input{box-shadow:0 0 0 1px rgba(56,189,248,.25),0 8px 20px -14px rgba(56,189,248,.5)}
+.searchbar .ai-go{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:9px;border:0;display:grid;place-items:center;background:linear-gradient(135deg,#38bdf8,#a855f7);color:#fff;font-size:10px;font-weight:900;letter-spacing:.02em;box-shadow:0 4px 12px -4px rgba(168,85,247,.7)}
+
+/* ===== Carousel fitur unggulan + variasi bentuk tile v3.14 — biar tidak monoton ===== */
+.feat-rail{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px 2px 4px;margin:0 -2px;scrollbar-width:none}
+.feat-rail::-webkit-scrollbar{display:none}
+.feat-card{flex:0 0 auto;scroll-snap-align:start;width:148px;height:104px;border-radius:22px;border:0;color:#fff;text-align:left;padding:14px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;box-shadow:0 14px 26px -14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .15s}
+.feat-card:active{transform:scale(.96)}
+.feat-card::after{content:"";position:absolute;right:-18px;bottom:-18px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.16)}
+.feat-card i{font-size:20px;opacity:.95;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.feat-card b{font-size:13.5px;font-weight:800;letter-spacing:-.01em}
+.feat-card small{font-size:10px;font-weight:700;opacity:.85}
+
+/* Variasi bentuk ikon per urutan supaya grid tidak terasa seragam */
+.tile:nth-child(6n+2) .ic{border-radius:18px 18px 18px 6px}
+.tile:nth-child(6n+4) .ic{border-radius:50%}
+.tile:nth-child(6n+5) .ic{border-radius:10px}
+.tile:nth-child(5n+3)::after{content:"✦";position:absolute;top:6px;left:10px;font-size:9px;color:var(--c);opacity:.7}
+
+/* ===== Kartu sholat berwarna + gelombang kecil, koordinat lokasi asli v3.15 ===== */
+.pray{position:relative;overflow:hidden;border-color:color-mix(in srgb,var(--pc,#64748b) 55%,transparent)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc,#64748b) 25%,transparent)}
+.pray b{color:color-mix(in srgb,var(--pc,#fff) 35%,#fff)}
+.pray .wv{display:block;width:100%;height:10px;margin-top:4px;background-image:repeating-linear-gradient(90deg,var(--pc,#64748b) 0 2px,transparent 2px 5px);mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);opacity:.55;animation:wvmove 2.6s linear infinite}
+.pray.next .wv{background-image:repeating-linear-gradient(90deg,#1f1300 0 2px,transparent 2px 5px);opacity:.4}
+@keyframes wvmove{0%{background-position-x:0}100%{background-position-x:14px}}
+.lite .pray .wv{animation:none}
+#loc-name small{font-weight:600}
+
+/* ================= v3.16 — kaca (glass) dasbor, bingkai peran, chat baru ================= */
+#app::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(120% 70% at 50% 0%,rgba(15,23,42,.10),rgba(8,12,24,.50) 100%),linear-gradient(180deg,rgba(8,12,24,.28),rgba(8,12,24,.46));backdrop-filter:blur(7px) saturate(1.35);-webkit-backdrop-filter:blur(7px) saturate(1.35)}
+#app,#app .topbar b,#app .topbar #u-name,#app .sec-title,#app .muted,#app .hero,#app .tile span,#app #next-line{color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.55)}
+#app .tile,#app .hero,#app .pray,#app .banner,#app .tabs .chip:not(.on),#app .topbar .btn-icon:not(#btn-dev),#app .searchbar input{background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,.06)),rgba(10,16,32,.30);border:1px solid rgba(255,255,255,.28)!important;box-shadow:0 14px 30px -16px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.34);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);color:#fff}
+#app .tile span{font-weight:800}
+#app .searchbar input::placeholder{color:rgba(255,255,255,.78)}
+#app .searchbar i{color:#fff}
+#app .tabs .chip:not(.on){color:#fff}
+.lite #app::before{backdrop-filter:none;-webkit-backdrop-filter:none;background:linear-gradient(180deg,rgba(8,12,24,.5),rgba(8,12,24,.62))}
+.lite #app .tile,.lite #app .hero,.lite #app .pray,.lite #app .banner,.lite #app .tabs .chip:not(.on),.lite #app .topbar .btn-icon:not(#btn-dev),.lite #app .searchbar input{background:rgba(30,41,59,.72)}
+
+/* --- bingkai & lencana peran --- */
+@property --a{syntax:"<angle>";initial-value:0deg;inherits:false}
+@keyframes ringspin{to{--a:360deg}}
+.avatar.rk-user{box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 0 4px #22d3ee,0 0 14px rgba(34,211,238,.55)!important}
+.avatar.rk-dev{box-shadow:0 0 0 2px #fff7c2,0 0 0 4px #f59e0b,0 0 20px rgba(245,158,11,.8)!important}
+@supports (background:conic-gradient(from var(--a),red,blue)){.avatar.rk-dev{box-shadow:0 0 22px rgba(245,158,11,.6)!important;border:3px solid transparent;background:linear-gradient(#0f172a,#0f172a) padding-box,conic-gradient(from var(--a),#ffe27a,#f59e0b,#fff7c2,#f59e0b,#ffe27a) border-box;animation:ringspin 4s linear infinite}}
+.lite .avatar.rk-dev{animation:none}
+.rk-tag{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:.18rem .55rem;white-space:nowrap;text-shadow:none}
+.rk-tag.rk-user{background:linear-gradient(135deg,#22d3ee,#6366f1);color:#fff;box-shadow:0 0 10px -2px rgba(34,211,238,.7)}
+.rk-tag.rk-dev{background:linear-gradient(135deg,#ffe27a,#f59e0b);color:#1f1300;box-shadow:0 0 14px -2px rgba(245,158,11,.9)}
+.rk-tag.sm{font-size:8px;padding:.1rem .4rem}
+.me-card{padding:20px 16px;text-align:center;border:1.5px solid #22d3ee!important}
+.me-card.dev{border-color:#f59e0b!important;box-shadow:0 0 0 1px rgba(245,158,11,.3),0 14px 34px -14px rgba(245,158,11,.7)}
+
+/* --- Chat Global: kaca, mudah diketik, responsif --- */
+.sheet>.panel.chatp{background:linear-gradient(180deg,rgba(15,23,42,.74),rgba(8,12,26,.86));backdrop-filter:blur(26px) saturate(1.6);-webkit-backdrop-filter:blur(26px) saturate(1.6);color:#fff;transition:height .12s}
+.chatp .sheet-head{background:rgba(255,255,255,.08);border-bottom-color:rgba(255,255,255,.14);color:#fff}
+.chatp .sheet-head .btn-ghost{color:#fff}
+.chatp .muted,.chatp .empty{color:rgba(255,255,255,.78)}
+.chatp .sheet-body{padding:12px 12px 8px;scroll-behavior:smooth;overscroll-behavior:contain}
+.cb{max-width:86%;padding:.55rem .8rem .5rem;border-radius:18px 18px 18px 6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#fff;box-shadow:0 8px 20px -12px rgba(0,0,0,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.cb.me{border-radius:18px 18px 6px 18px;background:linear-gradient(135deg,rgba(79,70,229,.78),rgba(14,165,233,.66));border-color:rgba(255,255,255,.38)}
+.cb.dev{border:1.5px solid #fbbf24;background:linear-gradient(135deg,rgba(245,158,11,.30),rgba(255,255,255,.10));box-shadow:0 0 0 1px rgba(251,191,36,.25),0 8px 24px -10px rgba(245,158,11,.75)}
+.cb.pend{opacity:.7}
+.cn{display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap}
+.cnm{font-size:11.5px;opacity:.95}
+.cnm.dev{background:linear-gradient(135deg,#ffe27a,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:1}
+.cdel{border:0;background:none;color:inherit;opacity:.65;font-size:11px;padding:2px 4px;margin-left:auto}
+.ctx{font-size:14.5px;font-weight:500;line-height:1.5;word-break:break-word;white-space:pre-wrap;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.ch-day{align-self:center;margin:6px 0 2px}.ch-day span{font-size:10px;font-weight:800;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:.2rem .7rem}
+.ch-pin{position:sticky;top:-12px;z-index:3;margin:-12px -12px 4px;display:flex;gap:10px;align-items:flex-start;padding:.6rem .9rem;background:linear-gradient(135deg,rgba(245,158,11,.38),rgba(15,23,42,.6));border-bottom:1px solid rgba(251,191,36,.5);color:#fff;font-size:12px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.ch-pin i{color:#fbbf24;margin-top:2px}.ch-pin b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#fde68a}.ch-pin span{font-weight:600;line-height:1.4;word-break:break-word}
+.ch-foot{position:relative;background:rgba(8,12,26,.78);border-top:1px solid rgba(255,255,255,.16);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.ch-bar{display:flex;gap:8px;align-items:flex-end;padding:10px 12px calc(10px + var(--safe-b))}
+.ch-b{width:44px;height:44px;flex:none;border-radius:50%;border:1px solid rgba(255,255,255,.26)!important;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;font-size:16px;transition:transform .12s}
+.ch-b:active{transform:scale(.92)}
+.ch-go{background:linear-gradient(135deg,#ffe27a,#f59e0b);color:#1f1300;border-color:transparent!important;box-shadow:0 8px 18px -8px rgba(245,158,11,.9)}
+.ch-go:disabled{opacity:.4;filter:grayscale(.5);box-shadow:none}
+.chatp .ch-in,.ch-in{flex:1;min-width:0;min-height:44px;max-height:130px;resize:none;border-radius:22px!important;border:1px solid rgba(255,255,255,.3)!important;background:rgba(255,255,255,.14)!important;color:#fff!important;padding:.7rem 1rem;font:500 16px/1.35 'Plus Jakarta Sans',system-ui,sans-serif;outline:none;-webkit-appearance:none;appearance:none}
+.chatp .ch-in:focus{border-color:#fbbf24!important;box-shadow:0 0 0 3px rgba(251,191,36,.22)!important}
+.ch-in::placeholder{color:rgba(255,255,255,.7)}
+.ch-cnt{position:absolute;right:76px;top:-18px;font-size:10px;font-weight:800;color:#fde68a;text-shadow:0 1px 4px #000}
+.ch-pnl{max-height:210px;overflow:auto;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12)}
+.ch-stk{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.ch-stk button{font-size:30px;line-height:1.3;border:0;background:none;border-radius:12px;padding:2px}.ch-stk button:active{background:rgba(255,255,255,.16)}
+.ch-stk .ch-mk{grid-column:span 2;border:2px dashed rgba(255,255,255,.35);font-size:11px;font-weight:800;color:#fff;line-height:1.2}
+.ch-new{position:absolute;left:50%;transform:translateX(-50%);top:-44px;border:0;border-radius:999px;padding:.5rem 1rem;font-size:12px;font-weight:800;background:linear-gradient(135deg,#ffe27a,#f59e0b);color:#1f1300;box-shadow:0 10px 22px -8px rgba(0,0,0,.7);z-index:4}
+@media(min-width:700px){.sheet.full>.panel.chatp{max-width:560px;height:min(92dvh,900px);border-radius:28px;margin:auto}.sheet:has(.chatp){align-items:center}}
+
+/* ===== v3.17 — warna bingkai/bubble mengikuti role ===== */
+.avatar.rk-user{box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 0 4px var(--rc,#22d3ee),0 0 14px var(--rc,#22d3ee)!important}
+.cb:not(.dev):not(.me){border-color:var(--rc,rgba(255,255,255,.24))}
+.cb:not(.dev).me{box-shadow:0 0 0 1px var(--rc,transparent),0 8px 20px -12px rgba(0,0,0,.7)}
+.me-card{border-color:var(--rc,#22d3ee)!important}
