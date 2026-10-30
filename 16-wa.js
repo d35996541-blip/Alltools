@@ -51,6 +51,7 @@ const WA = {
       foot: `<nav class="wa-nav">${[['chat', 'fa-message', 'Chat'], ['upd', 'fa-circle-notch', 'Pembaruan'], ['me', 'fa-user-gear', 'Saya']].map(([k, i, l]) => `<button data-t="${k}" class="${k === 'chat' ? 'on' : ''}"><i class="fa-solid ${i}"></i><span>${l}</span><b class="wa-bd hidden" id="wa-bd-${k}"></b></button>`).join('')}</nav>`,
       on: el => { el.querySelectorAll('.wa-nav [data-t]').forEach(b => b.onclick = () => this.go(b.dataset.t)); this.boot(); } });
   },
+  async deep(id, name) { if (!id || !Ban.on()) return; if (!await this.gate()) return; if (!Sheet.isOpen('wa')) await this.open(); if (Sheet.isOpen('wa') && !(this.C && this.C.id === id)) this.openChat(id, name || this.uname(id)); },
   async boot() {
     this.av.clear(); this.go('chat');
     try { await this.users(true); } catch (e) {}
@@ -75,11 +76,12 @@ const WA = {
   badge() { const n = Object.entries(this.S.ib).filter(([k, e]) => e && e.ts && !this.S.bl[k] && this.unread(k, e)).length, b = $('wa-bd-chat'); if (b) { b.textContent = n > 99 ? '99+' : n; b.classList.toggle('hidden', !n); } },
   async cnt(k, e) { const me = this.me(), c = this.cn[k]; if (c && c.ts === e.ts) return c.n; const d = await this.rq(k.startsWith('g:') ? 'wa/gm/' + k.slice(2) : 'wa/dm/' + this.pair(me, k), { orderBy: '$key', limitToLast: 30 }), rd = this.S.rd[k] || 0, n = Object.values(d || {}).filter(m => m.k !== me && m.ts > rd).length; this.cn[k] = { ts: e.ts, n }; return n; },
   v_chat(v) {
-    v.innerHTML = `${this.top('DimzzChat', 0, '<button class="wa-ib" id="wa-th" title="Tema gelap / terang"><i class="fa-solid fa-circle-half-stroke"></i></button>')}<div class="wa-sr"><i class="fa-solid fa-magnifying-glass"></i><input id="wa-q" type="text" placeholder="Cari chat…" autocomplete="off" value="${esc(this.S.q)}"/></div><div class="wa-fl">${[['all', 'Semua'], ['u', 'Belum dibaca'], ['g', 'Grup']].map(([k, l]) => `<button data-f="${k}" class="${this.S.f === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="wa-l"></div><button class="wa-fab" id="wa-new" aria-label="Chat baru"><i class="fa-solid fa-plus"></i></button>`;
+    v.innerHTML = `${this.top('DimzzChat', 0, '<button class="wa-ib" id="wa-th" title="Tema gelap / terang"><i class="fa-solid fa-circle-half-stroke"></i></button>')}${Push.ok() && Push.perm() === 'default' && LS.get('push_on', 1) !== 0 && !LS.get('push_ask') ? '<div class="wa-pn" id="wa-pn"><i class="fa-solid fa-bell"></i><span>Aktifkan notifikasi agar pesan tetap muncul di layar HP walau web ditutup.</span><button class="btn btn-sm btn-pri" id="wa-pn-y">Aktifkan</button><button class="wa-ib sm" id="wa-pn-x" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div>' : ''}<div class="wa-sr"><i class="fa-solid fa-magnifying-glass"></i><input id="wa-q" type="text" placeholder="Cari chat…" autocomplete="off" value="${esc(this.S.q)}"/></div><div class="wa-fl">${[['all', 'Semua'], ['u', 'Belum dibaca'], ['g', 'Grup']].map(([k, l]) => `<button data-f="${k}" class="${this.S.f === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="wa-l"></div><button class="wa-fab" id="wa-new" aria-label="Chat baru"><i class="fa-solid fa-plus"></i></button>`;
     $('wa-q').oninput = e => { this.S.q = e.target.value; this.drawList(); };
     v.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { this.S.f = b.dataset.f; v.querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x === b)); this.drawList(); });
     $('wa-th').onclick = () => { LS.set('wa_dk', LS.get('wa_dk', 0) ? 0 : 1); this.prefs(); };
     $('wa-new').onclick = () => this.newChat(); this.drawList();
+    const py = $('wa-pn-y'); if (py) { py.onclick = async () => { py.disabled = true; try { await Push.enable(); UI.toast('Notifikasi aktif', 'ok'); } catch (e) { UI.toast(e.message || 'Gagal mengaktifkan notifikasi', 'err'); } const b = $('wa-pn'); if (b) b.remove(); LS.set('push_ask', 1); }; $('wa-pn-x').onclick = () => { LS.set('push_ask', 1); $('wa-pn').remove(); }; }
   },
   drawList() {
     const L = $('wa-l'); if (!L) return; const me = this.me(), q = this.S.q.toLowerCase(), f = this.S.f;
@@ -162,6 +164,7 @@ const WA = {
     else { up[`ib/${me}/${C.other}`] = { u: C.name, t: pv, ts, k: me }; up[`ib/${C.other}/${me}`] = { u: this.myName(), t: pv, ts, k: me }; }
     C.msgs.push({ id, ...m, pending: 1 }); this.drawC(true);
     try { await this.rq('wa', null, 'PATCH', up); } catch (e) { C.msgs = C.msgs.filter(x => x.id !== id); this.drawC(true); UI.toast(e.permission ? 'Pesan tidak terkirim (kamu diblokir atau Rules belum dipasang)' : 'Pesan gagal dikirim', 'err'); if (!extra) { i.value = t; i.oninput(); } return; }
+    try { const gm = C.g ? (C.info && C.info.m ? Object.keys(C.info.m) : []) : [C.other], gn = C.info ? C.info.n : C.name; Push.notify(gm, C.g ? { t: gn, n: gn, b: (this.myName() + ': ' + pv).slice(0, 140), c: 'g:' + C.gid, k: 'msg' } : { t: this.myName(), n: this.myName(), b: pv.slice(0, 140), c: me, k: 'msg' }); } catch (e) {}
     this.pollC(); this.pollIb();
   },
   async del(m) { const C = this.C; if (!await UI.confirm('Hapus pesan?', 'Pesan dihapus untuk semua orang di chat ini.', { ok: 'Hapus', danger: true, icon: 'fa-trash' })) return; try { await this.rq((C.g ? 'wa/gm/' + C.gid : 'wa/dm/' + C.pair) + '/' + m.id, null, 'DELETE'); if (m.im) this.rq('wa/md/' + m.im, null, 'DELETE').catch(() => {}); C.msgs = C.msgs.filter(x => x.id !== m.id); this.drawC(true); } catch (e) { UI.toast('Gagal menghapus', 'err'); } },
@@ -205,7 +208,7 @@ const WA = {
       } });
   },
   async diag() {
-    const me = this.me(), T = [['Daftar centang biru', 'wa/vf'], ['Saluran', 'wa/c'], ['Status', 'wa/st'], ['Nama kontak', 'wa/dn'], ['Chat masuk', 'wa/ib/' + me], ['Nomor telepon', 'wa/ph/' + me], ['Panggilan', 'wa/ic/' + me]];
+    const me = this.me(), T = [['Daftar centang biru', 'wa/vf'], ['Saluran', 'wa/c'], ['Status', 'wa/st'], ['Nama kontak', 'wa/dn'], ['Chat masuk', 'wa/ib/' + me], ['Nomor telepon', 'wa/ph/' + me], ['Panggilan', 'wa/ic/' + me], ['Notifikasi layar HP', 'wa/ps/' + me]];
     this.sheet({ id: 'wadg', body: `${this.top('Cek Rules Firebase', 'wadg')}<div id="dg-l" style="padding:14px">${loadingHtml('Memeriksa…')}</div>`, on: async () => {
       const r = []; for (const [l, p] of T) { try { await this.rq(p, { shallow: true }); r.push([l, 1]); } catch (e) { r.push([l, 0]); } } const bad = r.some(x => !x[1]), b = $('dg-l'); if (!b) return;
       b.innerHTML = `<div class="card" style="padding:6px 14px">${r.map(([l, o]) => `<div class="kv"><span>${esc(l)}</span><b style="color:${o ? '#16a34a' : '#dc2626'}">${o ? '✓ OK' : '✗ Ditolak'}</b></div>`).join('')}</div>` + (bad ? `<div class="banner" style="margin-top:12px"><i class="fa-solid fa-circle-info" style="margin-top:2px"></i><div><b>Cara memperbaiki:</b><br>1. Buka Firebase Console → <b>Realtime Database</b> (bukan Firestore) → tab <b>Rules</b>.<br>2. Hapus semua isinya, tempel seluruh isi <b>firebase-rules-tambahan.json</b> dari zip v3.21.<br>3. Tekan <b>Publish</b>, lalu tutup dan buka lagi web ini.</div></div>` : '<div class="banner" style="margin-top:12px"><i class="fa-solid fa-circle-check" style="margin-top:2px"></i><div>Semua Rules terpasang. Silakan tutup halaman ini dan buka DimzzChat lagi.</div></div>') + '<div style="padding:12px 0"><button class="btn btn-pri" id="dg-re" style="width:100%">Periksa ulang</button></div>';
@@ -264,7 +267,7 @@ const WA = {
         await this.rq('wa/cc/' + K.pair, null, 'DELETE').catch(() => {});
         await pc.setLocalDescription(await pc.createOffer());
         await this.rq('wa/cl/' + K.pair, null, 'PUT', { f: me, t: K.other, ty: K.ty, st: 'r', ts: Date.now(), o: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } });
-        await this.rq('wa/ic/' + K.other, null, 'PUT', { f: me, ty: K.ty, ts: Date.now(), p: K.pair, n: this.myName() }); this.rtOn();
+        await this.rq('wa/ic/' + K.other, null, 'PUT', { f: me, ty: K.ty, ts: Date.now(), p: K.pair, n: this.myName() }); this.rtOn(); try { Push.notify([K.other], { t: this.myName(), n: this.myName(), b: K.ty === 'v' ? '📹 Panggilan video masuk' : '📞 Panggilan suara masuk', c: me, k: 'call' }); } catch (x) {}
       } else {
         const c = await this.rq('wa/cl/' + K.pair); if (!c || !c.o || c.st === 'e') throw new Error('Panggilan sudah berakhir');
         await pc.setRemoteDescription(c.o); K.hasRd = 1; await pc.setLocalDescription(await pc.createAnswer());
@@ -303,22 +306,72 @@ const WA = {
   v_upd(v) { v.innerHTML = `${this.top('Pembaruan')}<div class="wa-sec">Status</div><div id="wa-st">${loadingHtml()}</div><div class="wa-sec">Saluran <button class="wa-ib sm" id="wa-cn" title="Buat saluran"><i class="fa-solid fa-plus"></i></button></div><div id="wa-ch">${loadingHtml()}</div>`; $('wa-cn').onclick = () => this.newChannel(); this.loadSt(); this.loadCh(); },
   async loadSt() {
     let d = {}; try { d = (await this.rq('wa/st')) || {}; } catch (e) {} const now = Date.now(), me = this.me(), mine = [], o = [];
-    for (const [k, v] of Object.entries(d)) { const all = Object.entries(v || {}).map(([id, s]) => ({ id, ...s })), live = all.filter(s => now - s.ts < 864e5).sort((a, b) => a.ts - b.ts); if (k === me) all.filter(s => now - s.ts >= 864e5).forEach(s => { this.rq(`wa/st/${me}/${s.id}`, null, 'DELETE').catch(() => {}); if (s.m) this.rq('wa/md/' + s.m, null, 'DELETE').catch(() => {}); }); if (!live.length || this.S.bl[k]) continue; k === me ? mine.push(...live) : o.push([k, live]); }
+    for (const [k, v] of Object.entries(d)) { const all = Object.entries(v || {}).map(([id, s]) => ({ id, ...s })), live = all.filter(s => now - s.ts < 864e5).sort((a, b) => a.ts - b.ts); if (k === me) all.filter(s => now - s.ts >= 864e5).forEach(s => { this.rq(`wa/st/${me}/${s.id}`, null, 'DELETE').catch(() => {}); this.rq(`wa/sv/${me}/${s.id}`, null, 'DELETE').catch(() => {}); if (s.m) this.rq('wa/md/' + s.m, null, 'DELETE').catch(() => {}); }); if (!live.length || this.S.bl[k]) continue; k === me ? mine.push(...live) : o.push([k, live]); }
     o.sort((a, b) => b[1][b[1].length - 1].ts - a[1][a[1].length - 1].ts); this.S.st = { me: mine, o }; const box = $('wa-st'); if (!box) return;
-    box.innerHTML = `<div class="wa-row" id="st-me"><span class="wa-rg ${mine.length ? 'on' : 'no'}">${this.avatar(me, this.myName(), 46)}</span><span class="wa-m"><b>Status saya</b><small class="muted">${mine.length ? mine.length + ' status · ketuk untuk lihat' : 'Ketuk untuk menambah status'}</small></span><button class="wa-ib sm" id="st-add" title="Status baru"><i class="fa-solid fa-plus"></i></button></div>${o.map(([k, l]) => `<button class="wa-row" data-k="${esc(k)}"><span class="wa-rg ${l.some(s => s.ts > (this.S.seen[k] || 0)) ? 'on' : 'seen'}">${this.avatar(k, this.uname(k), 46)}</span><span class="wa-m"><b>${this.nm(k)}</b><small class="muted">${this.dl(l[l.length - 1].ts)} · ${l.length} status</small></span></button>`).join('')}`;
+    box.innerHTML = `<div class="wa-row" id="st-me"><span class="wa-rg ${mine.length ? 'on' : 'no'}">${this.avatar(me, this.myName(), 46)}</span><span class="wa-m"><b>Status saya</b><small class="muted">${mine.length ? mine.length + ' status · ketuk untuk lihat' : 'Ketuk untuk menambah status'}</small></span><button class="wa-ib sm" id="st-add" title="Status baru"><i class="fa-solid fa-plus"></i></button></div>${o.map(([k, l]) => `<button class="wa-row" data-k="${esc(k)}"><span class="wa-rg ${l.some(s => s.ts > (this.S.seen[k] || 0)) ? 'on' : 'seen'}">${this.avatar(k, this.uname(k), 46)}</span><span class="wa-m"><b>${this.nm(k)}</b><small class="muted">${this.stTime(l[l.length - 1].ts)} · ${l.length} status</small></span></button>`).join('')}`;
     this.hydrate(box); $('st-add').onclick = e => { e.stopPropagation(); this.composeSt(); }; $('st-me').onclick = () => mine.length ? this.viewSt(me, mine) : this.composeSt(); box.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => this.viewSt(b.dataset.k, (o.find(x => x[0] === b.dataset.k) || [0, []])[1]));
   },
+  stTime(ts) { const d = new Date(ts), p = n => String(n).padStart(2, '0'), n = new Date(); return (d.toDateString() === n.toDateString() ? 'Hari ini' : d.toDateString() === new Date(n - 864e5).toDateString() ? 'Kemarin' : d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' })) + ' ' + p(d.getHours()) + '.' + p(d.getMinutes()); },
+  /* kirim pesan pribadi tanpa membuka chat (dipakai balasan status) */
+  async quickDM(k, text) {
+    if (!await this.okSend()) return false; const me = this.me(), id = this.nid(), ts = Date.now(), pair = this.pair(me, k), t = String(text).slice(0, 1000), pv = t.replace(/\s+/g, ' ').slice(0, 60);
+    try { await this.rq('wa', null, 'PATCH', { [`dm/${pair}/${id}`]: { k: me, to: k, ts, t }, [`ib/${me}/${k}`]: { u: this.uname(k), t: pv, ts, k: me }, [`ib/${k}/${me}`]: { u: this.myName(), t: pv, ts, k: me } }); }
+    catch (e) { UI.toast(e.permission ? 'Pesan tidak terkirim (kamu diblokir atau Rules belum dipasang)' : 'Pesan gagal dikirim', 'err'); return false; }
+    try { Push.notify([k], { t: this.myName(), n: this.myName(), b: pv, c: me, k: 'msg' }); } catch (e) {} return true;
+  },
+
+  /* ---------- penampil status — tata letak seperti WhatsApp ---------- */
   viewSt(k, items) {
-    let i = 0, tm = null; const me = this.me(), nx = () => { i++; show(); };
+    const me = this.me(), own = k === me, DUR = 6000, seen = this.S.seen[k] || 0; let i = Math.max(0, items.findIndex(s => s.ts > seen)), raf = 0, last = 0, el = 0, dur = DUR, hold = false, typing = false, menu = false, ovl = false, vid = null, ready = false, wd = null, off = () => {}; const liked = this.lk || (this.lk = new Set()), vw = this.vw || (this.vw = new Set());
+    const paused = () => hold || typing || menu || ovl || !ready, upd = () => { if (!vid || !ready) return; if (paused()) vid.pause(); else { const p = vid.play(); if (p && p.catch) p.catch(() => { vid.muted = true; vid.play().catch(() => {}); }); } };
+    const paint = p => document.querySelectorAll('#wsv .pb i').forEach((x, j) => { x.style.width = (j < i ? 100 : j === i ? Math.min(100, p * 100) : 0) + '%'; });
+    const stop = () => { cancelAnimationFrame(raf); raf = 0; clearTimeout(wd); };
+    const nx = () => { if (i >= items.length - 1) return Sheet.close('wasv'); i++; show(); }, pv = () => { i = Math.max(0, i - 1); show(); };
+    const tick = t => { raf = requestAnimationFrame(tick); if (vid && ready) { if (vid.duration) { el = vid.currentTime * 1000; dur = vid.duration * 1000; } } else if (!paused()) el += Math.min(100, Math.max(0, t - last)); last = t; paint(dur ? el / dur : 0); if (!vid && ready && el >= dur) nx(); };
+    const snip = s => s.t ? '“' + s.t.slice(0, 40) + (s.t.length > 40 ? '…' : '') + '”' : s.ty === 'v' ? 'video' : 'foto';
+    const reply = async txt => { txt = String(txt || '').trim(); const s = items[i]; if (!txt || !s) return; const inp = $('wsr'); if (await this.quickDM(k, txt + '\n↩ Membalas status ' + snip(s))) { if (inp) { inp.value = ''; inp.blur(); } const b = $('wsb'); if (b) b.classList.remove('has'); UI.toast('Balasan terkirim', 'ok', 1400); } };
     const show = () => {
-      clearTimeout(tm); const s = items[i]; if (!s) return Sheet.close('wasv'); const c = $('wsc'); if (!c) return; this.S.seen[k] = Math.max(this.S.seen[k] || 0, s.ts); LS.set('wa_seen', this.S.seen);
-      document.querySelectorAll('#wsv .pb i').forEach((b, j) => { b.className = j < i ? 'f' : j === i ? 'a' + (s.ty === 'v' ? ' vid' : '') : ''; }); $('wst').textContent = this.dt(s.ts);
-      if (s.ty === 't') { c.innerHTML = `<div class="wst-t" style="background:${esc(s.bg)}">${esc(s.t)}</div>`; tm = setTimeout(nx, 6000); }
-      else { c.innerHTML = `<div class="wst-m">${this.mt(s.ty === 'v' ? 'v' : 'p', s.m)}</div>${s.t ? `<div class="wst-c">${esc(s.t)}</div>` : ''}`; this.hydrate(c); const v = c.querySelector('video'); if (v) { v.autoplay = true; v.onended = nx; } else tm = setTimeout(nx, 6000); }
-      const dl = $('wsd'); if (dl) dl.classList.toggle('hidden', k !== me); };
-    this.sheet({ id: 'wasv', cls: 'wap wasv', onClose: () => clearTimeout(tm),
-      body: `<div id="wsv"><div class="pb">${items.map(() => '<span><i></i></span>').join('')}</div><div class="wsh"><button class="wa-ib" data-x="wasv"><i class="fa-solid fa-xmark"></i></button>${this.avatar(k, this.uname(k), 36)}<span><b>${this.nm(k)}</b><small id="wst"></small></span><button class="wa-ib hidden" id="wsd" title="Hapus status"><i class="fa-regular fa-trash-can"></i></button></div><div id="wsc"></div><button class="wz l" id="wsl" aria-label="Sebelumnya"></button><button class="wz r" id="wsr" aria-label="Berikutnya"></button></div>`,
-      on: () => { $('wsl').onclick = () => { i = Math.max(0, i - 1); show(); }; $('wsr').onclick = nx; $('wsd').onclick = async () => { const s = items[i]; if (!s || !await UI.confirm('Hapus status?', '', { ok: 'Hapus', danger: true })) return; await this.rq(`wa/st/${me}/${s.id}`, null, 'DELETE').catch(() => {}); if (s.m) this.rq('wa/md/' + s.m, null, 'DELETE').catch(() => {}); Sheet.close('wasv'); this.loadSt(); }; show(); } });
+      stop(); const s = items[i]; if (!s) return Sheet.close('wasv'); const c = $('wsc'); if (!c) return;
+      el = 0; dur = DUR; ready = false; vid = null; last = performance.now(); this.S.seen[k] = Math.max(this.S.seen[k] || 0, s.ts); LS.set('wa_seen', this.S.seen);
+      $('wst').textContent = this.stTime(s.ts); paint(0); const cap = $('wcap'); cap.textContent = s.ty !== 't' && s.t ? s.t : ''; cap.classList.toggle('hidden', !cap.textContent);
+      const hb = $('wsh'); if (hb) { hb.classList.toggle('on', liked.has(k + s.id)); hb.firstElementChild.className = liked.has(k + s.id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'; }
+      if (own) this.rq(`wa/sv/${me}/${s.id}`, { shallow: true }).then(d => { const n = $('wsv-n'); if (n && items[i] === s) n.textContent = Object.keys(d || {}).length; }).catch(() => {});
+      else if (!vw.has(k + s.id)) { vw.add(k + s.id); this.rq(`wa/sv/${k}/${s.id}/${me}`, null, 'PUT', Date.now()).catch(() => {}); }
+      if (s.ty === 't') { const n = String(s.t || '').length; c.innerHTML = `<div class="wsx-t" style="background:${esc(s.bg || this.BG[0])};font-size:${n <= 40 ? 34 : n <= 100 ? 27 : 21}px"><span>${esc(s.t || '')}</span></div>`; ready = true; }
+      else {
+        c.innerHTML = `<div class="wsx-ld"><i class="fa-solid fa-circle-notch spin"></i></div>${s.ty === 'v' ? `<video data-im="${esc(s.m)}" class="wsx-m" playsinline preload="auto"></video>` : `<img data-im="${esc(s.m)}" class="wsx-m" alt="">`}`;
+        const m = c.querySelector('.wsx-m'), go = () => { if (items[i] !== s || ready) return; ready = true; last = performance.now(); const l = c.querySelector('.wsx-ld'); if (l) l.remove(); upd(); };
+        if (s.ty === 'v') { vid = m; m.onloadeddata = go; m.onended = nx; } else m.onload = go;
+        this.hydrate(c);
+        wd = setTimeout(() => { if (ready || items[i] !== s) return; vid = null; ready = true; dur = 3000; last = performance.now(); const l = c.querySelector('.wsx-ld'); if (l) l.innerHTML = '<small>Media tidak tersedia</small>'; }, 9000);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    const viewers = async () => { const s = items[i]; if (!s) return; ovl = true; upd(); let d = {}; try { d = (await this.rq(`wa/sv/${me}/${s.id}`)) || {}; } catch (e) {} const es = Object.entries(d).sort((a, b) => b[1] - a[1]);
+      this.sheet({ id: 'wasw', cls: 'wap', onClose: () => { ovl = false; upd(); }, body: this.top('Dilihat oleh ' + es.length, 'wasw') + (es.map(([u, ts]) => `<div class="wa-row" style="cursor:default">${this.avatar(u, this.uname(u), 40)}<span class="wa-m"><b>${this.nm(u)}</b><small class="muted">${this.stTime(ts)}</small></span></div>`).join('') || emptyHtml('fa-eye-slash', 'Belum ada yang melihat.')), on: e => this.hydrate(e) }); };
+    const bar = own ? `<div class="wsx-bar own"><button id="wsw" type="button"><i class="fa-regular fa-eye"></i><b id="wsv-n">0</b><span>Dilihat · ketuk untuk melihat</span></button></div>`
+      : `<div class="wsx-bar" id="wsb"><div class="wsx-in"><input id="wsr" type="text" placeholder="Balas" maxlength="500" autocomplete="off" enterkeyhint="send"/><span class="wsx-em">${['😍', '😂', '😮'].map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</span></div><button class="wsx-c" id="wsh" type="button" aria-label="Suka"><i class="fa-regular fa-heart"></i></button><button class="wsx-c go" id="wss" type="button" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button></div>`;
+    this.sheet({ id: 'wasv', cls: 'wap wasv', onClose: () => { stop(); off(); },
+      body: `<div id="wsv"><div id="wsc"></div><div id="wsz"></div><div class="pb">${items.map(() => '<span><i></i></span>').join('')}</div><div class="wsh"><button class="wsx-b" data-x="wasv" aria-label="Kembali"><i class="fa-solid fa-arrow-left"></i></button>${this.avatar(k, own ? this.myName() : this.uname(k), 40)}<span class="wsi"><b>${own ? 'Status saya' : this.nm(k)}</b><small id="wst"></small></span><button class="wsx-b" id="wsm" type="button" aria-label="Menu"><i class="fa-solid fa-ellipsis-vertical"></i></button></div><div class="wsx-cap hidden" id="wcap"></div>${bar}</div>`,
+      on: () => {
+        off = this.vvFit('wasv'); this.hydrate($('wsv')); const z = $('wsz'), root = $('wsv'); let sx = 0, sy = 0, moved = false, ht = null;
+        z.onpointerdown = e => { sx = e.clientX; sy = e.clientY; moved = false; try { z.setPointerCapture(e.pointerId); } catch (x) {} ht = setTimeout(() => { hold = true; upd(); root.classList.add('holding'); }, 230); };
+        z.onpointermove = e => { if (Math.abs(e.clientY - sy) > 14 || Math.abs(e.clientX - sx) > 14) { moved = true; clearTimeout(ht); } };
+        const fin = e => { clearTimeout(ht); const was = hold; hold = false; root.classList.remove('holding'); upd(); const dy = e.clientY - sy, dx = e.clientX - sx; if (dy > 110 && Math.abs(dx) < 90) return Sheet.close('wasv'); if (own && dy < -80 && Math.abs(dx) < 90) return viewers(); if (moved || was) return; const r = z.getBoundingClientRect(); if (e.clientX - r.left < r.width * .3) pv(); else nx(); };
+        z.onpointerup = fin; z.onpointercancel = () => { clearTimeout(ht); hold = false; root.classList.remove('holding'); upd(); };
+        $('wsm').onclick = e => { e.stopPropagation(); const s = items[i]; menu = true; upd(); const done = () => { menu = false; upd(); };
+          this.pop(e.currentTarget, own ? [['<i class="fa-solid fa-eye"></i> Dilihat oleh', () => viewers()], ['<i class="fa-regular fa-trash-can"></i> Hapus status', async () => { ovl = true; upd(); const okk = s && await UI.confirm('Hapus status?', 'Status ini akan dihapus untuk semua orang.', { ok: 'Hapus', danger: true, icon: 'fa-trash' }); if (!okk) { ovl = false; upd(); return; } await this.rq(`wa/st/${me}/${s.id}`, null, 'DELETE').catch(() => {}); this.rq(`wa/sv/${me}/${s.id}`, null, 'DELETE').catch(() => {}); if (s.m) this.rq('wa/md/' + s.m, null, 'DELETE').catch(() => {}); Sheet.close('wasv'); this.loadSt(); }]]
+            : [['<i class="fa-regular fa-comment"></i> Kirim pesan', () => { Sheet.close('wasv'); this.openChat(k, this.uname(k)); }], ...(s && s.t ? [['<i class="fa-regular fa-copy"></i> Salin teks', () => copyText(s.t)]] : [])]);
+          setTimeout(() => document.addEventListener('click', done, { once: true }), 0); };
+        if (own) $('wsw').onclick = viewers;
+        else {
+          const inp = $('wsr'), b = $('wsb'); inp.onfocus = () => { typing = true; upd(); }; inp.onblur = () => { typing = false; upd(); }; inp.oninput = () => b.classList.toggle('has', !!inp.value.trim());
+          inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); reply(inp.value); } }; $('wss').onclick = () => reply(inp.value);
+          b.querySelectorAll('[data-e]').forEach(x => { x.onpointerdown = e => e.preventDefault(); x.onclick = () => reply(x.dataset.e); });
+          $('wsh').onclick = async () => { const s = items[i]; if (!s || liked.has(k + s.id)) return; if (await this.quickDM(k, '❤️\n↩ Menyukai status ' + snip(s))) { liked.add(k + s.id); const h = $('wsh'); h.classList.add('on'); h.firstElementChild.className = 'fa-solid fa-heart'; UI.toast('Disukai', 'ok', 1200); } };
+        }
+        show();
+      } });
   },
   composeSt() {
     let bg = this.BG[0], file = null;
@@ -373,6 +426,8 @@ const WA = {
       <div class="wa-it" style="flex-wrap:wrap"><i class="fa-regular fa-image"></i><span><b>Wallpaper chat</b></span><div class="wa-wp">${this.WP.map((w, i) => `<button data-w="${i}" class="${i === wp ? 'on' : ''}" style="background:linear-gradient(160deg,${w[0]})"></button>`).join('')}</div></div>
       <div class="wa-it"><i class="fa-solid fa-text-height"></i><span><b>Ukuran huruf</b></span><div class="wa-fz">${[[13, 'Kecil'], [15, 'Sedang'], [17, 'Besar']].map(([n, l]) => `<button data-z="${n}" class="${n === fz ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <div class="wa-sec">Notifikasi &amp; privasi</div>
+      <div class="wa-it"><i class="fa-solid fa-mobile-screen-button"></i><span><b>Notifikasi layar HP</b><small id="me-pn-s">${esc(Push.ok() ? (Push.perm() === 'denied' ? 'Diblokir di pengaturan browser' : Push.enabled() ? 'Aktif — pesan & panggilan muncul walau web ditutup' : 'Mati') : Push.why())}</small></span>${sw('me-pn', Push.enabled())}</div>
+      ${Push.enabled() ? '<button class="wa-it" id="me-pt"><i class="fa-solid fa-vial"></i><span><b>Kirim notifikasi tes</b><small>Tekan, lalu tutup web untuk mencoba</small></span></button>' : ''}
       <div class="wa-it"><i class="fa-solid fa-bell"></i><span><b>Suara pesan masuk</b></span>${sw('me-sn', LS.get('wa_snd', 1))}</div>
       <button class="wa-it" id="me-bl"><i class="fa-solid fa-ban"></i><span><b>Akun diblokir</b><small>${Object.keys(this.S.bl).length} akun</small></span></button>
       <div class="wa-sec">Bantuan</div>
@@ -384,6 +439,8 @@ const WA = {
     $('me-ed').onclick = async () => { const b = await UI.prompt('Info saya', 'Tulisan singkat di profilmu', { value: p.b || '', placeholder: 'Hai! Saya pakai DimzzChat', ok: 'Simpan' }); if (b === null) return; try { await this.rq('wa/prof/' + me, null, 'PUT', { b: b.trim().slice(0, 80), ts: Date.now() }); this.S.prof = { b: b.trim().slice(0, 80) }; this.go('me'); } catch (e) { UI.toast(this.errMsg(e), 'err'); } };
     const vq = $('me-vq'); if (vq) vq.onclick = async () => { try { await this.rq('wa/vq/' + me, null, 'PUT', { u: u.username, ts: Date.now(), st: 'p' }); this.S.vq = { st: 'p' }; UI.toast('Permintaan dikirim ke Developer', 'ok'); this.go('me'); } catch (e) { UI.toast(this.errMsg(e), 'err'); } };
     $('me-dk').onclick = e => { const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); LS.set('wa_dk', on ? 1 : 0); this.prefs(); };
+    $('me-pn').onclick = async e => { const b = e.currentTarget, s = $('me-pn-s'); if (!Push.ok()) return UI.toast(Push.why(), 'warn'); b.disabled = true; try { if (Push.enabled()) { await Push.disable(); b.classList.remove('on'); s.textContent = 'Mati'; } else { await Push.enable(); b.classList.add('on'); s.textContent = 'Aktif — pesan & panggilan muncul walau web ditutup'; UI.toast('Notifikasi aktif', 'ok'); } this.go('me'); } catch (x) { b.classList.remove('on'); s.textContent = x.denied ? 'Diblokir / belum diizinkan' : 'Mati'; UI.toast(x.message || 'Gagal', 'err'); } b.disabled = false; };
+    const pt = $('me-pt'); if (pt) pt.onclick = async () => { pt.disabled = true; try { await Push.test(); UI.toast('Tes terkirim — notifikasi akan muncul sebentar lagi', 'ok'); } catch (x) { UI.toast(x.message || 'Gagal mengirim tes', 'err'); } pt.disabled = false; };
     $('me-sn').onclick = e => { const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); LS.set('wa_snd', on ? 1 : 0); if (on) this.beep(); };
     v.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { LS.set('wa_wp', +b.dataset.w); v.querySelectorAll('[data-w]').forEach(x => x.classList.toggle('on', x === b)); this.prefs(); });
     v.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { LS.set('wa_fz', +b.dataset.z); v.querySelectorAll('[data-z]').forEach(x => x.classList.toggle('on', x === b)); this.prefs(); });

@@ -77,12 +77,14 @@ const Wall = {
 /* ---------- intro layar penuh ---------- */
 const Intro = {
   active: false, finish: null,
-  prime() { const v = $('intro-video'); if (!v || this.active) return; v.muted = false; v.volume = 0; const p = v.play(); const back = () => { if (!this.active) { try { v.pause(); v.currentTime = 0; } catch (e) {} v.volume = 1; } }; if (p && p.then) p.then(back).catch(() => { v.volume = 1; }); },
+  /* layar penuh sungguhan (bila didukung browser) — harus dipanggil dari ketukan pengguna */
+  fs(on) { try { const d = document, el = d.documentElement; if (on) { if (!d.fullscreenElement && !d.webkitFullscreenElement) { const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen(); if (r && r.catch) r.catch(() => {}); } } else if (d.fullscreenElement || d.webkitFullscreenElement) { const r = d.exitFullscreen ? d.exitFullscreen() : d.webkitExitFullscreen && d.webkitExitFullscreen(); if (r && r.catch) r.catch(() => {}); } } catch (e) {} },
+  prime() { const v = $('intro-video'); if (!v || this.active) return; this.fs(true); v.muted = false; v.volume = 0; const p = v.play(); const back = () => { if (!this.active) { try { v.pause(); v.currentTime = 0; } catch (e) {} v.volume = 1; } }; if (p && p.then) p.then(back).catch(() => { v.volume = 1; }); },
   play() {
     return new Promise(resolve => {
       const ov = $('intro'), v = $('intro-video'); this.active = true; Sound.play('intro');
       let seen = false, timer;
-      const done = () => { if (!this.active) return; this.active = false; clearTimeout(timer); v.onended = v.onerror = v.onplaying = v.ontimeupdate = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); document.body.classList.remove('no-scroll'); Sound.release('intro'); resolve(); };
+      const done = () => { if (!this.active) return; this.active = false; clearTimeout(timer); v.onended = v.onerror = v.onplaying = v.ontimeupdate = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); resolve(); };
       this.finish = done; ov.classList.remove('hidden'); document.body.classList.add('no-scroll');
       try { v.currentTime = 0; } catch (e) {} v.muted = false; v.volume = 1; $('intro-bar').style.width = '0';
       v.onended = done; v.onerror = done;
@@ -258,6 +260,7 @@ this.renderTabs(); this.renderTiles(); { const fq = $('f-q'); if (fq) fq.oninput
   },
   async logout() {
     if (!await UI.confirm('Keluar dari akun?', 'Kamu perlu masuk lagi untuk memakai aplikasi.', { ok: 'Keluar', danger: true, icon: 'fa-right-from-bracket' })) return;
+    try { if (window.Push) await Push.forget(); } catch (e) {}
     LS.del('session'); location.reload();
   }
 };

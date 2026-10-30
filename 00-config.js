@@ -4,12 +4,12 @@
               Saat dijadikan APK (file lokal), isi dengan alamat Vercel-mu, contoh 'https://alltools-six.vercel.app'
    ============================================================ */
 const CONFIG = {
-  VERSION: '3.22.0',
+  VERSION: '3.23.0',
   API_BASE: '',
   ADMIN_WA: '6281563426001',
   ASSETS: {
     LOGIN_VIDEO: 'https://files.catbox.moe/hnfdro.mp4',
-    INTRO_VIDEO: 'https://files.catbox.moe/96bxec.mp4',
+    INTRO_VIDEO: 'https://files.catbox.moe/41oywq.mp4',
     BGM: 'https://files.catbox.moe/r4yjpe.mp3',
     ADZAN: ['https://cdn.aladhan.com/audio/adhans/a1.mp3', 'https://www.islamcan.com/audio/adhan/azan1.mp3', 'https://files.catbox.moe/mh6pyz.mpeg'],
     DEFAULT_WALLPAPER_VIDEO: 'https://files.catbox.moe/m5x2pf.mp4'
