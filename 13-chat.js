@@ -29,7 +29,7 @@ const Chat = {
     bd.addEventListener('scroll', () => { if (bd.scrollHeight - bd.scrollTop - bd.clientHeight < 90) nw.classList.add('hidden'); }, { passive: true });
     nw.onclick = () => { bd.scrollTop = bd.scrollHeight; nw.classList.add('hidden'); };
     const vv = window.visualViewport;
-    if (vv) { this._vv = () => { const pn = document.querySelector('#sheet-chat .panel'); if (!pn) return; pn.style.height = vv.height + 'px'; pn.style.transform = 'translateY(' + vv.offsetTop + 'px)'; if (bd.scrollHeight - bd.scrollTop - bd.clientHeight < 400) bd.scrollTop = bd.scrollHeight; }; vv.addEventListener('resize', this._vv); vv.addEventListener('scroll', this._vv); this._vv(); }
+    if (vv) { this._vv = () => { const sh = document.getElementById('sheet-chat'); if (!sh) return; const pn = sh.querySelector('.panel'); sh.style.top = vv.offsetTop + 'px'; sh.style.bottom = 'auto'; sh.style.height = vv.height + 'px'; sh.style.alignItems = 'stretch'; if (pn) { pn.style.height = '100%'; pn.style.maxHeight = '100%'; pn.style.transform = 'none'; } if (bd.scrollHeight - bd.scrollTop - bd.clientHeight < 400) bd.scrollTop = bd.scrollHeight; }; vv.addEventListener('resize', this._vv); vv.addEventListener('scroll', this._vv); this._vv(); setTimeout(this._vv, 300); }
     $('ch-img').onclick = () => $('ch-f1').click(); $('ch-mk').onclick = () => $('ch-f2').click();
     $('ch-f1').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) this.sendImage(f, false); };
     $('ch-f2').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) this.sendImage(f, true); };

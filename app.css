@@ -464,3 +464,9 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 .cb:not(.dev):not(.me){border-color:var(--rc,rgba(255,255,255,.24))}
 .cb:not(.dev).me{box-shadow:0 0 0 1px var(--rc,transparent),0 8px 20px -12px rgba(0,0,0,.7)}
 .me-card{border-color:var(--rc,#22d3ee)!important}
+
+/* ===== v3.19 — chat: latar lebih pekat (dasbor tidak tembus), tinggi mengikuti keyboard ===== */
+.sheet:has(.chatp){background:rgba(4,7,16,.94)}
+.sheet>.panel.chatp{background:linear-gradient(180deg,rgba(18,26,48,.92),rgba(8,12,26,.96))}
+.sheet.full:has(.chatp)>.panel.chatp{height:100%}
+.chatp .ch-in{min-height:46px}
