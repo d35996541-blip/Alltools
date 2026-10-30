@@ -59,7 +59,7 @@ const WA = {
   },
   async loadMeta() { const me = this.me(), g = p => this.rq(p).catch(() => null); const [vf, bl, pf, vq] = await Promise.all([g('wa/vf'), g('wa/bl/' + me), g('wa/prof/' + me), g('wa/vq/' + me)]); this.S.vf = vf || {}; this.S.bl = bl || {}; this.S.prof = pf || {}; this.S.vq = vq; },
   async paintPP() { const me = this.me(), v = await this.avGet(me); if (v) { LS.set('wa_pp', { k: me, v }); this.pp(); } },
-  pp() { const p = LS.get('wa_pp'), el = $('u-avatar'); if (p && el && p.k === this.me() && Chat.RE_IMG.test(p.v)) el.innerHTML = `<img src="${p.v}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`; },
+  pp() { const p = LS.get('wa_pp'), el = $('u-avatar'); if (!el || !App.user) return; if (!(p && p.k === this.me() && Chat.RE_IMG.test(p.v))) { el.innerHTML = `<span class="u-ini">${esc(this.myName().charAt(0).toUpperCase())}</span>`; return; } el.innerHTML = `<img src="${p.v}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`; },
   go(t) { this.S.tab = t; document.querySelectorAll('.wa-nav [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t)); const v = $('wa-v'); if (v) this['v_' + t](v); Sheet.$('wa') && (Sheet.$('wa').scrollTop = 0); },
 
   /* ---------- daftar chat (riwayat) ---------- */
@@ -405,6 +405,6 @@ Dev.t_centang = async function (box) {
 };
 
 /* foto profil muncul di bilah atas setelah masuk */
-(function () { const e1 = App.enter; App.enter = async function (f) { const r = await e1.call(this, f); try { WA.pp(); WA.startCalls(); } catch (x) {} return r; }; })();
+(function () { const e1 = App.enter; App.enter = async function (f) { const r = await e1.call(this, f); try { WA.pp(); WA.startCalls(); WA.paintPP(); } catch (x) {} return r; }; })();
 document.addEventListener('click', e => { if (e.target.closest('[data-diag]')) WA.diag(); });
 Features.reg({ id: 'wa', name: 'DimzzChat', cat: 'sosmed', icon: 'fa-comment-dots', grad: 'linear-gradient(135deg,#25d366,#0b8f6a)', open: () => WA.open() });
