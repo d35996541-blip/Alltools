@@ -4,7 +4,8 @@ const WA = {
   S: { dn: {}, ph: '', ib: {}, vf: {}, vq: null, users: [], um: {}, rl: {}, bl: {}, prof: {}, tab: 'chat', q: '', f: 'all', st: { me: [], o: [] }, ch: {}, fol: {}, seen: LS.get('wa_seen', {}), rd: LS.get('wa_rd', {}) },
   C: null, av: new Map(), md: new Map(), pend: new Map(), cn: {}, lastSend: 0,
   BG: ['#128c7e', '#7c3aed', '#db2777', '#ea580c', '#2563eb', '#0f172a'],
-  WP: [['#d9f5e8,#bfe9d6', '#0b141a,#0f2a24'], ['#dbeafe,#c7d2fe', '#0b1020,#16224a'], ['#fae8ff,#fbcfe8', '#1a0b1f,#3b0f3a'], ['#ffedd5,#fde68a', '#1f1405,#3a2a08'], ['#eef2f7,#e5e9f0', '#0e1116,#141922']],
+  WP: [['#efeae2,#efeae2', '#0b141a,#0b141a'], ['#d9f5e8,#bfe9d6', '#0b141a,#0f2a24'], ['#dbeafe,#c7d2fe', '#0b1020,#16224a'], ['#fae8ff,#fbcfe8', '#1a0b1f,#3b0f3a'], ['#ffedd5,#fde68a', '#1f1405,#3a2a08'], ['#eef2f7,#e5e9f0', '#0e1116,#141922']],
+  EMO: ['😀', '😂', '🥹', '😍', '😘', '😎', '🤔', '😭', '😡', '👍', '🙏', '👏', '🔥', '❤️', '🎉', '😴'],
   TK: '<svg class="wa-tk" viewBox="0 0 24 24" width="15" height="15" role="img" aria-label="Terverifikasi"><title>Terverifikasi</title><circle cx="12" cy="12" r="11" fill="#1d9bf0"/><path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   me: () => userKey(App.user.username),
   rq: (p, q, m, b, t) => FB.request(p, q, m, b, t),
@@ -29,13 +30,21 @@ const WA = {
   async media(el) {
     el.dataset.d = 1; const id = el.dataset.im; let v = this.md.get(id);
     if (!v) { try { v = await this.rq('wa/md/' + id, null, 'GET', undefined, 30000); if (typeof v === 'string' && /^data:(image|video|audio)\//.test(v)) this.md.set(id, v); else v = null; } catch (e) { v = null; } }
-    if (!el.isConnected) return; if (v) { el.src = v; if (el.tagName === 'IMG') el.onclick = () => Chat.view(v); } else el.alt = 'Media tidak tersedia';
+    if (!el.isConnected) return; if (v) { el.src = v; if (el.tagName === 'IMG' && !el.closest('[data-nolb]')) el.onclick = () => Chat.view(v); } else el.alt = 'Media tidak tersedia';
   },
   beep() { if (!LS.get('wa_snd', 1)) return; try { const a = this.ac || (this.ac = new (window.AudioContext || window.webkitAudioContext)()), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.0001, a.currentTime); g.gain.exponentialRampToValueAtTime(.18, a.currentTime + .02); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .35); o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + .4); } catch (e) {} },
   async users(force) { if (!force && this.S.users.length && Date.now() - (this.S.ut || 0) < 60000) return this.S.users; const l = await FB.listUsers(); this.S.dn = (await this.rq('wa/dn').catch(() => null)) || this.S.dn; this.S.users = l; this.S.ut = Date.now(); l.forEach(u => { const k = userKey(u.username); this.S.um[k] = u.username; this.S.rl[k] = String(u.role).toLowerCase(); }); return l; },
   prefs() { const dk = LS.get('wa_dk', 0), wp = this.WP[LS.get('wa_wp', 0)] || this.WP[0], fz = LS.get('wa_fz', 15); document.querySelectorAll('.panel.wap').forEach(p => { p.classList.toggle('dk', !!dk); p.style.setProperty('--wp', `linear-gradient(160deg,${dk ? wp[1] : wp[0]})`); p.style.setProperty('--fz', fz + 'px'); }); },
   sheet(o) { return Sheet.open({ title: 'DimzzChat', icon: 'fa-comment-dots', full: true, cls: 'wap', bodyCls: 'wa-body custom-scrollbar', ...o, onOpen: el => { el.addEventListener('click', e => { const b = e.target.closest('[data-x]'); if (b) Sheet.close(b.dataset.x); }); this.prefs(); o.on && o.on(el); } }); },
   top: (t, x, ex = '') => `<div class="wa-top">${x ? `<button class="wa-ib" data-x="${x}" aria-label="Kembali"><i class="fa-solid fa-arrow-left"></i></button>` : ''}<h2>${t}</h2>${ex}</div>`,
+  home: (t, ico, brand) => `<div class="wa-top home"><h2 class="${brand ? 'brand' : ''}">${t}</h2>${ico || ''}</div>`,
+  mnb: '<button class="wa-ib" data-mn aria-label="Menu"><i class="fa-solid fa-ellipsis-vertical"></i></button>',
+  menu(v, items) { const b = v.querySelector('[data-mn]'); if (b) b.onclick = e => { e.stopPropagation(); this.pop(b, items); }; },
+  fav() { return LS.get('wa_fav', {}); },
+  togFav(k) { const f = this.fav(); if (f[k]) delete f[k]; else f[k] = 1; LS.set('wa_fav', f); UI.toast(f[k] ? 'Ditambahkan ke favorit' : 'Dihapus dari favorit', 'ok'); },
+  readAll() { for (const [k, e] of Object.entries(this.S.ib)) if (e && e.ts && this.unread(k, e)) this.S.rd[k] = e.ts; LS.set('wa_rd', this.S.rd); this.drawList(); this.badge(); UI.toast('Semua chat ditandai dibaca', 'ok'); },
+  settings() { this.sheet({ id: 'wast', body: '<div id="wst-v"></div>', on: () => this.v_me($('wst-v')) }); },
+  switchAcc() { App.logout(); },
   pop(anchor, items) { document.querySelectorAll('.wa-pop').forEach(x => x.remove()); const p = document.createElement('div'); p.className = 'wa-pop'; p.innerHTML = items.map((it, i) => `<button data-i="${i}">${it[0]}</button>`).join(''); anchor.closest('.panel').appendChild(p); p.onclick = e => { const b = e.target.closest('button'); if (b) { p.remove(); items[+b.dataset.i][1](); } }; setTimeout(() => document.addEventListener('click', () => p.remove(), { once: true }), 0); },
   vvFit(id) { const v = window.visualViewport; if (!v || !matchMedia('(pointer:coarse)').matches) return () => {}; const f = () => { const sh = $('sheet-' + id); if (!sh) return; const pn = sh.querySelector('.panel'); sh.style.top = v.offsetTop + 'px'; sh.style.bottom = 'auto'; sh.style.height = v.height + 'px'; sh.style.alignItems = 'stretch'; if (pn) { pn.style.height = '100%'; pn.style.maxHeight = '100%'; } const b = Sheet.$(id); if (b && b.scrollHeight - b.scrollTop - b.clientHeight < 400) b.scrollTop = b.scrollHeight; }; v.addEventListener('resize', f); v.addEventListener('scroll', f); f(); setTimeout(f, 300); return () => { v.removeEventListener('resize', f); v.removeEventListener('scroll', f); }; },
   async prep(file) { if (/^audio\//.test(file.type)) { if (file.size > 1200000) throw new Error('VN maksimal 1,2 MB.'); return { ty: 'a', data: await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(file); }) }; } if (/^video\//.test(file.type)) { if (file.size > 3200000) throw new Error('Video maksimal ±3 MB (sekitar 10 detik). Pangkas dulu videonya.'); return { ty: 'v', data: await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(file); }) }; } if (/^image\//.test(file.type)) return { ty: 'p', data: await Chat.shrink(file, false) }; throw new Error('Pilih foto, video, atau audio'); },
@@ -48,7 +57,7 @@ const WA = {
     if (!await this.gate()) return;
     this.S.tab = 'chat'; this.S.ib_ready = 0;
     this.sheet({ id: 'wa', body: '<div id="wa-v" class="wa-v"></div>', onClose: () => { clearInterval(this.t1); clearInterval(this.stTimer); },
-      foot: `<nav class="wa-nav">${[['chat', 'fa-message', 'Chat'], ['upd', 'fa-circle-notch', 'Pembaruan'], ['me', 'fa-user-gear', 'Saya']].map(([k, i, l]) => `<button data-t="${k}" class="${k === 'chat' ? 'on' : ''}"><i class="fa-solid ${i}"></i><span>${l}</span><b class="wa-bd hidden" id="wa-bd-${k}"></b></button>`).join('')}</nav>`,
+      foot: `<nav class="wa-nav">${[['chat', 'fa-message', 'Chat'], ['upd', 'fa-circle-notch', 'Pembaruan'], ['kom', 'fa-user-group', 'Komunitas'], ['call', 'fa-phone', 'Panggilan']].map(([k, i, l]) => `<button data-t="${k}" class="${k === 'chat' ? 'on' : ''}"><i class="fa-solid ${i}"></i><span>${l}</span><b class="wa-bd hidden" id="wa-bd-${k}"></b></button>`).join('')}</nav>`,
       on: el => { el.querySelectorAll('.wa-nav [data-t]').forEach(b => b.onclick = () => this.go(b.dataset.t)); this.boot(); } });
   },
   async deep(id, name) { if (!id || !Ban.on()) return; if (!await this.gate()) return; if (!Sheet.isOpen('wa')) await this.open(); if (Sheet.isOpen('wa') && !(this.C && this.C.id === id)) this.openChat(id, name || this.uname(id)); },
@@ -61,7 +70,7 @@ const WA = {
   async loadMeta() { const me = this.me(), g = p => this.rq(p).catch(() => null); const [vf, bl, pf, vq] = await Promise.all([g('wa/vf'), g('wa/bl/' + me), g('wa/prof/' + me), g('wa/vq/' + me)]); this.S.vf = vf || {}; this.S.bl = bl || {}; this.S.prof = pf || {}; this.S.vq = vq; },
   async paintPP() { const me = this.me(), v = await this.avGet(me); if (v) { LS.set('wa_pp', { k: me, v }); this.pp(); } },
   pp() { const p = LS.get('wa_pp'), el = $('u-avatar'); if (!el || !App.user) return; if (!(p && p.k === this.me() && Chat.RE_IMG.test(p.v))) { el.innerHTML = `<span class="u-ini">${esc(this.myName().charAt(0).toUpperCase())}</span>`; return; } el.innerHTML = `<img src="${p.v}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`; },
-  go(t) { this.S.tab = t; document.querySelectorAll('.wa-nav [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t)); const v = $('wa-v'); if (v) this['v_' + t](v); Sheet.$('wa') && (Sheet.$('wa').scrollTop = 0); },
+  go(t) { if (t === 'me') { const b = $('wst-v'); if (b) this.v_me(b); return; } if (t !== 'upd') clearInterval(this.stTimer); this.S.tab = t; document.querySelectorAll('.wa-nav [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t)); const v = $('wa-v'); if (v) this['v_' + t](v); Sheet.$('wa') && (Sheet.$('wa').scrollTop = 0); },
 
   /* ---------- daftar chat (riwayat) ---------- */
   async pollIb() {
@@ -76,17 +85,18 @@ const WA = {
   badge() { const n = Object.entries(this.S.ib).filter(([k, e]) => e && e.ts && !this.S.bl[k] && this.unread(k, e)).length, b = $('wa-bd-chat'); if (b) { b.textContent = n > 99 ? '99+' : n; b.classList.toggle('hidden', !n); } },
   async cnt(k, e) { const me = this.me(), c = this.cn[k]; if (c && c.ts === e.ts) return c.n; const d = await this.rq(k.startsWith('g:') ? 'wa/gm/' + k.slice(2) : 'wa/dm/' + this.pair(me, k), { orderBy: '$key', limitToLast: 30 }), rd = this.S.rd[k] || 0, n = Object.values(d || {}).filter(m => m.k !== me && m.ts > rd).length; this.cn[k] = { ts: e.ts, n }; return n; },
   v_chat(v) {
-    v.innerHTML = `${this.top('DimzzChat', 0, '<button class="wa-ib" id="wa-th" title="Tema gelap / terang"><i class="fa-solid fa-circle-half-stroke"></i></button>')}${Push.ok() && Push.perm() === 'default' && LS.get('push_on', 1) !== 0 && !LS.get('push_ask') ? '<div class="wa-pn" id="wa-pn"><i class="fa-solid fa-bell"></i><span>Aktifkan notifikasi agar pesan tetap muncul di layar HP walau web ditutup.</span><button class="btn btn-sm btn-pri" id="wa-pn-y">Aktifkan</button><button class="wa-ib sm" id="wa-pn-x" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div>' : ''}<div class="wa-sr"><i class="fa-solid fa-magnifying-glass"></i><input id="wa-q" type="text" placeholder="Cari chat…" autocomplete="off" value="${esc(this.S.q)}"/></div><div class="wa-fl">${[['all', 'Semua'], ['u', 'Belum dibaca'], ['g', 'Grup']].map(([k, l]) => `<button data-f="${k}" class="${this.S.f === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="wa-l"></div><button class="wa-fab" id="wa-new" aria-label="Chat baru"><i class="fa-solid fa-plus"></i></button>`;
+    v.innerHTML = `${this.home('DimzzChat', '<button class="wa-ib" id="wa-cm" aria-label="Status baru"><i class="fa-solid fa-camera"></i></button>' + this.mnb, 1)}${Push.ok() && Push.perm() === 'default' && LS.get('push_on', 1) !== 0 && !LS.get('push_ask') ? '<div class="wa-pn" id="wa-pn"><i class="fa-solid fa-bell"></i><span>Aktifkan notifikasi agar pesan tetap muncul di layar HP walau web ditutup.</span><button class="btn btn-sm btn-pri" id="wa-pn-y">Aktifkan</button><button class="wa-ib sm" id="wa-pn-x" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div>' : ''}<div class="wa-sr"><i class="fa-solid fa-magnifying-glass"></i><input id="wa-q" type="text" placeholder="Cari chat…" autocomplete="off" value="${esc(this.S.q)}"/></div><div class="wa-fl">${[['all', 'Semua'], ['u', 'Belum dibaca'], ['f', 'Favorit'], ['g', 'Grup']].map(([k, l]) => `<button data-f="${k}" class="${this.S.f === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="wa-l"></div><button class="wa-fab" id="wa-new" aria-label="Chat baru"><i class="fa-solid fa-comment-medical"></i></button>`;
+    this.menu(v, [['Grup baru', () => this.newGroup()], ['Baca semua', () => this.readAll()], ['Pengaturan', () => this.settings()], ['Alihkan akun', () => this.switchAcc()]]);
+    $('wa-cm').onclick = () => this.addSt();
     $('wa-q').oninput = e => { this.S.q = e.target.value; this.drawList(); };
     v.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { this.S.f = b.dataset.f; v.querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x === b)); this.drawList(); });
-    $('wa-th').onclick = () => { LS.set('wa_dk', LS.get('wa_dk', 0) ? 0 : 1); this.prefs(); };
     $('wa-new').onclick = () => this.newChat(); this.drawList();
     const py = $('wa-pn-y'); if (py) { py.onclick = async () => { py.disabled = true; try { await Push.enable(); UI.toast('Notifikasi aktif', 'ok'); } catch (e) { UI.toast(e.message || 'Gagal mengaktifkan notifikasi', 'err'); } const b = $('wa-pn'); if (b) b.remove(); LS.set('push_ask', 1); }; $('wa-pn-x').onclick = () => { LS.set('push_ask', 1); $('wa-pn').remove(); }; }
   },
   drawList() {
-    const L = $('wa-l'); if (!L) return; const me = this.me(), q = this.S.q.toLowerCase(), f = this.S.f;
-    const a = Object.entries(this.S.ib).filter(([k, e]) => e && e.ts && !this.S.bl[k] && (!q || String(e.u).toLowerCase().includes(q)) && (f === 'all' || (f === 'g' && k.startsWith('g:')) || (f === 'u' && this.unread(k, e)))).sort((x, y) => y[1].ts - x[1].ts);
-    L.innerHTML = a.length ? a.map(([k, e]) => { const un = this.unread(k, e); return `<button class="wa-row" data-id="${esc(k)}" data-n="${esc(e.u)}">${this.avatar(k, e.u)}<span class="wa-m"><span class="wa-l1"><b>${this.nm(k, e.u)}</b><small class="${un ? 'un' : ''}">${this.dl(e.ts)}</small></span><span class="wa-l2"><span class="wa-pv">${e.k === me && !k.startsWith('g:') ? 'Kamu: ' : ''}${esc(e.t || '')}</span>${un ? `<i class="wa-n" data-c="${esc(k)}">•</i>` : ''}</span></span></button>`; }).join('') : emptyHtml('fa-comments', 'Belum ada chat.<br>Ketuk tombol hijau untuk mulai ngobrol.');
+    const L = $('wa-l'); if (!L) return; const me = this.me(), q = this.S.q.toLowerCase(), f = this.S.f, fv = this.fav();
+    const a = Object.entries(this.S.ib).filter(([k, e]) => e && e.ts && !this.S.bl[k] && (!q || String(e.u).toLowerCase().includes(q)) && (f === 'all' || (f === 'g' && k.startsWith('g:')) || (f === 'f' && fv[k]) || (f === 'u' && this.unread(k, e)))).sort((x, y) => y[1].ts - x[1].ts);
+    L.innerHTML = a.length ? a.map(([k, e]) => { const un = this.unread(k, e), tick = e.k === me && !k.startsWith('g:') ? '<i class="fa-solid fa-check-double wa-tk2"></i> ' : ''; return `<button class="wa-row" data-id="${esc(k)}" data-n="${esc(e.u)}">${this.avatar(k, e.u, 52)}<span class="wa-m"><span class="wa-l1"><b>${this.nm(k, e.u)}</b><small class="${un ? 'un' : ''}">${this.dl(e.ts)}</small></span><span class="wa-l2"><span class="wa-pv">${tick}${esc(e.t || '')}</span>${un ? `<i class="wa-n" data-c="${esc(k)}">•</i>` : ''}</span></span></button>`; }).join('') : emptyHtml(f === 'f' ? 'fa-star' : 'fa-comments', f === 'f' ? 'Belum ada favorit.<br>Buka chat lalu pilih “Favoritkan” di menu ⋮.' : 'Belum ada chat.<br>Ketuk tombol hijau untuk mulai ngobrol.');
     L.querySelectorAll('.wa-row').forEach(b => b.onclick = () => this.openChat(b.dataset.id, b.dataset.n));
     this.hydrate(L); a.filter(([k, e]) => this.unread(k, e)).slice(0, 8).forEach(([k, e]) => this.cnt(k, e).then(n => { const b = L.querySelector(`[data-c="${k}"]`); if (b) b.textContent = n > 99 ? '99+' : n || '•'; }).catch(() => {}));
   },
@@ -119,16 +129,19 @@ const WA = {
   async openChat(id, name) {
     const me = this.me(), g = id.startsWith('g:'); if (g) { const gi = await this.rq('wa/g/' + id.slice(2)).catch(() => null); if (!gi || !gi.m || !gi.m[me]) return UI.toast('Grup privat: kamu bukan anggota grup ini.', 'err'); } const C = this.C = { id, g, name: name || this.uname(id), other: g ? null : id, gid: g ? id.slice(2) : null, pair: g ? null : this.pair(me, id), msgs: [], prd: 0, n: 0, info: null }; let off = () => {};
     this.sheet({ id: 'wac', onClose: () => { clearInterval(C.t); off(); if (this.C === C) this.C = null; this.drawList(); this.badge(); },
-      body: `<div class="wa-top wa-ch"><button class="wa-ib" data-x="wac" aria-label="Kembali"><i class="fa-solid fa-arrow-left"></i></button><button class="wa-ct" id="wc-ti">${this.avatar(id, C.name, 40)}<span><b>${this.nm(id, C.name)}</b><small>${g ? 'Ketuk untuk info grup' : 'Ketuk untuk profil'}</small></span></button>${g ? '' : '<button class="wa-ib" id="wc-ca" aria-label="Telepon suara"><i class="fa-solid fa-phone"></i></button><button class="wa-ib" id="wc-cv" aria-label="Video call"><i class="fa-solid fa-video"></i></button>'}<button class="wa-ib" id="wc-mn" aria-label="Menu"><i class="fa-solid fa-ellipsis-vertical"></i></button></div><div id="wc-l" class="wa-ml">${loadingHtml('Memuat…')}</div>`,
-      foot: `<div class="wa-cb"><button class="wa-ib" id="wc-at" aria-label="Lampirkan"><i class="fa-solid fa-paperclip"></i></button><button class="wa-ib" id="wc-vn" aria-label="Rekam voice note" title="Rekam VN"><i class="fa-solid fa-microphone"></i></button><textarea id="wc-in" rows="1" maxlength="1000" placeholder="Ketik pesan" enterkeyhint="send" autocomplete="off"></textarea><button class="wa-go" id="wc-go" disabled aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button></div><input type="file" id="wc-f" accept="image/*,video/*,audio/*" hidden/>`,
+      body: `<div class="wa-top wa-ch"><button class="wa-ib" data-x="wac" aria-label="Kembali"><i class="fa-solid fa-arrow-left"></i></button><button class="wa-ct" id="wc-ti">${this.avatar(id, C.name, 40)}<span><b>${this.nm(id, C.name)}</b><small>${g ? 'Ketuk untuk info grup' : 'Ketuk untuk profil'}</small></span></button>${g ? '' : '<button class="wa-ib" id="wc-cv" aria-label="Video call"><i class="fa-solid fa-video"></i></button><button class="wa-ib" id="wc-ca" aria-label="Telepon suara"><i class="fa-solid fa-phone"></i></button>'}<button class="wa-ib" id="wc-mn" aria-label="Menu"><i class="fa-solid fa-ellipsis-vertical"></i></button></div><div id="wc-l" class="wa-ml">${loadingHtml('Memuat…')}</div>`,
+      foot: `<div id="wc-emo" class="wa-emo hidden">${this.EMO.map(x => `<button type="button">${x}</button>`).join('')}</div><div class="wa-cb"><div class="wa-pill"><button class="wa-ib" id="wc-em" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button><textarea id="wc-in" rows="1" maxlength="1000" placeholder="Ketik pesan" enterkeyhint="send" autocomplete="off"></textarea><button class="wa-ib" id="wc-at" aria-label="Lampirkan"><i class="fa-solid fa-paperclip"></i></button><button class="wa-ib" id="wc-cm" aria-label="Kamera"><i class="fa-solid fa-camera"></i></button></div><button class="wa-go" id="wc-go" aria-label="Kirim atau rekam"><i class="fa-solid fa-microphone"></i></button></div><input type="file" id="wc-f" accept="image/*,video/*,audio/*" hidden/><input type="file" id="wc-cf" accept="image/*" capture="environment" hidden/>`,
       on: () => {
         off = this.vvFit('wac'); const inp = $('wc-in'), go = $('wc-go'), touch = matchMedia('(pointer:coarse)').matches;
-        inp.oninput = () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 120) + 'px'; go.disabled = !inp.value.trim(); };
-        inp.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && !touch) { e.preventDefault(); this.send(); } }; go.onclick = () => this.send();
-        $('wc-at').onclick = () => $('wc-f').click(); $('wc-vn').onclick = () => this.recordVN(); $('wc-f').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!await this.okSend()) return; UI.toast('Mengirim…', 'info', 1800); try { await this.send(await this.upload(f), inp.value.trim()); inp.value = ''; inp.oninput(); } catch (x) { UI.toast(this.errMsg(x), 'err'); } };
+        inp.oninput = () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 120) + 'px'; if (!(this.rec && this.rec.state === 'recording')) go.innerHTML = inp.value.trim() ? '<i class="fa-solid fa-paper-plane"></i>' : '<i class="fa-solid fa-microphone"></i>'; };
+        inp.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && !touch) { e.preventDefault(); if (inp.value.trim()) this.send(); } }; go.onclick = () => inp.value.trim() ? this.send() : this.recordVN();
+        const pick = async f => { if (!f) return; if (!await this.okSend()) return; UI.toast('Mengirim…', 'info', 1800); try { await this.send(await this.upload(f), inp.value.trim()); inp.value = ''; inp.oninput(); } catch (x) { UI.toast(this.errMsg(x), 'err'); } };
+        $('wc-at').onclick = () => $('wc-f').click(); $('wc-cm').onclick = () => $('wc-cf').click();
+        $('wc-f').onchange = e => { const f = e.target.files[0]; e.target.value = ''; pick(f); }; $('wc-cf').onchange = e => { const f = e.target.files[0]; e.target.value = ''; pick(f); };
+        $('wc-em').onclick = () => $('wc-emo').classList.toggle('hidden'); $('wc-emo').onclick = e => { const b = e.target.closest('button'); if (!b) return; inp.value += b.textContent; inp.oninput(); inp.focus(); };
         $('wc-ti').onclick = () => g ? this.ginfo() : this.profile(id, C.name);
         if (!g) { $('wc-ca').onclick = () => this.startCall('a'); $('wc-cv').onclick = () => this.startCall('v'); }
-        $('wc-mn').onclick = e => { e.stopPropagation(); this.pop(e.currentTarget, g ? [['<i class="fa-solid fa-circle-info"></i> Info grup', () => this.ginfo()], ['<i class="fa-solid fa-right-from-bracket"></i> Keluar grup', () => this.leave()]] : [['<i class="fa-solid fa-user"></i> Lihat profil', () => this.profile(id, C.name)], ['<i class="fa-solid fa-ban"></i> Blokir', () => this.block(id)], ['<i class="fa-solid fa-shield-halved"></i> Cek Rules', () => this.diag()], ['<i class="fa-solid fa-eraser"></i> Hapus dari daftar', async () => { await this.rq(`wa/ib/${me}/${id}`, null, 'DELETE').catch(() => {}); Sheet.close('wac'); this.pollIb(); }]]); };
+        $('wc-mn').onclick = e => { e.stopPropagation(); const fv = [this.fav()[id] ? 'Hapus dari favorit' : 'Favoritkan', () => this.togFav(id)]; this.pop(e.currentTarget, g ? [['Info grup', () => this.ginfo()], fv, ['Keluar grup', () => this.leave()]] : [['Lihat profil', () => this.profile(id, C.name)], fv, ['Blokir', () => this.block(id)], ['Cek Rules', () => this.diag()], ['Hapus dari daftar', async () => { await this.rq(`wa/ib/${me}/${id}`, null, 'DELETE').catch(() => {}); Sheet.close('wac'); this.pollIb(); }]]); };
         $('wc-l').onclick = e => { const b = e.target.closest('.wa-b'); if (!b || e.target.closest('img,video,audio,.wa-act')) return; const was = b.classList.contains('sel'); document.querySelectorAll('.wa-b.sel').forEach(x => x.classList.remove('sel')); if (!was) b.classList.add('sel'); };
         $('wc-l').addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; const b = a.closest('.wa-b'), m = C.msgs.find(x => x.id === b.dataset.id); if (!m) return; if (a.dataset.a === 'c') copyText(m.t || ''); else this.del(m); });
         this.pollC(true); clearInterval(C.t); C.t = setInterval(() => { if (!document.hidden) this.pollC(); }, 2000);
@@ -159,14 +172,14 @@ const WA = {
   async recordVN() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) return UI.toast('Browser tidak mendukung rekaman suara. Gunakan Chrome HTTPS.', 'warn');
     if (!await this.okSend()) return;
-    const btn = $('wc-vn'); if (!btn) return;
+    const btn = $('wc-go'); if (!btn) return;
     if (this.rec && this.rec.state === 'recording') { this.rec.stop(); return; }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mime = ['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '';
       const rec = this.rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), chunks = [];
       rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-      rec.onstop = async () => { clearTimeout(this.recTimer); stream.getTracks().forEach(t => t.stop()); btn.innerHTML = '<i class="fa-solid fa-microphone"></i>'; btn.classList.remove('recording'); if (!chunks.length) return; try { const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' }); const f = new File([blob], 'voice-note.' + (blob.type.includes('mp4') ? 'm4a' : 'webm'), { type: blob.type }); const up = await this.upload(f); await this.send(up, ''); } catch (e) { UI.toast(this.errMsg(e), 'err'); } };
+      rec.onstop = async () => { clearTimeout(this.recTimer); stream.getTracks().forEach(t => t.stop()); btn.classList.remove('recording'); { const ii = $('wc-in'); if (ii && ii.oninput) ii.oninput(); } if (!chunks.length) return; try { const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' }); const f = new File([blob], 'voice-note.' + (blob.type.includes('mp4') ? 'm4a' : 'webm'), { type: blob.type }); const up = await this.upload(f); await this.send(up, ''); } catch (e) { UI.toast(this.errMsg(e), 'err'); } };
       rec.start(); this.recTimer = setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 45000); btn.innerHTML = '<i class="fa-solid fa-stop"></i>';  btn.classList.add('recording'); UI.toast('Merekam VN… Tekan tombol merah untuk berhenti.', 'info');
     } catch (e) { UI.toast('Izin mikrofon ditolak atau tidak tersedia.', 'err'); }
   },
@@ -244,18 +257,20 @@ const WA = {
     if (!e || !e.f) return; if (Date.now() - e.ts > 45000) return void this.rq('wa/ic/' + me, null, 'DELETE').catch(() => {});
     if (this.S.bl[e.f] || this.K || this.ringing) return; this.ring(e);
   },
-  startCall(ty) {
-    const C = this.C; if (!C || C.g) return; if (this.K || this.ringing) return UI.toast('Sedang dalam panggilan', 'warn');
+  startCall(ty) { const C = this.C; if (!C || C.g) return; this.callTo(C.other, C.name, ty); },
+  callTo(k, name, ty) {
+    if (this.K || this.ringing) return UI.toast('Sedang dalam panggilan', 'warn');
     if (!navigator.mediaDevices || !window.RTCPeerConnection) return UI.alert('Tidak didukung', 'Browsermu belum mendukung panggilan suara/video.', { type: 'warn' });
-    this.callBegin({ pair: C.pair, other: C.other, name: C.name, ty, out: true });
+    this.callBegin({ pair: this.pair(this.me(), k), other: k, name, ty, out: true });
   },
+  addCall(K, dur) { const key = 'wa_calls_' + this.me(), l = LS.get(key, []); l.unshift({ k: K.other, n: K.name, ty: K.ty, o: K.out ? 1 : 0, d: dur || 0, ts: Date.now() }); LS.set(key, l.slice(0, 50)); if (this.S.tab === 'call' && $('wa-v')) this.v_call($('wa-v')); },
   ring(e) {
     const pair = e.p, from = e.f, name = e.n || this.uname(from), me = this.me(); this.ringing = e; Sound.play('call');
     const ov = this.ov(); ov.className = 'wacall ring';
     ov.innerHTML = `<div class="wk-info">${this.avatar(from, name, 120, 'big pulse')}<h3>${esc(name)}</h3><small>${e.ty === 'v' ? 'Panggilan video masuk…' : 'Panggilan suara masuk…'}</small></div><div class="wk-btns"><button class="wk-b red" id="wk-rj"><i class="fa-solid fa-phone-slash"></i><span>Tolak</span></button><button class="wk-b grn" id="wk-ac"><i class="fa-solid ${e.ty === 'v' ? 'fa-video' : 'fa-phone'}"></i><span>Terima</span></button></div>`; this.hydrate(ov);
     this.rtOn(); try { navigator.vibrate && navigator.vibrate([400, 200, 400]); } catch (x) {}
     const stop = () => { clearInterval(this.rw); this.rtOff(); this.ringing = null; };
-    this.rw = setInterval(async () => { const c = await this.rq('wa/cl/' + pair, null, 'GET', undefined, 6000).catch(() => undefined); if (c === undefined) return; if (!c || c.st === 'e' || Date.now() - e.ts > 45000) { stop(); this.ovClose(); Sound.release('call'); this.rq('wa/ic/' + me, null, 'DELETE').catch(() => {}); } }, 1500);
+    this.rw = setInterval(async () => { const c = await this.rq('wa/cl/' + pair, null, 'GET', undefined, 6000).catch(() => undefined); if (c === undefined) return; if (!c || c.st === 'e' || Date.now() - e.ts > 45000) { stop(); this.addCall({ other: from, name, ty: e.ty, out: false }, 0); this.ovClose(); Sound.release('call'); this.rq('wa/ic/' + me, null, 'DELETE').catch(() => {}); } }, 1500);
     $('wk-rj').onclick = () => { stop(); this.ovClose(); Sound.release('call'); this.rq('wa/cl/' + pair, null, 'PATCH', { st: 'e', by: 'n' }).catch(() => {}); this.rq('wa/ic/' + me, null, 'DELETE').catch(() => {}); };
     $('wk-ac').onclick = () => { stop(); this.callBegin({ pair, other: from, name, ty: e.ty, out: false }); };
   },
@@ -304,7 +319,7 @@ const WA = {
   async callEnd(msg, notify, quiet) {
     const K = this.K; if (!K) return; this.K = null; clearInterval(K.poll); clearInterval(K.tm); this.rtOff(); Sound.release('call');
     try { K.local && K.local.getTracks().forEach(t => t.stop()); K.pc && K.pc.close(); } catch (e) {}
-    const me = this.me(), dur = K.up ? Math.round((Date.now() - K.tu) / 1000) : 0;
+    const me = this.me(), dur = K.up ? Math.round((Date.now() - K.tu) / 1000) : 0; if (!quiet) this.addCall(K, dur);
     if (notify) this.rq('wa/cl/' + K.pair, null, 'PATCH', { st: 'e', by: K.up ? 'x' : K.out ? 'c' : 'n' }).catch(() => {});
     this.rq('wa/ic/' + (K.out ? K.other : me), null, 'DELETE').catch(() => {});
     if (K.out && !quiet) { this.logCall(K, dur); setTimeout(() => { this.rq('wa/cl/' + K.pair, null, 'DELETE').catch(() => {}); this.rq('wa/cc/' + K.pair, null, 'DELETE').catch(() => {}); }, 5000); }
@@ -317,13 +332,24 @@ const WA = {
   },
 
   /* ---------- Pembaruan: status + saluran ---------- */
-  v_upd(v) { v.innerHTML = `${this.top('Pembaruan')}<div class="wa-sec">Status</div><div id="wa-st">${loadingHtml()}</div><div class="wa-sec">Saluran <button class="wa-ib sm" id="wa-cn" title="Buat saluran"><i class="fa-solid fa-plus"></i></button></div><div id="wa-ch">${loadingHtml()}</div>`; $('wa-cn').onclick = () => this.newChannel(); this.loadSt(); this.loadCh(); clearInterval(this.stTimer); this.stTimer = setInterval(() => { if (!document.hidden && this.S.tab === 'upd') this.loadSt(); }, 60000); },
+  v_upd(v) {
+    v.innerHTML = `${this.home('Pembaruan', this.mnb)}<div class="wa-h3">Status</div><div class="wa-stg" id="wa-st">${loadingHtml()}</div><div class="wa-h3">Saluran <button class="wa-jl" id="wa-ex"><i class="fa-solid fa-table-cells-large"></i> Jelajahi</button></div><div id="wa-ch">${loadingHtml()}</div><button class="wa-fab sm" id="wa-pen" aria-label="Status teks"><i class="fa-solid fa-pen"></i></button><button class="wa-fab" id="wa-cam" aria-label="Tambah status"><i class="fa-solid fa-camera"></i></button>`;
+    this.menu(v, [['Buat saluran', () => this.newChannel()], ['Pengaturan', () => this.settings()], ['Alihkan akun', () => this.switchAcc()]]);
+    $('wa-ex').onclick = () => this.explore(); $('wa-pen').onclick = () => this.composeSt(); $('wa-cam').onclick = () => this.addSt();
+    this.loadSt(); this.loadCh(); clearInterval(this.stTimer); this.stTimer = setInterval(() => { if (!document.hidden && this.S.tab === 'upd') this.loadSt(); }, 60000);
+  },
   async loadSt() {
     let d = {}; try { d = (await this.rq('wa/st')) || {}; } catch (e) {} const now = Date.now(), me = this.me(), mine = [], o = [];
     for (const [k, v] of Object.entries(d)) { const all = Object.entries(v || {}).map(([id, s]) => ({ id, ...s })), live = all.filter(s => now - s.ts < 864e5).sort((a, b) => a.ts - b.ts); if (k === me) all.filter(s => now - s.ts >= 864e5).forEach(s => { this.rq(`wa/st/${me}/${s.id}`, null, 'DELETE').catch(() => {}); this.rq(`wa/sv/${me}/${s.id}`, null, 'DELETE').catch(() => {}); if (s.m) this.rq('wa/md/' + s.m, null, 'DELETE').catch(() => {}); }); if (!live.length || this.S.bl[k]) continue; k === me ? mine.push(...live) : o.push([k, live]); }
     o.sort((a, b) => b[1][b[1].length - 1].ts - a[1][a[1].length - 1].ts); this.S.st = { me: mine, o }; const box = $('wa-st'); if (!box) return;
-    box.innerHTML = `<div class="wa-row" id="st-me"><span class="wa-rg ${mine.length ? 'on' : 'no'}">${this.avatar(me, this.myName(), 46)}</span><span class="wa-m"><b>Status saya</b><small class="muted">${mine.length ? mine.length + ' status · ketuk untuk lihat' : 'Ketuk untuk menambah status'}</small></span><button class="wa-ib sm" id="st-add" title="Status baru"><i class="fa-solid fa-plus"></i></button></div>${o.map(([k, l]) => `<button class="wa-row" data-k="${esc(k)}"><span class="wa-rg ${l.some(s => s.ts > (this.S.seen[k] || 0)) ? 'on' : 'seen'}">${this.avatar(k, this.uname(k), 46)}</span><span class="wa-m"><b>${this.nm(k)}</b><small class="muted">${this.stTime(l[l.length - 1].ts)} · ${l.length} status</small></span></button>`).join('')}`;
-    this.hydrate(box); $('st-add').onclick = e => { e.stopPropagation(); this.composeSt(); }; $('st-me').onclick = () => mine.length ? this.viewSt(me, mine) : this.composeSt(); box.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => this.viewSt(b.dataset.k, (o.find(x => x[0] === b.dataset.k) || [0, []])[1]));
+    const pv = l => { const s = l[l.length - 1]; return s.ty === 't' ? `<div class="pv t" style="background:${esc(s.bg || '#128c7e')}"><span>${esc((s.t || '').slice(0, 60))}</span></div>` : s.ty === 'v' ? '<div class="pv v"><i class="fa-solid fa-play"></i></div>' : `<img class="pv" data-im="${esc(s.m)}" alt="">`; };
+    box.innerHTML = `<button class="wa-sc2 add" id="st-add"><span class="wa-addav">${this.avatar(me, this.myName(), 56)}<i class="fa-solid fa-plus"></i></span><b>Tambah Status</b></button>${mine.length ? `<button class="wa-sc2" id="st-me" data-nolb>${pv(mine)}<span class="wa-rg on">${this.avatar(me, this.myName(), 34)}</span><b>Status saya</b></button>` : ''}${o.map(([k, l]) => `<button class="wa-sc2" data-k="${esc(k)}" data-nolb>${pv(l)}<span class="wa-rg ${l.some(s => s.ts > (this.S.seen[k] || 0)) ? 'on' : 'seen'}">${this.avatar(k, this.uname(k), 34)}</span><b>${this.nm(k)}</b></button>`).join('')}`;
+    this.hydrate(box); $('st-add').onclick = () => this.addSt(); const sm = $('st-me'); if (sm) sm.onclick = () => this.viewSt(me, mine); box.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => this.viewSt(b.dataset.k, (o.find(x => x[0] === b.dataset.k) || [0, []])[1]));
+  },
+  /* pilih jenis status: teks, galeri, kamera */
+  addSt() {
+    this.sheet({ id: 'wasa', body: `${this.top('Tambah status', 'wasa')}<div class="wa-qk wa-qk2"><button id="sa-t"><i class="fa-solid fa-pen"></i><span>Teks</span></button><button id="sa-g"><i class="fa-regular fa-image"></i><span>Galeri</span></button><button id="sa-c"><i class="fa-solid fa-camera"></i><span>Kamera</span></button></div><div class="wa-sub" style="text-align:center;padding:18px 24px">Status hilang otomatis setelah 24 jam.<br>Foto atau video (maks. ±3 MB).</div><input type="file" id="sa-f" accept="image/*,video/*" hidden/><input type="file" id="sa-cf" accept="image/*,video/*" capture="environment" hidden/>`,
+      on: () => { const go = f => { if (!f) return; Sheet.close('wasa', true); this.composeSt(f); }; $('sa-t').onclick = () => { Sheet.close('wasa', true); this.composeSt(); }; $('sa-g').onclick = () => $('sa-f').click(); $('sa-c').onclick = () => $('sa-cf').click(); $('sa-f').onchange = e => { const f = e.target.files[0]; e.target.value = ''; go(f); }; $('sa-cf').onchange = e => { const f = e.target.files[0]; e.target.value = ''; go(f); }; } });
   },
   stTime(ts) { const d = new Date(ts), p = n => String(n).padStart(2, '0'), n = new Date(); return (d.toDateString() === n.toDateString() ? 'Hari ini' : d.toDateString() === new Date(n - 864e5).toDateString() ? 'Kemarin' : d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' })) + ' ' + p(d.getHours()) + '.' + p(d.getMinutes()); },
   /* kirim pesan pribadi tanpa membuka chat (dipakai balasan status) */
@@ -387,25 +413,30 @@ const WA = {
         show();
       } });
   },
-  composeSt() {
+  composeSt(file0) {
     let bg = this.BG[0], file = null;
     this.sheet({ id: 'wasc', body: `${this.top('Status baru', 'wasc')}<div class="wa-sc" id="wsc-p" style="background:${bg}"><textarea id="wsc-t" maxlength="200" placeholder="Ketik status…"></textarea><div id="wsc-pv"></div></div><div class="wa-sw" id="wsc-bg">${this.BG.map((b, i) => `<button style="background:${b}" data-b="${i}" aria-label="Warna ${i + 1}"></button>`).join('')}</div><div class="row" style="padding:12px;gap:10px"><button class="btn" id="wsc-f" style="flex:1"><i class="fa-regular fa-image"></i> Foto / Video</button><button class="btn btn-pri" id="wsc-s" style="flex:1"><i class="fa-solid fa-paper-plane"></i> Kirim</button></div><input type="file" id="wsc-i" accept="image/*,video/*" hidden/>`,
       on: () => {
         $('wsc-bg').querySelectorAll('button').forEach(b => b.onclick = () => { bg = this.BG[+b.dataset.b]; $('wsc-p').style.background = bg; });
         $('wsc-f').onclick = () => $('wsc-i').click();
-        $('wsc-i').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { const p = await this.prep(f); file = f; $('wsc-pv').innerHTML = p.ty === 'v' ? `<video src="${p.data}" controls playsinline></video>` : `<img src="${p.data}" alt="">`; $('wsc-t').placeholder = 'Tambahkan keterangan…'; $('wsc-p').classList.add('med'); } catch (x) { UI.toast(this.errMsg(x), 'err'); } };
+        const setF = async f => { if (!f) return; try { const p = await this.prep(f); file = f; $('wsc-pv').innerHTML = p.ty === 'v' ? `<video src="${p.data}" controls playsinline></video>` : `<img src="${p.data}" alt="">`; $('wsc-t').placeholder = 'Tambahkan keterangan…'; $('wsc-p').classList.add('med'); } catch (x) { UI.toast(this.errMsg(x), 'err'); } };
+        $('wsc-i').onchange = e => { const f = e.target.files[0]; e.target.value = ''; setF(f); }; if (file0) setF(file0);
         $('wsc-s').onclick = async () => {
           const t = $('wsc-t').value.trim(); if (!t && !file) return UI.toast('Tulis sesuatu atau pilih foto/video', 'warn'); if (!await this.okSend()) return; const b = $('wsc-s'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-circle-notch spin"></i> Mengirim…';
           try { const s = file ? await this.upload(file) : null, id = this.nid(); await this.rq(`wa/st/${this.me()}/${id}`, null, 'PUT', { ty: s ? s.ty === 'v' ? 'v' : 'p' : 't', ...(t ? { t } : {}), ...(s ? { m: s.im } : { bg }), ts: Date.now() }); Sheet.close('wasc'); UI.toast('Status terkirim', 'ok'); this.loadSt(); } catch (e) { UI.toast(this.errMsg(e), 'err'); b.disabled = false; b.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim'; }
         };
       } });
   },
+  chRow([id, c], f) { return `<button class="wa-row" data-c="${esc(id)}">${this.avatar('c:' + id, c.n, 52)}<span class="wa-m"><span class="wa-l1"><b>${esc(c.n)}${this.isV(c.o) ? this.TK : ''}</b>${f ? '' : `<small>${this.dl(c.ts)}</small>`}</span><span class="wa-l2"><span class="wa-pv">${esc(c.d || 'Saluran DimzzChat')}</span>${f ? '<span class="wa-fo">Ikuti</span>' : ''}</span></span></button>`; },
   async loadCh() {
     const me = this.me(); try { const [a, f] = await Promise.all([this.rq('wa/c'), this.rq('wa/cu/' + me)]); this.S.ch = a || {}; this.S.fol = f || {}; } catch (e) { const b = $('wa-ch'); if (b) b.innerHTML = this.errBox(e); return; }
-    const box = $('wa-ch'); if (!box) return; const es = Object.entries(this.S.ch).sort((a, b) => b[1].ts - a[1].ts), mine = es.filter(([id]) => this.S.fol[id]), oth = es.filter(([id]) => !this.S.fol[id]).slice(0, 20);
-    const row = ([id, c], f) => `<button class="wa-row" data-c="${esc(id)}">${this.avatar('c:' + id, c.n)}<span class="wa-m"><b>${esc(c.n)}${this.isV(c.o) ? this.TK : ''}</b><small class="muted">${esc(c.d || 'Saluran DimzzChat')}</small></span>${f ? '<span class="wa-fo">Ikuti</span>' : ''}</button>`;
-    box.innerHTML = (mine.length ? mine.map(e => row(e)).join('') : '<div class="muted" style="padding:6px 16px;font-size:12px;font-weight:600">Belum mengikuti saluran.</div>') + (oth.length ? '<div class="wa-sub">Temukan saluran</div>' + oth.map(e => row(e, 1)).join('') : '');
+    const box = $('wa-ch'); if (!box) return; const es = Object.entries(this.S.ch).sort((a, b) => b[1].ts - a[1].ts), mine = es.filter(([id]) => this.S.fol[id]), oth = es.filter(([id]) => !this.S.fol[id]).slice(0, 5);
+    box.innerHTML = (mine.length ? mine.map(e => this.chRow(e)).join('') : '<div class="muted" style="padding:4px 16px 8px;font-size:13px;font-weight:500;line-height:1.5">Belum mengikuti saluran. Ketuk <b>Jelajahi</b> untuk menemukan saluran.</div>') + (oth.length ? '<div class="wa-sub">Temukan saluran</div>' + oth.map(e => this.chRow(e, 1)).join('') : '');
     box.querySelectorAll('[data-c]').forEach(b => b.onclick = () => this.openChannel(b.dataset.c));
+  },
+  explore() {
+    const es = Object.entries(this.S.ch || {}).sort((a, b) => b[1].ts - a[1].ts);
+    this.sheet({ id: 'wax', body: `${this.top('Jelajahi saluran', 'wax')}<div>${es.length ? es.map(e => this.chRow(e, !this.S.fol[e[0]])).join('') : emptyHtml('fa-bullhorn', 'Belum ada saluran.<br>Buat yang pertama lewat menu ⋮.')}</div>`, on: el => el.querySelectorAll('[data-c]').forEach(b => b.onclick = () => this.openChannel(b.dataset.c)) });
   },
   async newChannel() {
     const n = await UI.prompt('Buat saluran', 'Nama saluran (maks. 40 huruf)', { placeholder: 'Contoh: Info Terbaru', ok: 'Lanjut' }); if (!n || !n.trim()) return; const d = await UI.prompt('Deskripsi', 'Boleh dikosongkan', { placeholder: 'Tentang saluran ini', ok: 'Buat' }); if (d === null) return;
@@ -427,10 +458,35 @@ const WA = {
       } });
   },
 
-  /* ---------- Saya: profil, centang biru, pengaturan ---------- */
+  /* ---------- Komunitas (grup) ---------- */
+  v_kom(v) {
+    const gs = Object.entries(this.S.ib).filter(([k, e]) => k.startsWith('g:') && e && e.ts && !this.S.bl[k]).sort((a, b) => b[1].ts - a[1].ts);
+    v.innerHTML = `${this.home('Komunitas', this.mnb)}<button class="wa-row" id="kom-new"><span class="wa-av sq" style="--s:52px"><i class="fa-solid fa-users"></i></span><span class="wa-m"><b>Komunitas baru</b><small class="muted">Buat grup untuk mengumpulkan teman</small></span></button><div class="wa-h3">Grup kamu</div>${gs.length ? gs.map(([k, e]) => `<button class="wa-row" data-id="${esc(k)}" data-n="${esc(e.u)}">${this.avatar(k, e.u, 52)}<span class="wa-m"><span class="wa-l1"><b>${this.nm(k, e.u)}</b><small>${this.dl(e.ts)}</small></span><span class="wa-l2"><span class="wa-pv">${esc(e.t || '')}</span></span></span></button>`).join('') : emptyHtml('fa-user-group', 'Belum ada grup.<br>Ketuk “Komunitas baru” untuk membuatnya.')}`;
+    this.menu(v, [['Pengaturan', () => this.settings()], ['Alihkan akun', () => this.switchAcc()]]);
+    $('kom-new').onclick = () => this.newGroup(); v.querySelectorAll('.wa-row[data-id]').forEach(b => b.onclick = () => this.openChat(b.dataset.id, b.dataset.n)); this.hydrate(v);
+  },
+
+  /* ---------- Panggilan ---------- */
+  async keypad() {
+    const n = await UI.prompt('Keypad', 'Masukkan nomor telepon pengguna DimzzChat', { placeholder: '0812…', ok: 'Cari' }); if (!n) return; const ph = this.normPh(n);
+    try { const k = await this.rq('wa/pi/' + ph); if (!k) return UI.toast('Nomor ini belum terdaftar di DimzzChat', 'warn'); if (k === this.me()) return UI.toast('Itu nomormu sendiri', 'info'); await this.users(true).catch(() => {}); this.openChat(k, this.uname(k)); } catch (e) { UI.toast(this.errMsg(e), 'err'); }
+  },
+  v_call(v) {
+    const me = this.me(), key = 'wa_calls_' + me, log = LS.get(key, []).slice(0, 30), us = (this.S.users || []).filter(u => { const k = userKey(u.username); return k !== me && !this.S.bl[k]; }), lim = this.S.cMore ? us.length : 5;
+    v.innerHTML = `${this.home('Panggilan', this.mnb)}<div class="wa-qk"><button id="cl-tl"><i class="fa-solid fa-phone"></i><span>Telepon</span></button><button id="cl-kp"><i class="fa-solid fa-table-cells"></i><span>Keypad</span></button><button id="cl-fv"><i class="fa-regular fa-star"></i><span>Favorit</span></button></div>`
+      + (log.length ? `<div class="wa-h3">Terbaru</div>${log.map((c, i) => `<div class="wa-row${!c.o && !c.d ? ' miss' : ''}">${this.avatar(c.k, c.n, 48)}<span class="wa-m"><b>${this.nm(c.k, c.n)}</b><small class="muted">${c.o ? '↗' : '↙'} ${esc(this.stTime(c.ts))}${c.d ? ' · ' + fmtDur(c.d) : ''}</small></span><button class="wa-ib ln" data-cb="${i}" aria-label="Hubungi"><i class="fa-solid ${c.ty === 'v' ? 'fa-video' : 'fa-phone'}"></i></button></div>`).join('')}` : '')
+      + `<div class="wa-h3">Mulai menelepon${us.length > 5 ? `<button class="wa-jl" id="cl-mr">${this.S.cMore ? 'Sedikit' : 'Lainnya'}</button>` : ''}</div>${us.slice(0, lim).map(u => { const k = userKey(u.username); return `<div class="wa-row">${this.avatar(k, this.uname(k), 48)}<span class="wa-m"><b>${this.nm(k, this.uname(k))}</b></span><button class="wa-ib ln" data-cp="${esc(k)}" data-ty="a" aria-label="Telepon suara"><i class="fa-solid fa-phone"></i></button><button class="wa-ib ln" data-cp="${esc(k)}" data-ty="v" aria-label="Video call"><i class="fa-solid fa-video"></i></button></div>`; }).join('') || emptyHtml('fa-user-slash', 'Belum ada pengguna lain.')}`;
+    this.menu(v, [['Hapus riwayat panggilan', () => { LS.set(key, []); this.v_call(v); }], ['Pengaturan', () => this.settings()], ['Alihkan akun', () => this.switchAcc()]]);
+    $('cl-tl').onclick = () => this.newChat(); $('cl-kp').onclick = () => this.keypad(); $('cl-fv').onclick = () => { this.S.f = 'f'; this.go('chat'); };
+    const mr = $('cl-mr'); if (mr) mr.onclick = () => { this.S.cMore = !this.S.cMore; this.v_call(v); };
+    v.querySelectorAll('[data-cb]').forEach(b => b.onclick = () => { const c = log[+b.dataset.cb]; this.callTo(c.k, c.n, c.ty); });
+    v.querySelectorAll('[data-cp]').forEach(b => b.onclick = () => this.callTo(b.dataset.cp, this.uname(b.dataset.cp), b.dataset.ty)); this.hydrate(v);
+  },
+
+  /* ---------- Pengaturan: profil, centang biru, preferensi ---------- */
   v_me(v) {
     const u = App.user, me = this.me(), p = this.S.prof || {}, dk = LS.get('wa_dk', 0), wp = LS.get('wa_wp', 0), fz = LS.get('wa_fz', 15), vf = this.isV(me), pend = this.S.vq && this.S.vq.st === 'p', sw = (id, on) => `<button class="switch ${on ? 'on' : ''}" id="${id}"></button>`;
-    v.innerHTML = `${this.top('Saya')}<div class="wa-pf"><span style="position:relative">${this.avatar(me, this.myName(), 92, 'big')}<button class="wa-cam" id="me-pp" aria-label="Ganti foto profil"><i class="fa-solid fa-camera"></i></button></span><b>${this.nm(me, this.myName())}</b><small id="me-ab">${esc(p.b || 'Hai! Saya pakai DimzzChat')}</small></div>
+    v.innerHTML = `${this.top('Pengaturan', 'wast')}<div class="wa-pf"><span style="position:relative">${this.avatar(me, this.myName(), 92, 'big')}<button class="wa-cam" id="me-pp" aria-label="Ganti foto profil"><i class="fa-solid fa-camera"></i></button></span><b>${this.nm(me, this.myName())}</b><small id="me-ab">${esc(p.b || 'Hai! Saya pakai DimzzChat')}</small></div>
       <div class="wa-it"><i class="fa-solid fa-phone"></i><span><b>${esc(this.fmtPh(this.S.ph) || '-')}</b><small>Nomor telepon</small></span></div>
       <button class="wa-it" id="me-nm"><i class="fa-solid fa-id-card"></i><span><b>Nama kontak</b><small>${esc(this.myName())}</small></span></button>
       <button class="wa-it" id="me-ed"><i class="fa-solid fa-pen"></i><span><b>Info saya</b><small>Ubah tulisan di bawah namamu</small></span></button>

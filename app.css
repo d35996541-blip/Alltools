@@ -629,41 +629,102 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 .wk-b:active i{transform:scale(.9)}.wk-b.red i{background:#ef4444}.wk-b.grn i{background:#22c55e}.wk-b.off i{background:#fff;color:#111}
 .wacall.vid.live{justify-content:flex-end}
 
-/* ===== v3.22 tampilan kaca (glass) untuk DimzzChat ===== */
+/* ===== DimzzChat ===== */
 .u-ini{display:grid;place-items:center;width:100%;height:100%;font-weight:800;font-size:18px;color:#fff;background:linear-gradient(135deg,#25d366,#0b8f6a);border-radius:inherit}
-.panel.wap{--gl:rgba(255,255,255,.52);--gb:rgba(255,255,255,.65);--gs:0 12px 32px -14px rgba(11,60,45,.45);--wcard:var(--gl);--wbg:transparent;--wot:rgba(255,255,255,.62);--wme:rgba(190,250,200,.72);
-  background:radial-gradient(70% 38% at 8% 0%,rgba(37,211,102,.5),transparent 70%),radial-gradient(55% 40% at 100% 18%,rgba(56,189,248,.42),transparent 70%),radial-gradient(70% 45% at 25% 100%,rgba(167,139,250,.42),transparent 70%),#e7f5ef}
-.panel.wap.dk{--gl:rgba(18,30,38,.55);--gb:rgba(255,255,255,.13);--gs:0 14px 34px -14px rgba(0,0,0,.8);--wot:rgba(32,44,52,.66);--wme:rgba(0,98,80,.72);
-  background:radial-gradient(70% 38% at 8% 0%,rgba(16,185,129,.34),transparent 70%),radial-gradient(55% 40% at 100% 18%,rgba(14,116,144,.38),transparent 70%),radial-gradient(70% 45% at 25% 100%,rgba(109,40,217,.34),transparent 70%),#060c11}
-.wap .wa-body{background:transparent}
-.wa-top{background:linear-gradient(135deg,rgba(16,185,129,.55),rgba(7,94,84,.62));backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);border-bottom:1px solid rgba(255,255,255,.28);box-shadow:0 10px 30px -16px rgba(0,0,0,.55)}
-.wa-ib{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.wa-sr,.wa-fd,.wa-vc,.wa-it,.wa-cb textarea{backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--gb)}
-.wa-sr{background:var(--gl);box-shadow:var(--gs)}
-.wa-fl button{background:var(--gl);border:1px solid var(--gb);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.wa-fl button.on{border-color:transparent}
-.wa-row{margin:6px 12px;width:calc(100% - 24px);padding:10px 12px;border-radius:20px;background:var(--gl);border:1px solid var(--gb);box-shadow:var(--gs);backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5)}
-.wa-row:active{background:var(--gl);transform:scale(.985)}
-.wa-it{margin:6px 12px;width:calc(100% - 24px);border-radius:18px;background:var(--gl);box-shadow:var(--gs)}
-.wa-it:active{background:var(--gl)}
-.wa-sec{padding-left:20px}
-.wa-vc{background:linear-gradient(135deg,rgba(29,155,240,.2),rgba(37,211,102,.16));box-shadow:var(--gs)}
-.wa-nav{margin:0 12px calc(var(--safe-b) + 10px);padding:6px;border-radius:26px;background:var(--gl);border:1px solid var(--gb);box-shadow:0 18px 40px -16px rgba(0,0,0,.6);backdrop-filter:blur(24px) saturate(1.7);-webkit-backdrop-filter:blur(24px) saturate(1.7)}
-.wa-nav button.on i{background:linear-gradient(135deg,rgba(37,211,102,.45),rgba(16,185,129,.3));box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
-.wa-fab{bottom:104px;background:linear-gradient(135deg,rgba(37,211,102,.92),rgba(11,143,106,.92));border:1px solid rgba(255,255,255,.5);box-shadow:0 18px 34px -10px var(--wg2),inset 0 1px 0 rgba(255,255,255,.55);backdrop-filter:blur(10px)}
-.wa-b{background:var(--wot);border:1px solid var(--gb);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 6px 16px -10px rgba(0,0,0,.45)}
-.wa-b.me{background:var(--wme)}
-.wa-cb{background:var(--gl);border-top:1px solid var(--gb);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6)}
-.wap .wa-cb textarea{background:rgba(255,255,255,.35)!important}.dk .wa-cb textarea{background:rgba(255,255,255,.08)!important}
-.wa-cb .wa-ib{background:rgba(255,255,255,.3);color:var(--wmu)}
-.wa-pop{background:var(--gl);border:1px solid var(--gb);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6)}
-.wa-av{box-shadow:0 0 0 2px rgba(255,255,255,.7),0 8px 18px -8px rgba(0,0,0,.5)}
-.wa-on .wa-fd{background:var(--gl)}
-.wa-on #on-b{padding:16px;border-radius:26px;background:var(--gl);border:1px solid var(--gb);box-shadow:var(--gs);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6)}
-.wa-on .wa-fd{box-shadow:none}
-.wap .ch-day span{background:var(--gl);border:1px solid var(--gb);backdrop-filter:blur(10px)}
-.wa-sw button{border-color:rgba(255,255,255,.7)}
-#wa-l{padding-bottom:110px}
+/* ===== v3.25 DimzzChat — tampilan datar ala WhatsApp (terang & gelap) ===== */
+.panel.wap{--wbg:#fff;--wcard:#f0f2f5;--wtx:#111b21;--wmu:#667781;--wln:rgba(17,27,33,.08);--wme:#d9fdd3;--wot:#fff;--wg1:#1fa855;--wg2:#1fa855;--wsel:#d9fdd3;--wselt:#0a5c36;background:#fff}
+.panel.wap.dk{--wbg:#0b141a;--wcard:#202c33;--wtx:#e9edef;--wmu:#8696a0;--wln:rgba(255,255,255,.08);--wme:#005c4b;--wot:#202c33;--wg1:#00a884;--wg2:#00a884;--wsel:#103529;--wselt:#00a884;background:#0b141a}
+.wap .wa-body{background:var(--wbg)}
+.wa-top{background:var(--wbg);color:var(--wtx);box-shadow:none;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;padding:calc(var(--safe-t) + 8px) 8px 8px}
+.wa-top h2{font-size:19px;font-weight:700;letter-spacing:0;padding-left:4px}
+.wa-top.home{padding-top:calc(var(--safe-t) + 14px)}
+.wa-top.home h2{font-size:26px;font-weight:800}
+.wa-top.home h2.brand{color:var(--wg1)}
+.wa-ib{background:transparent;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;color:var(--wtx);font-size:19px}
+.wa-ib:active{background:var(--wln);transform:none}
+.wa-ib.sm{background:var(--wsel);color:var(--wselt)}
+.wa-ct{color:var(--wtx)}.wa-ct small{opacity:.7}
+.wa-top .btn,.dk .btn:not(.btn-pri):not(.btn-danger){background:var(--wcard);color:var(--wtx)}
+.wap .btn-pri{background:var(--wg1)!important;box-shadow:none}
+.wa-sr{margin:6px 16px 8px;height:48px;border-radius:24px;background:var(--wcard);box-shadow:none;border:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+.wa-fl{padding:4px 16px 10px;gap:8px}
+.wa-fl button{background:var(--wcard);color:var(--wmu);border:0;backdrop-filter:none;font-weight:600;font-size:14px;padding:8px 16px;border-radius:20px}
+.wa-fl button.on{background:var(--wsel);color:var(--wselt);box-shadow:none}
+.wa-row{margin:0;width:100%;padding:10px 16px;border-radius:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;animation:none}
+.wa-row:active{background:var(--wln);transform:none}
+.wa-m b{font-size:16.5px;font-weight:600}
+.wa-l1 small{font-weight:500}.wa-l1 small.un{color:var(--wg1);font-weight:700}
+.wa-pv{font-size:14px;font-weight:400}
+.wa-tk2{font-size:12px;color:#53bdeb;margin-right:2px}
+.wa-n{background:var(--wg1);color:#fff;min-width:21px;height:21px;border-radius:11px;line-height:21px;font-size:11.5px}
+.wa-av,.wa-av.big{box-shadow:none}
+.wa-av.ic{background:var(--wg1)}
+.wa-av.sq{border-radius:16px;background:var(--wsel);color:var(--wselt)}
+.wa-rg.on{border-color:var(--wg1)}.wa-rg.seen{border-color:#c5ccd1;opacity:1}
+.wa-h3{padding:14px 16px 6px;font-size:18px;font-weight:800;color:var(--wtx);display:flex;align-items:center;justify-content:space-between}
+.wa-jl{border:0;border-radius:18px;padding:8px 14px;background:var(--wcard);color:var(--wtx);font-weight:700;font-size:13px;display:flex;gap:6px;align-items:center}
+.wa-sub{padding:10px 16px 2px;font-size:13px;font-weight:700;color:var(--wmu)}
+.wa-fo{background:var(--wsel);color:var(--wselt)}
+.wa-fab{right:16px;bottom:88px;width:58px;height:58px;border-radius:18px;background:var(--wg1);border:0;box-shadow:0 4px 12px rgba(11,20,26,.28);backdrop-filter:none;color:#fff}
+.wa-fab.sm{width:46px;height:46px;border-radius:14px;bottom:158px;right:22px;font-size:17px;background:var(--wcard);color:var(--wtx);box-shadow:0 3px 8px rgba(11,20,26,.2)}
+.wa-nav{margin:0;padding:8px 6px calc(var(--safe-b) + 8px);gap:0;border-radius:0;background:var(--wbg);border:0;border-top:1px solid var(--wln);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.wa-nav button{font-size:12px;font-weight:600;color:var(--wmu)}
+.wa-nav button.on{color:var(--wtx);font-weight:800}
+.wa-nav button i{font-size:19px;padding:5px 20px;border-radius:16px}
+.wa-nav button.on i{background:var(--wsel);color:var(--wtx);box-shadow:none}
+.dk .wa-nav button.on i{color:var(--wselt)}
+.wa-bd{top:0;left:calc(50% + 4px);background:var(--wg1);min-width:17px;height:17px;font-size:10px;line-height:17px}
+/* kartu status */
+.wa-stg{display:flex;gap:10px;overflow-x:auto;padding:4px 16px 8px;scrollbar-width:none}.wa-stg::-webkit-scrollbar{display:none}
+.wa-sc2{position:relative;flex:none;width:100px;height:158px;border:0;border-radius:16px;overflow:hidden;background:var(--wcard);color:#fff;padding:0;text-align:left}
+.wa-sc2 .pv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;margin:0;border-radius:0;background:#1f2c34;display:grid;place-items:center;padding:10px;text-align:center;font-size:12px;font-weight:700;cursor:pointer}
+.wa-sc2 .pv.v{font-size:22px;color:rgba(255,255,255,.85)}
+.wa-sc2::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.35),transparent 38%,transparent 55%,rgba(0,0,0,.65));pointer-events:none}
+.wa-sc2 .wa-rg{position:absolute;left:7px;top:7px;z-index:2;padding:2px}
+.wa-sc2 b{position:absolute;left:8px;right:8px;bottom:8px;z-index:2;font-size:12.5px;font-weight:700;line-height:1.2;display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.wa-sc2.add{color:var(--wtx)}.wa-sc2.add::after{display:none}
+.wa-sc2.add b{text-shadow:none;white-space:normal;text-align:center;left:6px;right:6px;bottom:14px}
+.wa-addav{position:absolute;left:50%;top:32px;transform:translateX(-50%);display:grid}
+.wa-addav>i{position:absolute;right:-4px;bottom:-4px;width:24px;height:24px;border-radius:50%;background:var(--wg1);color:#fff;border:3px solid var(--wcard);display:grid;place-items:center;font-size:10px;box-sizing:content-box}
+/* pintasan panggilan / tambah status */
+.wa-qk{display:flex;justify-content:space-around;padding:10px 8px 4px}
+.wa-qk button{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:transparent;color:var(--wtx);font-size:12.5px;font-weight:600}
+.wa-qk button i{width:62px;height:62px;border-radius:50%;background:var(--wcard);display:grid;place-items:center;font-size:21px}
+.wa-qk2{padding-top:26px}.wa-qk2 button i{background:var(--wsel);color:var(--wselt)}
+.wa-row.miss .wa-m b{color:#e53935}
+.wa-row .wa-ib.ln{color:var(--wtx);font-size:20px}
+/* pengaturan */
+.wa-it{margin:0;width:100%;padding:13px 18px;gap:18px;border-radius:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.wa-it:active{background:var(--wln)}
+.wa-it>i{font-size:19px;width:26px;color:var(--wmu)}
+.wa-it b{font-size:16px;font-weight:600}
+.wa-sec{padding:18px 18px 6px;font-size:13.5px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--wg1)}
+.wa-vc{margin:8px 16px;background:var(--wsel);border:0;box-shadow:none;backdrop-filter:none}
+.wa-on{background:var(--wbg)}
+.wa-on #on-b{padding:0;background:none;border:0;box-shadow:none;backdrop-filter:none}
+.wa-fd{background:var(--wcard);box-shadow:none;border:0;backdrop-filter:none}
+.wa-lg{background:var(--wg1);box-shadow:none}
+.wa-sc{border-radius:0}
+/* ruang chat */
+.wa-ml{background-color:transparent;background-image:radial-gradient(rgba(11,20,26,.05) 1.3px,transparent 1.4px),var(--wp);background-size:24px 24px,auto}
+.dk .wa-ml{background-image:radial-gradient(rgba(255,255,255,.035) 1.3px,transparent 1.4px),var(--wp)}
+.wa-b{max-width:82%;padding:6px 8px 4px 9px;border-radius:2px 10px 10px 10px;background:var(--wot);border:0;box-shadow:0 1px .5px rgba(11,20,26,.13);backdrop-filter:none;-webkit-backdrop-filter:none}
+.wa-b.me{border-radius:10px 2px 10px 10px;background:var(--wme)}
+.wa-b.ch{border-radius:10px}
+.wa-b small i.rd{color:#53bdeb}
+.wap .ch-day span{background:var(--wot);color:var(--wmu);border:0;backdrop-filter:none;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+.wa-cb{background:var(--wp);border:0;padding:6px 8px calc(var(--safe-b) + 8px);gap:6px;backdrop-filter:none;-webkit-backdrop-filter:none;align-items:flex-end}
+.wa-pill{flex:1;min-width:0;display:flex;align-items:flex-end;background:var(--wot);border-radius:26px;box-shadow:0 1px 1px rgba(11,20,26,.12);padding:0 2px}
+.wa-pill .wa-ib,.wa-cb .wa-pill .wa-ib{width:42px;height:46px;border-radius:50%;background:transparent;color:var(--wmu);font-size:19px}
+.wap .wa-pill textarea{flex:1;min-width:0;min-height:46px;max-height:120px;padding:.8rem .2rem;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--wtx);font-size:16px;resize:none;backdrop-filter:none}
+.wa-go{width:50px;height:50px;background:var(--wg1);box-shadow:none;font-size:19px;color:#fff}
+.wa-go.recording{background:#dc2626;animation:vnPulse 1s infinite}
+.wa-emo{display:flex;flex-wrap:wrap;gap:2px;padding:8px 10px;background:var(--wot);border-top:1px solid var(--wln)}
+.wa-emo button{border:0;background:transparent;font-size:26px;padding:4px 6px}
+/* menu titik tiga */
+.wa-pop{top:54px;right:8px;min-width:220px;padding:8px 0;border-radius:14px;background:var(--wbg);border:0;box-shadow:0 6px 24px rgba(11,20,26,.28);backdrop-filter:none;-webkit-backdrop-filter:none}
+.wa-pop button{padding:13px 22px;font-size:15.5px;font-weight:500;border-radius:0}
+#wa-l{padding-bottom:104px}
 
 /* ajakan aktifkan notifikasi layar HP */
 .wa-pn{display:flex;align-items:center;gap:10px;margin:10px 12px 0;padding:10px 10px 10px 14px;border-radius:18px;background:linear-gradient(135deg,rgba(37,211,102,.18),rgba(11,143,106,.14));border:1px solid rgba(37,211,102,.35);font-size:12.5px;font-weight:700;line-height:1.35}
@@ -679,3 +740,14 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 #mg-out .wp-card + div,.panel #mg-ch .item .t,.panel #mg-ch .item .s{color:var(--ink,#111827)!important}
 .wap .wa-ib.recording{background:#dc2626!important;color:#fff!important;animation:vnPulse 1s infinite}
 @keyframes vnPulse{50%{opacity:.55}}
+
+/* ===== v3.25 keterbacaan: gaya "dark-wall" (teks putih) hanya untuk layar utama, bukan panel putih (sheet) ===== */
+.sheet>.panel:not(.wap) .item{background:#fff;border-color:var(--line);color:var(--ink)}
+.sheet>.panel:not(.wap) .item .t{color:var(--ink)}
+.sheet>.panel:not(.wap) .item .s{color:var(--mut)}
+.sheet>.panel:not(.wap) .sec-title{color:var(--ink2);text-shadow:none}
+.sheet>.panel:not(.wap) .searchbar i{color:var(--ink)}
+.sheet>.panel:not(.wap) .searchbar input{background:#fff;border-color:var(--line);color:var(--ink);text-shadow:none}
+.sheet>.panel:not(.wap) .searchbar input::placeholder{color:#94a3b8}
+.sheet>.panel:not(.wap) .tabs .chip:not(.on){background:#fff;color:var(--ink);border-color:var(--line)}
+.sheet>.panel:not(.wap) .muted{color:var(--mut);text-shadow:none}
