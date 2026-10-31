@@ -80,22 +80,37 @@ const Intro = {
   /* layar penuh sungguhan (bila didukung browser) — harus dipanggil dari ketukan pengguna */
   fs(on) { try { const d = document, el = d.documentElement; if (on) { if (!d.fullscreenElement && !d.webkitFullscreenElement) { const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen(); if (r && r.catch) r.catch(() => {}); } } else if (d.fullscreenElement || d.webkitFullscreenElement) { const r = d.exitFullscreen ? d.exitFullscreen() : d.webkitExitFullscreen && d.webkitExitFullscreen(); if (r && r.catch) r.catch(() => {}); } } catch (e) {} },
   p: null,
-  /* Mulai SEKETIKA saat tombol Masuk diketuk (browser mengizinkan video bersuara hanya dari ketukan). Login berjalan di belakangnya. */
+  /* Mulai SEKETIKA saat tombol Masuk diketuk (browser mengizinkan video bersuara hanya dari ketukan). Login berjalan di belakangnya.
+     Bila video utama gagal dimuat/diputar, otomatis mencoba ulang lalu memakai video cadangan — jadi animasi tetap berjalan. */
   start() {
     if (this.active && this.p) return this.p;
-    const ov = $('intro'), v = $('intro-video'); this.active = true; Sound.play('intro'); this.fs(true);
+    const ov = $('intro'), v = $('intro-video'), A = CONFIG.ASSETS, srcs = [A.INTRO_VIDEO, A.INTRO_VIDEO + (A.INTRO_VIDEO.includes('?') ? '&' : '?') + 'r=' + Date.now(), A.INTRO_FALLBACK].filter(Boolean);
+    this.active = true; Sound.play('intro'); this.fs(true);
     this.p = new Promise(resolve => {
-      let seen = false, timer;
-      const done = () => { if (!this.active) return; this.active = false; clearTimeout(timer); v.onended = v.onerror = v.onplaying = v.ontimeupdate = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); Intro.p = null; resolve(); };
-      this.finish = done; ov.classList.remove('hidden'); document.body.classList.add('no-scroll');
-      try { v.currentTime = 0; } catch (e) {} v.loop = false; v.muted = false; v.volume = 1; $('intro-bar').style.width = '0';
-      v.onended = done; v.onerror = done;
+      let idx = -1, seen = false, wd = null;
+      const done = () => { if (!this.active) return; this.active = false; clearTimeout(wd); v.onended = v.onerror = v.onplaying = v.ontimeupdate = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); Intro.p = null; resolve(); };
+      const next = () => { if (!this.active) return; if (idx >= srcs.length - 1) { try { UI.toast('Video intro tidak bisa dimuat', 'warn'); } catch (e) {} return done(); } attempt(idx + 1); };
+      const attempt = i => {
+        idx = i; seen = false; clearTimeout(wd);
+        if (i > 0 || v.error || v.networkState === 3 || v.getAttribute('src') !== srcs[0]) { v.src = srcs[i]; try { v.load(); } catch (e) {} }
+        v.loop = false; v.muted = false; v.volume = 1;
+        wd = setTimeout(() => { if (!seen && this.active && i === idx && $('intro-tap').classList.contains('hidden')) next(); }, 12000);
+        const bad = (er, me) => { if (!this.active || i !== idx) return true; if (er && er.name === 'NotSupportedError') { next(); return true; } return !!(er && er.name === 'AbortError'); };
+        const p = v.play();
+        if (p && p.catch) p.catch(er => {
+          if (bad(er)) return;
+          v.muted = true; const q = v.play();
+          if (q && q.catch) q.catch(er2 => { if (bad(er2)) return; $('intro-tap').classList.remove('hidden'); });
+          const un = () => { document.removeEventListener('pointerdown', un, true); v.muted = false; v.volume = 1; }; document.addEventListener('pointerdown', un, true);
+        });
+      };
+      this.finish = done; ov.classList.remove('hidden'); document.body.classList.add('no-scroll'); $('intro-bar').style.width = '0';
+      v.onended = done; v.onerror = () => { if (this.active) next(); };
       v.ontimeupdate = () => { if (v.duration) $('intro-bar').style.width = (v.currentTime / v.duration * 100) + '%'; };
-      v.onplaying = () => { seen = true; clearTimeout(timer); $('intro-tap').classList.add('hidden'); };
-      const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => $('intro-tap').classList.remove('hidden')); const un = () => { document.removeEventListener('pointerdown', un, true); v.muted = false; v.volume = 1; }; document.addEventListener('pointerdown', un, true); });
-      $('intro-tap').onclick = () => { v.muted = false; v.volume = 1; v.play().then(() => $('intro-tap').classList.add('hidden')).catch(() => {}); };
+      v.onplaying = () => { seen = true; clearTimeout(wd); $('intro-tap').classList.add('hidden'); };
+      $('intro-tap').onclick = () => { v.muted = false; v.volume = 1; const q = v.play(); if (q && q.then) q.then(() => $('intro-tap').classList.add('hidden')).catch(() => next()); };
       $('intro-skip').onclick = done;
-      timer = setTimeout(() => { if (!seen && $('intro-tap').classList.contains('hidden')) done(); }, 25000);
+      attempt(0);
     });
     return this.p;
   },
