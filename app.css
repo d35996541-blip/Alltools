@@ -770,3 +770,10 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 .dk .wa-vn-p,.dk .wa-vn-bars u.on,.dk .wa-vn-dot{color:#aebac1;background-color:transparent}
 .dk .wa-vn-bars u.on{background:#aebac1}.dk .wa-vn-dot{background:#aebac1}.dk .wa-vn-bars u{background:rgba(174,186,193,.4)}
 .dk .wa-vn-mic{color:#aebac1}
+
+/* ===== Pembaca manga: kolom tengah, lebar bisa diatur ===== */
+.mg-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 10px;background:rgba(17,17,17,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.mg-bar .btn{width:36px;height:30px;padding:0;display:grid;place-items:center;font-size:12px}
+#mg-wl{font-size:11.5px;font-weight:700;color:#d1d5db;min-width:84px;text-align:center}
+.mg-pg{margin:0 auto;width:var(--mw,74%);max-width:680px;display:flex;flex-direction:column;gap:6px;padding:8px 0 10px}
+.mg-pg img{width:100%;height:auto;display:block;border-radius:3px}
