@@ -4,7 +4,7 @@
               Saat dijadikan APK (file lokal), isi dengan alamat Vercel-mu, contoh 'https://alltools-six.vercel.app'
    ============================================================ */
 const CONFIG = {
-  VERSION: '3.24.0',
+  VERSION: '3.24.1',
   API_BASE: '',
   ADMIN_WA: '6281563426001',
   ASSETS: {
