@@ -44,6 +44,7 @@ const Online = {
     }
   },
   open() {
+    if (!App.isDev()) { UI.toast('Fitur ini khusus Developer.', 'err'); return; }
     Sheet.open({ id: 'online', title: 'Yang Online', icon: 'fa-signal', grad: 'linear-gradient(135deg,#22c55e,#15803d)', onClose: () => { clearInterval(this.timer); },
       body: `<div class="on-hd"><span class="on-big"><i class="on-dot on"></i><b id="on-n">–</b> sedang online</span></div>
       <div class="seg" style="display:flex;gap:6px"><button class="chip on" id="on-t1" type="button">Online</button><button class="chip" id="on-t2" type="button">Terakhir aktif</button></div>
@@ -56,4 +57,4 @@ const Online = {
     this.tab = 'on'; this.draw(); clearInterval(this.timer); this.timer = setInterval(() => this.draw(), 15000);
   }
 };
-Features.reg({ id: 'online', name: 'Yang Online', cat: 'sosmed', icon: 'fa-signal', grad: 'linear-gradient(135deg,#22c55e,#15803d)', open: () => Online.open() });
+Features.reg({ id: 'online', name: 'Yang Online', cat: 'sosmed', devOnly: true, icon: 'fa-signal', grad: 'linear-gradient(135deg,#22c55e,#15803d)', open: () => Online.open() });
