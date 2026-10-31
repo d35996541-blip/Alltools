@@ -40,9 +40,20 @@ const Push = {
   async prune(me) { const d = await FB.request('wa/ps/' + me, null, 'GET', undefined, 8000).catch(() => null), es = Object.entries(d || {}).sort((a, b) => ((b[1] && b[1].ts) || 0) - ((a[1] && a[1].ts) || 0)); await Promise.all(es.slice(3).map(([id]) => FB.request(`wa/ps/${me}/${id}`, null, 'DELETE').catch(() => {}))); },
   async dropEndpoint(me, ep) { const d = await FB.request('wa/ps/' + me, null, 'GET', undefined, 8000).catch(() => null); await Promise.all(Object.entries(d || {}).filter(([, x]) => x && x.e === ep).map(([id]) => FB.request(`wa/ps/${me}/${id}`, null, 'DELETE').catch(() => {}))); },
   async enable() { LS.set('push_on', 1); try { await this.sync(true); return true; } catch (e) { throw e; } },
-  async disable() { LS.set('push_on', 0); await this.forget(); try { const r = await navigator.serviceWorker.getRegistration(), s = r && await r.pushManager.getSubscription(); if (s) await s.unsubscribe(); } catch (e) {} },
-  async forget() { const p = LS.get('push_id'); if (!p || !p.id) return; try { await Promise.race([FB.request(`wa/ps/${p.u}/${p.id}`, null, 'DELETE'), sleep(3500)]); } catch (e) {} LS.del('push_id'); },
-  auto() { if (this.enabled()) setTimeout(() => this.sync(false).catch(() => {}), 2500); },
+  async disable() { LS.set('push_on', 0); this.mirror(true); await this.forget(); try { const r = await navigator.serviceWorker.getRegistration(), s = r && await r.pushManager.getSubscription(); if (s) await s.unsubscribe(); } catch (e) {} },
+  async forget() { this.mirror(true); const p = LS.get('push_id'); if (!p || !p.id) return; try { await Promise.race([FB.request(`wa/ps/${p.u}/${p.id}`, null, 'DELETE'), sleep(3500)]); } catch (e) {} LS.del('push_id'); },
+
+  /* salin data sesi ke IndexedDB supaya service worker bisa membalas chat dari notifikasi walau web ditutup */
+  idb() { return new Promise((ok, no) => { const r = indexedDB.open('dz-sw', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); },
+  async mirror(clear) {
+    try {
+      const db = await this.idb(), tx = db.transaction('kv', 'readwrite'), st = tx.objectStore('kv');
+      if (clear || !App.user || !FB.st.refresh || FB.mode !== 'firebase') st.delete('creds');
+      else st.put({ u: App.user.username, key: this.me(), name: (window.WA && WA.myName) ? WA.myName() : App.user.username, refresh: FB.st.refresh, apiKey: FB.cfg().apiKey, db: FB.st.dbUrl, api: String(CONFIG.API_BASE || '').replace(/\/+$/, ''), ts: Date.now() }, 'creds');
+      await new Promise(ok => { tx.oncomplete = tx.onerror = tx.onabort = ok; }); db.close();
+    } catch (e) {}
+  },
+  auto() { if (this.enabled()) setTimeout(() => this.mirror(), 3000); if (this.enabled()) setTimeout(() => this.sync(false).catch(() => {}), 2500); },
 
   /* kirim notifikasi ke daftar pengguna (dipanggil setelah pesan berhasil terkirim) */
   async notify(keys, p) {
@@ -89,3 +100,4 @@ const Push = {
 };
 Push.init();
 (function () { const e1 = App.enter; App.enter = async function (f) { const r = await e1.call(this, f); try { Push.afterEnter(); } catch (x) {} return r; }; })();
+setInterval(() => { try { if (App.user && Push.enabled()) Push.mirror(); } catch (e) {} }, 10 * 60000);
