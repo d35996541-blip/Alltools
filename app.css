@@ -751,3 +751,22 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 .sheet>.panel:not(.wap) .searchbar input::placeholder{color:#94a3b8}
 .sheet>.panel:not(.wap) .tabs .chip:not(.on){background:#fff;color:var(--ink);border-color:var(--line)}
 .sheet>.panel:not(.wap) .muted{color:var(--mut);text-shadow:none}
+
+/* ===== VN gaya WhatsApp ===== */
+.wa-vn{display:flex;align-items:center;gap:6px;width:min(272px,70vw);padding:2px 0 0;margin:0 0 2px;user-select:none;-webkit-user-select:none}
+.wa-vn audio{display:none!important}
+.wa-vn-av{position:relative;flex:none;width:40px;height:40px;order:3;margin-left:2px}
+.wa-vn-av .wa-av{width:40px;height:40px}
+.wa-vn-mic{position:absolute;right:-5px;bottom:-2px;font-size:11px;color:#54656f;filter:drop-shadow(0 0 2px var(--wme))}
+.wa-b:not(.me) .wa-vn-mic{color:var(--wg1)}
+.wa-vn-p{flex:none;order:1;width:34px;height:34px;border:0;background:transparent;color:#54656f;font-size:21px;display:grid;place-items:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+.wa-vn-c{order:2;flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.wa-vn-w{position:relative;height:30px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.wa-vn-bars{display:flex;align-items:center;gap:2px;width:100%;height:100%}
+.wa-vn-bars u{flex:1;min-width:1.5px;border-radius:2px;background:rgba(84,101,111,.42);text-decoration:none;transition:background .1s}
+.wa-vn-bars u.on{background:#54656f}
+.wa-vn-dot{position:absolute;top:50%;left:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#54656f;box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:none}
+.wa-vn-t{font-size:11px;font-weight:600;color:var(--wmu);line-height:1}
+.dk .wa-vn-p,.dk .wa-vn-bars u.on,.dk .wa-vn-dot{color:#aebac1;background-color:transparent}
+.dk .wa-vn-bars u.on{background:#aebac1}.dk .wa-vn-dot{background:#aebac1}.dk .wa-vn-bars u{background:rgba(174,186,193,.4)}
+.dk .wa-vn-mic{color:#aebac1}

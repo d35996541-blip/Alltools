@@ -19,7 +19,36 @@ const WA = {
   isV(k) { return !!this.S.vf[k] || this.S.rl[k] === 'developer'; },
   nm(k, n) { return esc((!/^[gc]:/.test(k) && this.S.dn[k]) || n || this.uname(k)) + (this.isV(k) ? this.TK : ''); },
   hue(s) { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; },
-  mt: (ty, id) => ty === 'v' ? `<video data-im="${esc(id)}" controls playsinline preload="metadata"></video>` : ty === 'a' ? `<audio data-im="${esc(id)}" controls preload="metadata"></audio>` : `<img data-im="${esc(id)}" alt="">`,
+  mt(ty, id, k) {
+    if (ty === 'v') return `<video data-im="${esc(id)}" controls playsinline preload="metadata"></video>`;
+    if (ty === 'a') {
+      let h = 7; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+      const bars = Array.from({ length: 38 }, (_, i) => { h = (h * 1664525 + 1013904223) >>> 0; const w = Math.sin(i / 37 * Math.PI) * .45 + .55; return `<u style="height:${Math.round(18 + (h % 82) * w * .8)}%"></u>`; }).join('');
+      const av = k ? this.avatar(k, this.uname(k), 40) : '<span class="wa-av" style="--s:40px;--h:150"><i class="fa-solid fa-user"></i></span>';
+      return `<div class="wa-vn" data-vn="1"><span class="wa-vn-av">${av}<i class="fa-solid fa-microphone wa-vn-mic"></i></span><button type="button" class="wa-vn-p" aria-label="Putar VN"><i class="fa-solid fa-play"></i></button><div class="wa-vn-c"><div class="wa-vn-w"><div class="wa-vn-bars">${bars}</div><i class="wa-vn-dot"></i></div><span class="wa-vn-t">0:00</span></div><audio data-im="${esc(id)}" preload="metadata"></audio></div>`;
+    }
+    return `<img data-im="${esc(id)}" alt="">`;
+  },
+  vnInit(a) {
+    const r = a.closest('.wa-vn'); if (!r || r.dataset.ok) return; r.dataset.ok = 1;
+    const btn = r.querySelector('.wa-vn-p'), ic = btn.querySelector('i'), w = r.querySelector('.wa-vn-w'), bars = [...r.querySelectorAll('.wa-vn-bars u')], dot = r.querySelector('.wa-vn-dot'), tm = r.querySelector('.wa-vn-t');
+    const fmt = x => { x = Math.max(0, Math.floor(x || 0)); return Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0'); };
+    let dur = 0, drag = false;
+    const getDur = () => (isFinite(a.duration) && a.duration > 0) ? a.duration : dur;
+    const paint = () => { const d = getDur(), p = d ? Math.min(1, a.currentTime / d) : 0; bars.forEach((b, i) => b.classList.toggle('on', (i + .5) / bars.length <= p)); dot.style.left = (p * 100) + '%'; tm.textContent = fmt(a.paused && !a.currentTime ? d : a.currentTime); };
+    a.addEventListener('loadedmetadata', () => { if (a.duration === Infinity || isNaN(a.duration)) { const f = () => { a.removeEventListener('timeupdate', f); dur = a.duration; a.currentTime = 0; paint(); }; a.addEventListener('timeupdate', f); try { a.currentTime = 1e101; } catch (e) {} } else { dur = a.duration; paint(); } });
+    a.addEventListener('durationchange', () => { if (isFinite(a.duration)) { dur = a.duration; paint(); } });
+    a.addEventListener('timeupdate', () => { if (!drag) paint(); });
+    a.addEventListener('play', () => { document.querySelectorAll('.wa-vn audio').forEach(x => { if (x !== a && !x.paused) x.pause(); }); ic.className = 'fa-solid fa-pause'; });
+    a.addEventListener('pause', () => { ic.className = 'fa-solid fa-play'; });
+    a.addEventListener('ended', () => { ic.className = 'fa-solid fa-play'; a.currentTime = 0; paint(); });
+    btn.onclick = e => { e.stopPropagation(); if (!a.src) return; a.paused ? a.play().catch(() => {}) : a.pause(); };
+    const seek = e => { const b = w.getBoundingClientRect(), p = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width)), d = getDur(); if (d) { a.currentTime = p * d; paint(); } };
+    w.onpointerdown = e => { e.stopPropagation(); drag = true; try { w.setPointerCapture(e.pointerId); } catch (x) {} seek(e); };
+    w.onpointermove = e => { if (drag) seek(e); };
+    w.onpointerup = w.onpointercancel = () => { drag = false; };
+    paint();
+  },
   errMsg: e => e.permission ? 'Ditolak Firebase — tempel Rules terbaru (firebase-rules-tambahan.json) lalu Publish' : (e.message === 'format' ? 'Format gambar tidak didukung' : e.message === 'besar' ? 'Gambar terlalu besar' : e.message || 'Gagal'),
   avatar(k, n, sz = 46, ex = '') { return `<span class="wa-av ${ex}" data-k="${esc(k)}" style="--s:${sz}px;--h:${this.hue(k)}">${String(k).startsWith('g:') ? '<i class="fa-solid fa-user-group"></i>' : String(k).startsWith('c:') ? '<i class="fa-solid fa-bullhorn"></i>' : esc(String(n || k).charAt(0).toUpperCase())}</span>`; },
   avGet(k) { if (this.av.has(k)) return Promise.resolve(this.av.get(k)); const key = 'a' + k; if (!this.pend.has(key)) this.pend.set(key, this.rq('wa/av/' + k, null, 'GET', undefined, 9000).then(v => { v = typeof v === 'string' && Chat.RE_IMG.test(v) ? v : null; this.av.set(k, v); return v; }).catch(() => null).finally(() => this.pend.delete(key))); return this.pend.get(key); },
@@ -30,7 +59,7 @@ const WA = {
   async media(el) {
     el.dataset.d = 1; const id = el.dataset.im; let v = this.md.get(id);
     if (!v) { try { v = await this.rq('wa/md/' + id, null, 'GET', undefined, 30000); if (typeof v === 'string' && /^data:(image|video|audio)\//.test(v)) this.md.set(id, v); else v = null; } catch (e) { v = null; } }
-    if (!el.isConnected) return; if (v) { el.src = v; if (el.tagName === 'IMG' && !el.closest('[data-nolb]')) el.onclick = () => Chat.view(v); } else el.alt = 'Media tidak tersedia';
+    if (!el.isConnected) return; if (v) { el.src = v; if (el.tagName === 'AUDIO') this.vnInit(el); if (el.tagName === 'IMG' && !el.closest('[data-nolb]')) el.onclick = () => Chat.view(v); } else el.alt = 'Media tidak tersedia';
   },
   beep() { if (!LS.get('wa_snd', 1)) return; try { const a = this.ac || (this.ac = new (window.AudioContext || window.webkitAudioContext)()), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.0001, a.currentTime); g.gain.exponentialRampToValueAtTime(.18, a.currentTime + .02); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .35); o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + .4); } catch (e) {} },
   async users(force) { if (!force && this.S.users.length && Date.now() - (this.S.ut || 0) < 60000) return this.S.users; const l = await FB.listUsers(); this.S.dn = (await this.rq('wa/dn').catch(() => null)) || this.S.dn; this.S.users = l; this.S.ut = Date.now(); l.forEach(u => { const k = userKey(u.username); this.S.um[k] = u.username; this.S.rl[k] = String(u.role).toLowerCase(); }); return l; },
@@ -142,7 +171,7 @@ const WA = {
         $('wc-ti').onclick = () => g ? this.ginfo() : this.profile(id, C.name);
         if (!g) { $('wc-ca').onclick = () => this.startCall('a'); $('wc-cv').onclick = () => this.startCall('v'); }
         $('wc-mn').onclick = e => { e.stopPropagation(); const fv = [this.fav()[id] ? 'Hapus dari favorit' : 'Favoritkan', () => this.togFav(id)]; this.pop(e.currentTarget, g ? [['Info grup', () => this.ginfo()], fv, ['Keluar grup', () => this.leave()]] : [['Lihat profil', () => this.profile(id, C.name)], fv, ['Blokir', () => this.block(id)], ['Cek Rules', () => this.diag()], ['Hapus dari daftar', async () => { await this.rq(`wa/ib/${me}/${id}`, null, 'DELETE').catch(() => {}); Sheet.close('wac'); this.pollIb(); }]]); };
-        $('wc-l').onclick = e => { const b = e.target.closest('.wa-b'); if (!b || e.target.closest('img,video,audio,.wa-act')) return; const was = b.classList.contains('sel'); document.querySelectorAll('.wa-b.sel').forEach(x => x.classList.remove('sel')); if (!was) b.classList.add('sel'); };
+        $('wc-l').onclick = e => { const b = e.target.closest('.wa-b'); if (!b || e.target.closest('img,video,audio,.wa-vn,.wa-act')) return; const was = b.classList.contains('sel'); document.querySelectorAll('.wa-b.sel').forEach(x => x.classList.remove('sel')); if (!was) b.classList.add('sel'); };
         $('wc-l').addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; const b = a.closest('.wa-b'), m = C.msgs.find(x => x.id === b.dataset.id); if (!m) return; if (a.dataset.a === 'c') copyText(m.t || ''); else this.del(m); });
         this.pollC(true); clearInterval(C.t); C.t = setInterval(() => { if (!document.hidden) this.pollC(); }, 2000);
       } });
@@ -165,7 +194,7 @@ const WA = {
     l.innerHTML = C.msgs.length ? C.msgs.map(m => {
       const mine = m.k === me, d = Chat.dayLabel(m.ts), sep = d !== day ? (day = d, `<div class="ch-day"><span>${d}</span></div>`) : '', can = mine || App.isDev() || (C.g && C.info && C.info.m && C.info.m[me] === 'a');
       const st = !mine ? '' : m.pending ? '<i class="fa-regular fa-clock"></i>' : !C.g && m.ts <= C.prd ? '<i class="fa-solid fa-check-double rd"></i>' : '<i class="fa-solid fa-check"></i>';
-      return `${sep}<div class="wa-b ${mine ? 'me' : ''}" data-id="${esc(m.id)}">${C.g && !mine ? `<b class="wa-sn" style="--h:${this.hue(m.k)}">${this.nm(m.k)}</b>` : ''}${m.im ? this.mt(m.ty, m.im) : ''}${m.t ? `<span class="selectable">${esc(m.t).replace(/\n/g, '<br>')}</span>` : ''}<small>${this.hm(m.ts)} ${st}</small><span class="wa-act">${m.t ? '<button data-a="c"><i class="fa-regular fa-copy"></i> Salin</button>' : ''}${can && !m.pending ? '<button data-a="d"><i class="fa-regular fa-trash-can"></i> Hapus</button>' : ''}</span></div>`;
+      return `${sep}<div class="wa-b ${mine ? 'me' : ''}" data-id="${esc(m.id)}">${C.g && !mine ? `<b class="wa-sn" style="--h:${this.hue(m.k)}">${this.nm(m.k)}</b>` : ''}${m.im ? this.mt(m.ty, m.im, m.k) : ''}${m.t ? `<span class="selectable">${esc(m.t).replace(/\n/g, '<br>')}</span>` : ''}<small>${this.hm(m.ts)} ${st}</small><span class="wa-act">${m.t ? '<button data-a="c"><i class="fa-regular fa-copy"></i> Salin</button>' : ''}${can && !m.pending ? '<button data-a="d"><i class="fa-regular fa-trash-can"></i> Hapus</button>' : ''}</span></div>`;
     }).join('') : emptyHtml('fa-comment-dots', 'Belum ada pesan.<br>Sapa dulu yuk 👋');
     this.hydrate(l); if (near || force) body.scrollTop = body.scrollHeight;
   },

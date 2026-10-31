@@ -9,7 +9,7 @@ const CONFIG = {
   ADMIN_WA: '6281563426001',
   ASSETS: {
     LOGIN_VIDEO: 'https://files.catbox.moe/hnfdro.mp4',
-    INTRO_VIDEO: 'https://files.catbox.moe/96bxec.mp4',
+    INTRO_VIDEO: 'https://files.catbox.moe/bm9jqf.mp4',
     BGM: 'https://files.catbox.moe/r4yjpe.mp3',
     ADZAN: ['https://cdn.aladhan.com/audio/adhans/a1.mp3', 'https://www.islamcan.com/audio/adhan/azan1.mp3', 'https://files.catbox.moe/mh6pyz.mpeg'],
     DEFAULT_WALLPAPER_VIDEO: 'https://files.catbox.moe/m5x2pf.mp4'
