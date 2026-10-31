@@ -100,7 +100,7 @@ const FB = {
     this.setAuth(auth);
     let prof = await this.request('users/' + this.st.uid).catch(e => { if (e.permission) throw Object.assign(new Error('rules'), { userMessage: 'Aturan database menolak akses. Publikasikan Rules Firebase (lihat PANDUAN.md).' }); throw e; });
     if (!prof) {
-      prof = { u: username, k: key, role: key === this.devKey() ? 'Developer' : 'Gratis', created: Date.now() };
+      prof = { u: username, k: key, role: 'Gratis', created: Date.now() };
       try { await this.request('users/' + this.st.uid, null, 'PUT', prof); } catch (e) { throw Object.assign(new Error('profil'), { userMessage: 'Aturan database menolak pembuatan profil. Publikasikan Rules Firebase.' }); }
     }
     try { if ((await this.request('keys/' + key)) == null) await this.request('keys/' + key, null, 'PUT', this.st.uid); } catch (e) {}
@@ -133,7 +133,7 @@ const LocalAuth = {
   users() { return LS.get('users', []); },
   login(username, password, mode) {
     const us = this.users(), key = userKey(username), h = sha256Hex(`local|${key}|${password}`), f = us.find(u => u.k === key);
-    if (mode === 'register') { if (f) throw Object.assign(new Error('taken'), { userMessage: 'Username ini sudah dipakai.' }); const u = { u: username, k: key, h, role: key === FB.devKey() ? 'Developer' : 'Gratis', created: Date.now() }; us.push(u); LS.set('users', us); return { user: u, created: true, session: { username, role: u.role } }; }
+    if (mode === 'register') { if (f) throw Object.assign(new Error('taken'), { userMessage: 'Username ini sudah dipakai.' }); const u = { u: username, k: key, h, role: 'Gratis', created: Date.now() }; us.push(u); LS.set('users', us); return { user: u, created: true, session: { username, role: u.role } }; }
     if (!f || f.h !== h) throw Object.assign(new Error('wrong'), { userMessage: 'Username atau kata sandi salah.' });
     return { user: f, created: false, session: { username: f.u, role: f.role } };
   }

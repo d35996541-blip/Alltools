@@ -4,7 +4,7 @@
               Saat dijadikan APK (file lokal), isi dengan alamat Vercel-mu, contoh 'https://alltools-six.vercel.app'
    ============================================================ */
 const CONFIG = {
-  VERSION: '3.23.0',
+  VERSION: '3.24.0',
   API_BASE: '',
   ADMIN_WA: '6281563426001',
   ASSETS: {
@@ -22,6 +22,6 @@ const CONFIG = {
     messagingSenderId: '1044798503810',
     appId: '1:1044798503810:web:d27296afef813bd6b4ad9b',
     databaseURL: 'https://dimzzproject-40f14-default-rtdb.firebaseio.com',
-    devUsername: 'dimzz'   // akun dengan username ini otomatis menjadi Developer saat pertama mendaftar
+    devUsername: 'dimzz'   // identitas username Developer yang sudah diberi role tepercaya; pendaftaran tidak memberi role otomatis
   }
 };

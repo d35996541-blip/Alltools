@@ -47,8 +47,16 @@ const Chat = {
   async poll(first) {
     if (this.busy) return; this.busy = true;
     try {
-      const d = await FB.request('chat/global', { orderBy: '$key', limitToLast: 80 }, 'GET', undefined, 9000);
+      const d = await FB.request('chat/global', { orderBy: '$key', limitToLast: 120 }, 'GET', undefined, 9000);
       this.msgs = Object.entries(d || {}).map(([id, m]) => ({ id, ...m })).filter(m => m && (m.t || m.s || m.im)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      /* Batas retensi: ketika Developer sedang aktif, rapikan pesan tertua agar database tidak tumbuh tanpa batas. */
+      if (App.isDev() && Object.keys(d || {}).length > 80) {
+        const stale = Object.entries(d || {}).sort((a,b) => (a[1].ts || 0) - (b[1].ts || 0)).slice(0, Object.keys(d).length - 80);
+        if (stale.length) { /* Hapus pesan lewat node masing-masing; media yatim dibersihkan terpisah. */
+          await Promise.all(stale.map(async ([id, m]) => { await FB.request('chat/global/' + id, null, 'DELETE').catch(() => {}); if (m && m.im) await FB.request('chatimg/' + m.im, null, 'DELETE').catch(() => {}); }));
+        }
+      }
+      this.msgs = this.msgs.slice(-80);
       const live = $('ch-live'); if (live) { live.firstElementChild.className = 'dot-ok'; live.style.opacity = 1; }
       this.render(first);
       if (first || (this.pc = (this.pc || 0) + 1) % 6 === 0) this.pinLoad();
