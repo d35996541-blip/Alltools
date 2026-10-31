@@ -79,43 +79,43 @@ const Intro = {
   active: false, finish: null,
   /* layar penuh sungguhan (bila didukung browser) — harus dipanggil dari ketukan pengguna */
   fs(on) { try { const d = document, el = d.documentElement; if (on) { if (!d.fullscreenElement && !d.webkitFullscreenElement) { const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen(); if (r && r.catch) r.catch(() => {}); } } else if (d.fullscreenElement || d.webkitFullscreenElement) { const r = d.exitFullscreen ? d.exitFullscreen() : d.webkitExitFullscreen && d.webkitExitFullscreen(); if (r && r.catch) r.catch(() => {}); } } catch (e) {} },
-  p: null,
-  /* Mulai SEKETIKA saat tombol Masuk diketuk (browser mengizinkan video bersuara hanya dari ketukan). Login berjalan di belakangnya.
-     Bila video utama gagal dimuat/diputar, otomatis mencoba ulang lalu memakai video cadangan — jadi animasi tetap berjalan. */
-  start() {
-    if (this.active && this.p) return this.p;
-    const ov = $('intro'), v = $('intro-video'), A = CONFIG.ASSETS, srcs = [A.INTRO_VIDEO, A.INTRO_VIDEO + (A.INTRO_VIDEO.includes('?') ? '&' : '?') + 'r=' + Date.now(), A.INTRO_FALLBACK].filter(Boolean);
-    this.active = true; Sound.play('intro'); this.fs(true);
-    this.p = new Promise(resolve => {
-      let idx = -1, seen = false, wd = null;
-      const done = () => { if (!this.active) return; this.active = false; clearTimeout(wd); v.onended = v.onerror = v.onplaying = v.ontimeupdate = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); Intro.p = null; resolve(); };
-      const next = () => { if (!this.active) return; if (idx >= srcs.length - 1) { try { UI.toast('Video intro tidak bisa dimuat', 'warn'); } catch (e) {} return done(); } attempt(idx + 1); };
+  /* Dipanggil dari ketukan Masuk: memanaskan video (diam & tanpa suara) supaya langsung siap saat tiba gilirannya setelah animasi centang. */
+  prime() { const v = $('intro-video'); if (!v || this.active) return; this.fs(true); try { v.muted = true; v.loop = false; const p = v.play(); const back = () => { if (!this.active) { try { v.pause(); v.currentTime = 0; } catch (e) {} } }; if (p && p.then) p.then(back).catch(() => {}); } catch (e) {} },
+  msg(t) { const m = $('intro-msg'); if (!m) return; m.textContent = t || ''; m.classList.toggle('hidden', !t); },
+  /* Diputar otomatis (dengan suara) setelah animasi centang berhasil-login, layar penuh. Gagal muat → coba ulang sekali → tampilkan alasannya lalu lanjut ke dasbor. */
+  play() {
+    return new Promise(resolve => {
+      const ov = $('intro'), v = $('intro-video'), A = CONFIG.ASSETS, srcs = [A.INTRO_VIDEO, A.INTRO_VIDEO + (A.INTRO_VIDEO.includes('?') ? '&' : '?') + 'r=' + Date.now()];
+      this.active = true; Sound.play('intro'); this.fs(true);
+      let idx = -1, seen = false, last = Date.now(), wd = null, ld = null;
+      const done = () => { if (!this.active) return; this.active = false; clearInterval(wd); clearTimeout(ld); v.onended = v.onerror = v.onplaying = v.ontimeupdate = v.onprogress = v.onloadeddata = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); this.msg(''); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); resolve(); };
+      const fail = () => { if (!this.active) return; clearInterval(wd); $('intro-tap').classList.add('hidden'); const c = v.error ? v.error.code : 0; this.msg('Video intro gagal dimuat' + (c ? ' (kode ' + c + (c === 4 ? ': format/alamat tidak didukung' : c === 3 ? ': gagal diputar' : c === 2 ? ': jaringan' : '') + ')' : '') + '. Melanjutkan…'); setTimeout(done, 3500); };
+      const next = () => { if (!this.active) return; if (idx >= srcs.length - 1) return fail(); attempt(idx + 1); };
       const attempt = i => {
-        idx = i; seen = false; clearTimeout(wd);
+        idx = i; seen = false; last = Date.now(); clearInterval(wd); clearTimeout(ld);
         if (i > 0 || v.error || v.networkState === 3 || v.getAttribute('src') !== srcs[0]) { v.src = srcs[i]; try { v.load(); } catch (e) {} }
-        v.loop = false; v.muted = false; v.volume = 1;
-        wd = setTimeout(() => { if (!seen && this.active && i === idx && $('intro-tap').classList.contains('hidden')) next(); }, 12000);
-        const bad = (er, me) => { if (!this.active || i !== idx) return true; if (er && er.name === 'NotSupportedError') { next(); return true; } return !!(er && er.name === 'AbortError'); };
+        try { v.currentTime = 0; } catch (e) {} v.loop = false; v.muted = false; v.volume = 1;
+        ld = setTimeout(() => { if (!seen && this.active && i === idx && $('intro-tap').classList.contains('hidden')) this.msg('Memuat video…'); }, 900);
+        wd = setInterval(() => { if (!seen && this.active && i === idx && $('intro-tap').classList.contains('hidden') && Date.now() - last > 20000) next(); }, 2000);
+        const bad = er => { if (!this.active || i !== idx) return true; if (er && er.name === 'NotSupportedError') { next(); return true; } return !!(er && er.name === 'AbortError'); };
         const p = v.play();
         if (p && p.catch) p.catch(er => {
           if (bad(er)) return;
           v.muted = true; const q = v.play();
-          if (q && q.catch) q.catch(er2 => { if (bad(er2)) return; $('intro-tap').classList.remove('hidden'); });
+          if (q && q.catch) q.catch(er2 => { if (bad(er2)) return; this.msg(''); $('intro-tap').classList.remove('hidden'); });
           const un = () => { document.removeEventListener('pointerdown', un, true); v.muted = false; v.volume = 1; }; document.addEventListener('pointerdown', un, true);
         });
       };
       this.finish = done; ov.classList.remove('hidden'); document.body.classList.add('no-scroll'); $('intro-bar').style.width = '0';
       v.onended = done; v.onerror = () => { if (this.active) next(); };
-      v.ontimeupdate = () => { if (v.duration) $('intro-bar').style.width = (v.currentTime / v.duration * 100) + '%'; };
-      v.onplaying = () => { seen = true; clearTimeout(wd); $('intro-tap').classList.add('hidden'); };
+      v.onprogress = v.onloadeddata = () => { last = Date.now(); };
+      v.ontimeupdate = () => { last = Date.now(); if (v.duration) $('intro-bar').style.width = (v.currentTime / v.duration * 100) + '%'; };
+      v.onplaying = () => { seen = true; clearTimeout(ld); this.msg(''); $('intro-tap').classList.add('hidden'); };
       $('intro-tap').onclick = () => { v.muted = false; v.volume = 1; const q = v.play(); if (q && q.then) q.then(() => $('intro-tap').classList.add('hidden')).catch(() => next()); };
       $('intro-skip').onclick = done;
       attempt(0);
     });
-    return this.p;
   },
-  play() { return this.start(); },
-  prime() { this.start(); },
   abort() { if (this.active && this.finish) this.finish(); }
 };
 
@@ -175,7 +175,7 @@ const App = {
     if (!NAME_RE.test(username)) return this.authErr(NAME_HELP);
     if (pw.length < 4) return this.authErr('Kata sandi minimal 4 karakter.');
     if (reg && pw !== $('a-pass2').value) return this.authErr('Konfirmasi kata sandi tidak sama.');
-    this.authErr(''); this.busy = true; this.ip = Intro.start();
+    this.authErr(''); this.busy = true; Intro.prime();
     const btn = $('a-submit'); const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch spin"></i><span>Memproses…</span>';
     try {
       const r = FB.mode === 'firebase' ? await FB.login(username, pw, this.mode) : LocalAuth.login(username, pw, this.mode);
@@ -184,7 +184,7 @@ const App = {
       { const ban = await Ban.get(userKey(this.user.username)); if (ban && !this.isDev()) { Intro.abort(); this.hideAuth(); this.showBan(ban); return; } }
       await this.welcome(r.created);
       this.hideAuth();
-      await this.ip;
+      await Intro.play();
       await this.enter(true);
     } catch (e) {
       Intro.abort();

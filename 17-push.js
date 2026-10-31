@@ -21,14 +21,14 @@ const Push = {
   me: () => userKey(App.user.username),
 
   /* daftarkan perangkat ini untuk akun yang sedang masuk */
-  async sync(ask) {
+  async sync(ask, force) {
     if (!this.ok()) throw new Error(this.why());
     if (FB.mode !== 'firebase' || !FB.st.idToken) throw new Error('Butuh koneksi Firebase');
     if (this.perm() === 'default' && ask) await Notification.requestPermission();
     if (this.perm() !== 'granted') throw Object.assign(new Error(this.perm() === 'denied' ? 'Izin notifikasi diblokir. Buka pengaturan situs di browser lalu izinkan Notifikasi.' : 'Izin notifikasi belum diberikan'), { denied: 1 });
     const reg = await this.reg(), j0 = await API.get('push', { a: 'key' }, 15000), want = this.b64(j0.key);
     let sub = await reg.pushManager.getSubscription();
-    if (sub && LS.get('push_vk') !== j0.key) { await sub.unsubscribe().catch(() => {}); sub = null; } /* kunci server berubah → langganan lama ditolak */
+    if (sub && (force || LS.get('push_vk') !== j0.key)) { await sub.unsubscribe().catch(() => {}); sub = null; } /* kunci server berubah → langganan lama ditolak */
     if (sub) { const have = new Uint8Array((sub.options && sub.options.applicationServerKey) || []); if (have.length && (have.length !== want.length || have.some((v, i) => v !== want[i]))) { await sub.unsubscribe().catch(() => {}); sub = null; } }
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
     const j = sub.toJSON(); if (!j.endpoint || !j.keys) throw new Error('Langganan tidak lengkap');
@@ -50,7 +50,7 @@ const Push = {
       if (subs.length) await API.post('push', { token: await FB.token(), subs: subs.slice(0, 25), p }, 15000);
     } catch (e) {}
   },
-  async test() { await this.sync(true); const me = this.me(); const r = await API.post('push', { token: await FB.token(), subs: await this.mine(), p: { t: 'DimzzChat', b: 'Tes notifikasi berhasil ✅ Kamu akan menerima pesan seperti ini walau web ditutup.', c: me, n: 'DimzzChat', k: 'test' } }, 15000); if (!r.sent) { const w = (r.why && r.why[0]) || null; throw new Error(w ? 'Ditolak layanan notifikasi: HTTP ' + w.status + (w.detail ? ' · ' + w.detail : '') : 'Tidak ada langganan perangkat yang tersimpan — matikan lalu aktifkan lagi notifikasinya'); } return r; },
+  async test() { await this.sync(true, true); const me = this.me(); const r = await API.post('push', { token: await FB.token(), subs: await this.mine(), p: { t: 'DimzzChat', b: 'Tes notifikasi berhasil ✅ Kamu akan menerima pesan seperti ini walau web ditutup.', c: me, n: 'DimzzChat', k: 'test' } }, 15000); if (!r.sent) { const w = (r.why && r.why[0]) || null; throw new Error(w ? 'Ditolak layanan notifikasi: HTTP ' + w.status + (w.detail ? ' · ' + w.detail : '') : 'Tidak ada langganan perangkat yang tersimpan — matikan lalu aktifkan lagi notifikasinya'); } return r; },
   async mine() { const d = await FB.request('wa/ps/' + this.me(), null, 'GET', undefined, 8000).catch(() => null); return Object.values(d || {}).filter(x => x && x.e).map(x => ({ endpoint: x.e, keys: { p256dh: x.p, auth: x.a } })); },
 
   /* ketuk notifikasi → buka chat-nya */
