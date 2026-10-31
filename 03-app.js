@@ -79,23 +79,29 @@ const Intro = {
   active: false, finish: null,
   /* layar penuh sungguhan (bila didukung browser) — harus dipanggil dari ketukan pengguna */
   fs(on) { try { const d = document, el = d.documentElement; if (on) { if (!d.fullscreenElement && !d.webkitFullscreenElement) { const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen(); if (r && r.catch) r.catch(() => {}); } } else if (d.fullscreenElement || d.webkitFullscreenElement) { const r = d.exitFullscreen ? d.exitFullscreen() : d.webkitExitFullscreen && d.webkitExitFullscreen(); if (r && r.catch) r.catch(() => {}); } } catch (e) {} },
-  prime() { const v = $('intro-video'); if (!v || this.active) return; this.fs(true); v.muted = false; v.volume = 0; const p = v.play(); const back = () => { if (!this.active) { try { v.pause(); v.currentTime = 0; } catch (e) {} v.volume = 1; } }; if (p && p.then) p.then(back).catch(() => { v.volume = 1; }); },
-  play() {
-    return new Promise(resolve => {
-      const ov = $('intro'), v = $('intro-video'); this.active = true; Sound.play('intro');
+  p: null,
+  /* Mulai SEKETIKA saat tombol Masuk diketuk (browser mengizinkan video bersuara hanya dari ketukan). Login berjalan di belakangnya. */
+  start() {
+    if (this.active && this.p) return this.p;
+    const ov = $('intro'), v = $('intro-video'); this.active = true; Sound.play('intro'); this.fs(true);
+    this.p = new Promise(resolve => {
       let seen = false, timer;
-      const done = () => { if (!this.active) return; this.active = false; clearTimeout(timer); v.onended = v.onerror = v.onplaying = v.ontimeupdate = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); resolve(); };
+      const done = () => { if (!this.active) return; this.active = false; clearTimeout(timer); v.onended = v.onerror = v.onplaying = v.ontimeupdate = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); Intro.p = null; resolve(); };
       this.finish = done; ov.classList.remove('hidden'); document.body.classList.add('no-scroll');
-      try { v.currentTime = 0; } catch (e) {} v.muted = false; v.volume = 1; $('intro-bar').style.width = '0';
+      try { v.currentTime = 0; } catch (e) {} v.loop = false; v.muted = false; v.volume = 1; $('intro-bar').style.width = '0';
       v.onended = done; v.onerror = done;
       v.ontimeupdate = () => { if (v.duration) $('intro-bar').style.width = (v.currentTime / v.duration * 100) + '%'; };
       v.onplaying = () => { seen = true; clearTimeout(timer); $('intro-tap').classList.add('hidden'); };
       const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => $('intro-tap').classList.remove('hidden')); const un = () => { document.removeEventListener('pointerdown', un, true); v.muted = false; v.volume = 1; }; document.addEventListener('pointerdown', un, true); });
       $('intro-tap').onclick = () => { v.muted = false; v.volume = 1; v.play().then(() => $('intro-tap').classList.add('hidden')).catch(() => {}); };
       $('intro-skip').onclick = done;
-      timer = setTimeout(() => { if (!seen && $('intro-tap').classList.contains('hidden')) done(); }, 15000);
+      timer = setTimeout(() => { if (!seen && $('intro-tap').classList.contains('hidden')) done(); }, 25000);
     });
-  }
+    return this.p;
+  },
+  play() { return this.start(); },
+  prime() { this.start(); },
+  abort() { if (this.active && this.finish) this.finish(); }
 };
 
 /* ---------- aplikasi ---------- */
@@ -154,18 +160,19 @@ const App = {
     if (!NAME_RE.test(username)) return this.authErr(NAME_HELP);
     if (pw.length < 4) return this.authErr('Kata sandi minimal 4 karakter.');
     if (reg && pw !== $('a-pass2').value) return this.authErr('Konfirmasi kata sandi tidak sama.');
-    this.authErr(''); this.busy = true; Intro.prime();
+    this.authErr(''); this.busy = true; this.ip = Intro.start();
     const btn = $('a-submit'); const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch spin"></i><span>Memproses…</span>';
     try {
       const r = FB.mode === 'firebase' ? await FB.login(username, pw, this.mode) : LocalAuth.login(username, pw, this.mode);
       this.user = { username: r.user.username || r.user.u, role: r.user.role, created: r.user.created };
       LS.set('session', r.session);
-      { const ban = await Ban.get(userKey(this.user.username)); if (ban && !this.isDev()) { this.hideAuth(); this.showBan(ban); return; } }
+      { const ban = await Ban.get(userKey(this.user.username)); if (ban && !this.isDev()) { Intro.abort(); this.hideAuth(); this.showBan(ban); return; } }
       await this.welcome(r.created);
       this.hideAuth();
-      await Intro.play();
+      await this.ip;
       await this.enter(true);
     } catch (e) {
+      Intro.abort();
       this.authErr(e.userMessage || (e.message === 'Waktu habis, server lambat' ? e.message : 'Tidak bisa terhubung. Periksa internet lalu coba lagi.'));
       ErrLog.push(e.message, 'auth');
     } finally { this.busy = false; btn.disabled = false; btn.innerHTML = old; }
