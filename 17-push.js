@@ -50,7 +50,16 @@ const Push = {
       if (subs.length) await API.post('push', { token: await FB.token(), subs: subs.slice(0, 25), p }, 15000);
     } catch (e) {}
   },
-  async test() { await this.sync(true, true); const me = this.me(); const r = await API.post('push', { token: await FB.token(), subs: await this.mine(), p: { t: 'DimzzChat', b: 'Tes notifikasi berhasil ✅ Kamu akan menerima pesan seperti ini walau web ditutup.', c: me, n: 'DimzzChat', k: 'test' } }, 15000); if (!r.sent) { const w = (r.why && r.why[0]) || null; throw new Error(w ? 'Ditolak layanan notifikasi: HTTP ' + w.status + (w.detail ? ' · ' + w.detail : '') : 'Tidak ada langganan perangkat yang tersimpan — matikan lalu aktifkan lagi notifikasinya'); } return r; },
+  /* tes: kirim ke langganan perangkat ini (diambil langsung dari browser) dan tampilkan laporan lengkap */
+  async test() {
+    const sub = await this.sync(true, true), j = sub.toJSON(), db = await this.mine(), info = ['Izin notifikasi: ' + this.perm(), 'Layanan push: ' + new URL(j.endpoint).hostname, 'Tersimpan di database: ' + db.length + ' perangkat'];
+    let r; try { r = await API.post('push', { token: await FB.token(), subs: [{ endpoint: j.endpoint, keys: j.keys }], p: { t: 'DimzzChat', b: 'Tes notifikasi berhasil ✅ Kamu akan menerima pesan seperti ini walau web ditutup.', c: this.me(), n: 'DimzzChat', k: 'test' } }, 20000); }
+    catch (e) { info.push('Server error: ' + (e.message || e)); await UI.alert('Tes notifikasi gagal', info.join('\n'), { type: 'err' }); throw Object.assign(new Error('Tes gagal'), { shown: 1 }); }
+    info.push('Versi server: ' + (r.v || 'LAMA — api/index.js belum diperbarui'), 'Diterima server: ' + (r.n === undefined ? '?' : r.n), 'Berhasil dikirim: ' + r.sent, 'Ditolak: ' + r.failed);
+    (r.why || []).forEach(w => info.push('Alasan: HTTP ' + w.status + (w.detail ? ' · ' + w.detail : '')));
+    if (!r.sent) { await UI.alert('Tes notifikasi gagal', info.join('\n'), { type: 'err' }); throw Object.assign(new Error('Tes gagal'), { shown: 1 }); }
+    return r;
+  },
   async mine() { const d = await FB.request('wa/ps/' + this.me(), null, 'GET', undefined, 8000).catch(() => null); return Object.values(d || {}).filter(x => x && x.e).map(x => ({ endpoint: x.e, keys: { p256dh: x.p, auth: x.a } })); },
 
   /* ketuk notifikasi → buka chat-nya */

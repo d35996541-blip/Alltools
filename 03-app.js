@@ -85,7 +85,7 @@ const Intro = {
   /* Diputar otomatis (dengan suara) setelah animasi centang berhasil-login, layar penuh. Gagal muat → coba ulang sekali → tampilkan alasannya lalu lanjut ke dasbor. */
   play() {
     return new Promise(resolve => {
-      const ov = $('intro'), v = $('intro-video'), A = CONFIG.ASSETS, srcs = [A.INTRO_VIDEO, A.INTRO_VIDEO + (A.INTRO_VIDEO.includes('?') ? '&' : '?') + 'r=' + Date.now()];
+      const ov = $('intro'), v = $('intro-video'), A = CONFIG.ASSETS, srcs = [A.INTRO_LOCAL, A.INTRO_VIDEO, A.INTRO_VIDEO + (A.INTRO_VIDEO.includes('?') ? '&' : '?') + 'r=' + Date.now()].filter(Boolean);
       this.active = true; Sound.play('intro'); this.fs(true);
       let idx = -1, seen = false, last = Date.now(), wd = null, ld = null;
       const done = () => { if (!this.active) return; this.active = false; clearInterval(wd); clearTimeout(ld); v.onended = v.onerror = v.onplaying = v.ontimeupdate = v.onprogress = v.onloadeddata = null; try { v.pause(); } catch (e) {} ov.classList.add('hidden'); $('intro-tap').classList.add('hidden'); this.msg(''); document.body.classList.remove('no-scroll'); Sound.release('intro'); Intro.fs(false); resolve(); };
@@ -109,8 +109,10 @@ const Intro = {
       this.finish = done; ov.classList.remove('hidden'); document.body.classList.add('no-scroll'); $('intro-bar').style.width = '0';
       v.onended = done; v.onerror = () => { if (this.active) next(); };
       v.onprogress = v.onloadeddata = () => { last = Date.now(); };
-      v.ontimeupdate = () => { last = Date.now(); if (v.duration) $('intro-bar').style.width = (v.currentTime / v.duration * 100) + '%'; };
-      v.onplaying = () => { seen = true; clearTimeout(ld); this.msg(''); $('intro-tap').classList.add('hidden'); };
+      const live = () => { seen = true; clearTimeout(ld); this.msg(''); $('intro-tap').classList.add('hidden'); };
+      v.ontimeupdate = () => { last = Date.now(); if (v.currentTime > 0.05 && !v.paused) live(); if (v.duration) $('intro-bar').style.width = (v.currentTime / v.duration * 100) + '%'; };
+      v.onplaying = live;
+      const dbg = $('intro-dbg'); const dt = setInterval(() => { if (!this.active) return clearInterval(dt); if (dbg) dbg.textContent = (idx + 1) + '/' + srcs.length + ' · ' + (v.videoWidth || 0) + '×' + (v.videoHeight || 0) + ' · ' + (isFinite(v.duration) ? v.duration.toFixed(1) : '?') + 'd · rs' + v.readyState + ' ns' + v.networkState + ' e' + (v.error ? v.error.code : 0); }, 400);
       $('intro-tap').onclick = () => { v.muted = false; v.volume = 1; const q = v.play(); if (q && q.then) q.then(() => $('intro-tap').classList.add('hidden')).catch(() => next()); };
       $('intro-skip').onclick = done;
       attempt(0);
