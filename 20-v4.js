@@ -133,3 +133,20 @@
   setTimeout(go, 2500);
   setInterval(function () { tries = 0; go(); }, 1800000);
 })();
+
+/* v4.3 — bintang jatuh di latar dasbor */
+(function () {
+  function add() {
+    var bg = document.querySelector('.cyberbg');
+    if (!bg) return setTimeout(add, 600);
+    if (bg.querySelector('.meteor')) return;
+    [['12%', '0s'], ['46%', '3.2s'], ['78%', '5.6s']].forEach(function (p) {
+      var m = document.createElement('i');
+      m.className = 'meteor';
+      m.style.setProperty('--x', p[0]);
+      m.style.setProperty('--d', p[1]);
+      bg.appendChild(m);
+    });
+  }
+  add();
+})();

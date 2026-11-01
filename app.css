@@ -1073,3 +1073,68 @@ body.has-mini #cassette{bottom:calc(150px + var(--safe-b))}
 .fav-row{margin-bottom:4px}
 .wx{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--mist);background:rgba(255,255,255,.1);border-radius:999px;padding:.18rem .5rem;white-space:nowrap}
 body:not(.dark-wall) .wx{color:var(--ink2);background:rgba(15,23,42,.06)}
+
+/* ================= v4.3 — WARNA-WARNI + animasi terlihat jelas ================= */
+:root{--c1:#ff7a5c;--c2:#a78bfa;--c3:#22d3ee;--c4:#34d399;--c5:#fbbf24;--c6:#f472b6;--c7:#60a5fa;--c8:#fb923c}
+
+/* --- latar aurora bergerak (tetap jalan di mode ringan, hanya transform = ringan di HP) --- */
+.cyberbg{background:linear-gradient(180deg,var(--night2),var(--night) 60%,color-mix(in srgb,var(--sky-b) 35%,var(--night)))}
+.dark-wall .cyberbg,.cyberbg{overflow:hidden}
+.cyberbg::before,.lite .cyberbg::before{inset:-25%!important;background:
+  radial-gradient(38% 30% at 18% 22%,rgba(34,211,238,.42),transparent 70%),
+  radial-gradient(34% 28% at 82% 18%,rgba(167,139,250,.5),transparent 70%),
+  radial-gradient(40% 30% at 70% 72%,rgba(244,114,182,.34),transparent 70%),
+  radial-gradient(36% 28% at 24% 80%,rgba(52,211,153,.30),transparent 70%),
+  radial-gradient(30% 24% at 50% 48%,rgba(255,122,92,.22),transparent 70%)!important;
+  background-color:transparent!important;will-change:transform;animation:aurora 24s ease-in-out infinite alternate!important}
+@keyframes aurora{0%{transform:translate3d(-4%,-3%,0) rotate(0deg) scale(1)}50%{transform:translate3d(5%,4%,0) rotate(8deg) scale(1.12)}100%{transform:translate3d(-2%,6%,0) rotate(-6deg) scale(1.05)}}
+.cyberbg::after{opacity:1!important;animation:twinkle 4.5s ease-in-out infinite alternate}
+.lite .cyberbg::after{animation:twinkle 4.5s ease-in-out infinite alternate!important}
+@keyframes twinkle{0%{opacity:.35}100%{opacity:1}}
+.meteor{position:absolute;top:-12%;left:var(--x,50%);width:2px;height:110px;border-radius:2px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,.95));opacity:0;
+  transform:translate3d(0,0,0) rotate(-35deg);animation:meteor 8s linear infinite;animation-delay:var(--d,0s)}
+@keyframes meteor{0%{opacity:0;transform:translate3d(0,0,0) rotate(-35deg)}4%{opacity:1}16%{opacity:0;transform:translate3d(300px,430px,0) rotate(-35deg)}100%{opacity:0;transform:translate3d(300px,430px,0) rotate(-35deg)}}
+@media(prefers-reduced-motion:reduce){.cyberbg::before{animation:none!important}.meteor{display:none}}
+
+/* --- hero: video kelihatan jelas di bawah warna langit --- */
+.hero video,.dark-wall .hero video{opacity:.78!important;mix-blend-mode:normal!important;z-index:0}
+.hero::before,.dark-wall .hero::before{display:block!important;content:"";position:absolute;inset:0;z-index:1;border-radius:inherit;padding:0;-webkit-mask:none;mask:none;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--sky-a) 62%,transparent) 0%,color-mix(in srgb,var(--sky-b) 22%,transparent) 48%,color-mix(in srgb,var(--sky-c) 48%,transparent) 120%);pointer-events:none}
+.hero::after{z-index:1}
+.hero>*{z-index:2}
+.hero>video{z-index:0}
+.hero .clock{background:linear-gradient(180deg,#fff 30%,color-mix(in srgb,var(--sky-c) 55%,#fff));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;filter:drop-shadow(0 3px 10px rgba(0,0,0,.5))}
+.hero{border:1px solid rgba(255,255,255,.18)!important;box-shadow:0 30px 60px -28px color-mix(in srgb,var(--sky-c) 70%,#000),0 0 0 1px rgba(255,255,255,.04)}
+
+/* --- jadwal sholat: tiap waktu punya warnanya --- */
+.pray,.dark-wall .pray{background:color-mix(in srgb,var(--pc,#64748b) 30%,rgba(11,14,38,.55));border:1px solid color-mix(in srgb,var(--pc,#64748b) 55%,transparent)!important}
+.pray small{color:color-mix(in srgb,var(--pc,#fff) 40%,#fff);opacity:1}
+.pray.next{background:linear-gradient(135deg,#ffe9b0,#ffb74d)!important;border-color:transparent!important;box-shadow:0 0 0 3px rgba(255,200,120,.28),0 12px 24px -10px rgba(255,170,60,.9)}
+
+/* --- ikon fitur: warna penuh, bercahaya --- */
+.tile,.dark-wall .tile{background:color-mix(in srgb,var(--c) 13%,rgba(255,255,255,.04));border:1px solid color-mix(in srgb,var(--c) 32%,transparent)}
+.tile .ic,.dark-wall .tile .ic,.tile .ic.ic2,.dark-wall .tile .ic.ic2{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--c) 70%,#fff) 0%,var(--c) 48%,color-mix(in srgb,var(--c) 72%,#000) 100%)!important;
+  color:#fff!important;border:0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -3px 0 rgba(0,0,0,.16),0 10px 20px -6px var(--c)!important}
+.tile .ic i,.tile .ic .ico{filter:drop-shadow(0 2px 3px rgba(0,0,0,.28))}
+.tile.pressing{background:color-mix(in srgb,var(--c) 26%,rgba(255,255,255,.06))!important}
+
+/* --- kategori, judul, tombol, dock berwarna --- */
+.tabs .chip:nth-child(8n+1){--k:var(--c1)}.tabs .chip:nth-child(8n+2){--k:var(--c2)}.tabs .chip:nth-child(8n+3){--k:var(--c3)}.tabs .chip:nth-child(8n+4){--k:var(--c4)}
+.tabs .chip:nth-child(8n+5){--k:var(--c5)}.tabs .chip:nth-child(8n+6){--k:var(--c6)}.tabs .chip:nth-child(8n+7){--k:var(--c7)}.tabs .chip:nth-child(8n+8){--k:var(--c8)}
+.tabs .chip,.dark-wall .tabs .chip{border-color:color-mix(in srgb,var(--k,#fff) 55%,transparent);color:color-mix(in srgb,var(--k,#fff) 45%,#fff);background:color-mix(in srgb,var(--k,#fff) 10%,transparent)}
+.tabs .chip.on,.dark-wall .tabs .chip.on{background:linear-gradient(135deg,color-mix(in srgb,var(--k) 85%,#fff),var(--k));color:#10122e;border-color:transparent;box-shadow:0 8px 18px -8px var(--k)}
+.sec-title{background:linear-gradient(90deg,#fff,color-mix(in srgb,var(--c3) 60%,#fff));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.sec-title i{-webkit-text-fill-color:initial}
+.fav-row .sec-title i{color:var(--c5)!important}
+.searchbar input,.dark-wall .searchbar input{border:1px solid transparent;background:linear-gradient(rgba(18,22,58,.9),rgba(18,22,58,.9)) padding-box,linear-gradient(120deg,var(--c3),var(--c2),var(--c6),var(--c1)) border-box}
+.searchbar .ai-go{background:linear-gradient(135deg,var(--c3),var(--c2) 55%,var(--c6))}
+.avatar{background:linear-gradient(135deg,var(--c1),var(--c6) 55%,var(--c2))}
+.btn-pri,.auth-btn{background:linear-gradient(135deg,var(--c1),var(--c6) 60%,var(--c2))!important;color:#fff}
+.dock button:nth-child(1).on i{color:var(--c1)}.dock button:nth-child(2).on i{color:var(--c6)}.dock button:nth-child(3).on i{color:var(--c3)}.dock button:nth-child(4).on i{color:var(--c4)}
+.dock button:nth-child(1).on::after{background:var(--c1)}.dock button:nth-child(2).on::after{background:var(--c6)}.dock button:nth-child(3).on::after{background:var(--c3)}.dock button:nth-child(4).on::after{background:var(--c4)}
+.dock{border-color:rgba(255,255,255,.16)}
+#mini{border-top:2px solid var(--c6)}
+#cassette .hub{background:linear-gradient(135deg,var(--c1),var(--c6))}
