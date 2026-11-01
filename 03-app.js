@@ -12,7 +12,7 @@ const HeroVid = {
     document.addEventListener('visibilitychange', upd); setInterval(upd, 1000); upd();
   }
 };
-const CATS = [['semua', 'Semua'], ['media', 'Media'], ['islami', 'Islami'], ['info', 'Info'], ['sosmed', 'Sosmed'], ['alat', 'Alat'], ['kreasi', 'Kreasi']];
+const CATS = [['semua', 'Semua'], ['media', 'Media'], ['islami', 'Islami'], ['info', 'Info'], ['sosmed', 'Sosmed'], ['alat', 'Alat'], ['kreasi', 'Kreasi'], ['game', 'Game']];
 const Features = {
   list: [], flags: {},
   reg(f) { this.list.push(f); },
@@ -59,7 +59,7 @@ const GRADS = [
   ['Sakura', 'linear-gradient(160deg,#ffd1dc,#f8b6d1 55%,#cdb4db)'], ['Hutan', 'linear-gradient(160deg,#134e5e,#2f8f6b 60%,#a8e063)'], ['Malam', 'linear-gradient(160deg,#0f172a,#1e1b4b 60%,#4c1d95)'],
   ['Mentari', 'linear-gradient(160deg,#ff9a9e,#fecfef 55%,#fad0c4)'], ['Es', 'linear-gradient(160deg,#e0eafc,#cfdef3 60%,#a1c4fd)']
 ];
-const GLASS_BG = 'radial-gradient(60% 50% at 10% 6%,rgba(36,90,81,.85),transparent 62%),radial-gradient(50% 40% at 94% 20%,rgba(242,176,30,.16),transparent 62%),linear-gradient(160deg,#08171a,#0c211d)';
+const GLASS_BG = 'linear-gradient(160deg,#2a2f7a,#141838)';
 const Wall = {
   get() { return LS.get('wall', { type: 'gradient', value: GLASS_BG, dim: 0, dark: true }); },
   isDark(w, cb) { if (w.type === 'gradient') return cb(w.dark !== undefined ? !!w.dark : /#0f|#13|#2c|#302|#1e/i.test(w.value)); if (w.type === 'video') return cb(true); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { try { const c = document.createElement('canvas'); c.width = c.height = 12; const g = c.getContext('2d'); g.drawImage(im, 0, 0, 12, 12); const d = g.getImageData(0, 0, 12, 12).data; let l = 0; for (let i = 0; i < d.length; i += 4) l += .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]; cb(l / 144 < 120); } catch (e) { cb(!!w.dark); } }; im.onerror = () => cb(!!w.dark); im.src = w.value; },
@@ -69,7 +69,7 @@ const Wall = {
     else if (w.type === 'gradient') el.style.background = w.value;
     else if (w.type === 'image') { el.style.backgroundImage = `url("${String(w.value).replace(/"/g, '%22')}")`; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
     $('wallpaper-dim').style.opacity = w.dim || 0;
-    this.isDark(w, d => document.body.classList.toggle('dark-wall', d || (w.dim || 0) > .45));
+    document.documentElement.classList.toggle('wall-custom', w.type === 'image' || w.type === 'video' || (w.type === 'gradient' && w.value !== GLASS_BG));
   },
   set(w) { if (!LS.set('wall', w)) { UI.toast('Penyimpanan perangkat penuh, gambar terlalu besar', 'err'); return false; } this.apply(w); return true; }
 };
@@ -197,7 +197,7 @@ const App = {
   async welcome(created) {
     const w = $('welcome'); $('w-title').textContent = created ? 'Akun berhasil dibuat!' : 'Selamat datang kembali!';
     $('w-sub').textContent = created ? `Halo, ${this.user.username}. Akunmu siap dipakai.` : `Senang melihatmu lagi, ${this.user.username}.`;
-    const c = $('confetti'); c.innerHTML = ''; const cols = ['#ffd23f', '#f43f5e', '#22c55e', '#38bdf8', '#a78bfa', '#fb923c'];
+    const c = $('confetti'); c.innerHTML = ''; const cols = ['#FFC53D', '#D9385F', '#27B4EC', '#FF8F3F', '#3C41A8', '#161A2B'];
     for (let i = 0; i < 46; i++) { const p = document.createElement('i'); p.style.cssText = `left:${Math.random() * 100}%;background:${cols[i % cols.length]};animation-duration:${1.8 + Math.random() * 1.8}s;animation-delay:${Math.random() * .5}s;transform:rotate(${Math.random() * 360}deg)`; c.appendChild(p); }
     w.classList.remove('hidden'); await sleep(created ? 1900 : 1300); w.classList.add('hidden');
   },
@@ -216,17 +216,22 @@ this.renderTabs(); this.renderTiles(); { const fq = $('f-q'); if (fq) fq.oninput
     Bgm.start();
     if (fresh && this.installEv && !LS.get('install_asked')) { LS.set('install_asked', 1); }
   },
-  tickClock() { const n = new Date(); $('clock').textContent = n.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':'); $('date').textContent = n.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); Adzan.tick && Adzan.tick(); },
+  tickClock() { const n = new Date(); $('clock').textContent = n.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':'); $('date').textContent = n.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); Adzan.tick && Adzan.tick(); window.Waktu && Waktu.tick(); },
 
   cat: 'semua',
   renderTabs() { $('cat-tabs').innerHTML = CATS.map(([k, l]) => `<button class="chip ${k === this.cat ? 'on' : ''}" data-c="${k}">${l}</button>`).join(''); $('cat-tabs').querySelectorAll('button').forEach(b => b.onclick = () => { this.cat = b.dataset.c; this.renderTabs(); this.renderTiles(); }); },
   renderTiles() {
-    const q = String(this.q || '').toLowerCase(); $('tiles').classList.toggle('searching', !!q);
+    const q = String(this.q || '').toLowerCase(), box = $('tiles'); box.classList.toggle('searching', !!q);
     const list = Features.list.filter(f => !f.dev && (!f.devOnly || this.isDev()) && (q ? String(f.name).toLowerCase().includes(q) : (this.cat === 'semua' || f.cat === this.cat)));
-    const usage = LS.get('usage', {});
-    const sorted = this.cat === 'semua' ? [...list] : list;
-    $('tiles').innerHTML = (this.cat === 'semua' ? '<div class="sec-title"><i class="fa-solid fa-sparkles" style="color:#f59e0b"></i>Semua fitur</div>' : '') + `<div class="tile-grid">${sorted.map(f => `<button class="tile ${Features.enabled(f) ? '' : 'off'}" data-f="${f.id}" style="--c:${(String(f.grad).match(/#[0-9a-fA-F]{3,8}/) || ['#6366f1'])[0]}">${Ico.has(f.id) ? `<div class="ic ic2">${Ico.svg(f.id, 26)}</div>` : `<div class="ic" style="background:${f.grad}"><i class="fa-solid ${f.icon}"></i></div>`}<span>${esc(f.name)}</span><i class="dot"></i></button>`).join('')}</div>`;
-    $('tiles').querySelectorAll('.tile').forEach(t => t.onclick = () => Features.open(t.dataset.f));
+    const cell = f => `<button class="cell ${Features.enabled(f) ? '' : 'off'}" data-f="${f.id}">${Ico.has(f.id) ? `<span class="ic">${Ico.svg(f.id, 30)}</span>` : `<span class="ic"><i class="fa-solid ${f.icon}"></i></span>`}<span class="nm">${esc(f.name)}</span><i class="dot"></i></button>`;
+    const grp = (title, arr, cls) => `<section class="grp ${cls || ''}"><div class="grp-h"><h3>${esc(title)}</h3><span>${arr.length}</span></div><div class="cells">${arr.map(cell).join('')}</div></section>`;
+    let html = '';
+    if (!list.length) html = '<div class="empty"><i class="fa-solid fa-magnifying-glass"></i>Fitur tidak ditemukan. Coba kata lain.</div>';
+    else if (q) html = grp('Hasil pencarian', list);
+    else if (this.cat === 'semua') html = CATS.filter(c => c[0] !== 'semua').map(([k, l]) => { const arr = list.filter(f => f.cat === k); return arr.length ? grp(l, arr) : ''; }).join('') + (() => { const known = CATS.map(c => c[0]); const rest = list.filter(f => !known.includes(f.cat)); return rest.length ? grp('Lainnya', rest) : ''; })();
+    else html = grp((CATS.find(c => c[0] === this.cat) || [0, 'Fitur'])[1], list);
+    box.innerHTML = html;
+    box.querySelectorAll('.cell').forEach(t => t.onclick = () => Features.open(t.dataset.f));
   },
 
   /* ----- konfigurasi global dari Developer ----- */

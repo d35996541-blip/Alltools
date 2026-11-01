@@ -61,12 +61,12 @@ const UI = {
     });
   },
   alert(title, msg, o = {}) {
-    const t = o.type || 'info', c = { ok: ['#dcfce7', '#16a34a', 'fa-check'], err: ['#fee2e2', '#dc2626', 'fa-xmark'], warn: ['#fef3c7', '#d97706', 'fa-exclamation'], info: ['#e0e7ff', '#4f46e5', 'fa-info'] }[t];
-    const p = this._dlg(`<div class="di" style="background:${c[0]};color:${c[1]}"><i class="fa-solid ${c[2]}"></i></div><h4>${esc(title)}</h4><p>${esc(msg || '')}</p><button class="btn btn-pri" style="width:100%" id="dlg-ok">${esc(o.ok || 'Mengerti')}</button>`);
+    const t = o.type || 'info', ic = { ok: 'fa-check', err: 'fa-xmark', warn: 'fa-exclamation', info: 'fa-info' }[t] || 'fa-info';
+    const p = this._dlg(`<div class="di di-${t}"><i class="fa-solid ${ic}"></i></div><h4>${esc(title)}</h4><p>${esc(msg || '')}</p><button class="btn btn-pri" style="width:100%" id="dlg-ok">${esc(o.ok || 'Mengerti')}</button>`);
     const d = $('dialog'); d._cancelVal = true; $('dlg-ok').onclick = () => d._done(true); return p;
   },
   confirm(title, msg, o = {}) {
-    const p = this._dlg(`<div class="di" style="background:${o.danger ? '#fee2e2' : '#e0e7ff'};color:${o.danger ? '#dc2626' : '#4f46e5'}"><i class="fa-solid ${o.icon || 'fa-question'}"></i></div><h4>${esc(title)}</h4><p>${esc(msg || '')}</p><div class="row"><button class="btn" style="flex:1" id="dlg-no">${esc(o.cancel || 'Batal')}</button><button class="btn ${o.danger ? 'btn-danger' : 'btn-pri'}" style="flex:1" id="dlg-ok">${esc(o.ok || 'Ya')}</button></div>`);
+    const p = this._dlg(`<div class="di ${o.danger ? 'di-err' : 'di-info'}"><i class="fa-solid ${o.icon || 'fa-question'}"></i></div><h4>${esc(title)}</h4><p>${esc(msg || '')}</p><div class="row"><button class="btn" style="flex:1" id="dlg-no">${esc(o.cancel || 'Batal')}</button><button class="btn ${o.danger ? 'btn-danger' : 'btn-pri'}" style="flex:1" id="dlg-ok">${esc(o.ok || 'Ya')}</button></div>`);
     const d = $('dialog'); d._cancelVal = false; $('dlg-no').onclick = () => d._done(false); $('dlg-ok').onclick = () => d._done(true); return p;
   },
   prompt(title, msg, o = {}) {

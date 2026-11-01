@@ -1,6 +1,6 @@
 /* ==== 19-icons.js — set ikon fitur buatan sendiri (SVG garis + isian duotone), menggantikan ikon bawaan Font Awesome pada kartu fitur ==== */
 const Ico = (() => {
-  const F = 'fill="currentColor" fill-opacity=".22"';
+  const F = 'style="fill:var(--ico-fill,currentColor);fill-opacity:var(--ico-fo,.22)"';
   const P = {
     adzan: `<path d="M6 20v-6.2C6 10.7 8.7 9 12 9s6 1.7 6 4.8V20" ${F}/><path d="M12 9V6.7M13.4 4.6a1.5 1.5 0 1 1-1.9-1.5 1.2 1.2 0 0 0 1.9 1.5z"/><path d="M3.5 20v-8.5M20.5 20v-8.5M2.6 11.5h1.8M19.6 11.5h1.8M2 20h20M10 20v-2.6a2 2 0 0 1 4 0V20"/>`,
     music: `<path d="M4.5 14.5v-2.2a7.5 7.5 0 0 1 15 0v2.2"/><rect x="3.8" y="14" width="4.4" height="6.5" rx="2" ${F}/><rect x="15.8" y="14" width="4.4" height="6.5" rx="2" ${F}/>`,
@@ -36,6 +36,8 @@ const Ico = (() => {
     't-margin': `<rect x="3.5" y="3.5" width="17" height="17" rx="4.2" ${F}/><path d="M8.5 15.5l7-7"/><circle cx="8.7" cy="8.9" r="1.3"/><circle cx="15.3" cy="15.1" r="1.3"/>`,
     't-walink': `<path d="M12 3.5a8.5 8.5 0 0 0-7.3 12.8l-1.2 4.2 4.4-1.1A8.5 8.5 0 1 0 12 3.5z" ${F}/><path d="M9.2 9.3c.2 2.6 2.4 4.9 5.4 5.6l1-1.5-1.8-.9-.8.7c-.9-.4-1.7-1.2-2.1-2.1l.7-.8-.9-1.8z"/>`,
     't-chatstat': `<rect x="4" y="12" width="4" height="8" rx="1.3" ${F}/><rect x="10" y="7" width="4" height="13" rx="1.3" ${F}/><rect x="16" y="3.5" width="4" height="16.5" rx="1.3" ${F}/>`,
+    tok: `<rect x="3.5" y="4" width="17" height="16" rx="3.4" ${F}/><path d="M3.5 9h17M8 4l-2 5M13 4l-2 5M18 4l-2 5"/><path d="M10.4 12.4v5l4.2-2.5z" fill="currentColor"/>`,
+    catur: `<path d="M8 20h9M9 20c.4-3 .1-4.6-1.6-6.3C6 12.3 6.2 9.6 8.4 8L11 4.5l.9 2.2c3 .4 5 2.7 5 6 0 2.8-.8 5.4-1.4 7.3" ${F}/><path d="M11.9 6.7L9.8 8.6M10.2 10.6h.01" stroke-width="2.2"/>`,
     /* ikon antarmuka */
     back: `<path d="M14.5 5.5L8 12l6.5 6.5"/>`,
     gavel: `<g transform="rotate(45 15 8)"><rect x="9.6" y="5.6" width="10.8" height="4.8" rx="1.7" ${F}/></g><path d="M12.6 10.4L4.8 18.2M11.5 20.6h9"/>`,

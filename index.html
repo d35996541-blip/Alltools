@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
   <title>Dimzz Prozet</title>
-  <meta name="theme-color" content="#0c211d" />
+  <meta name="theme-color" content="#161A2B" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="description" content="Dimzz Prozet — musik, unduh video, adzan, Al-Quran, berita, dan puluhan tools dalam satu aplikasi." />
@@ -13,16 +13,14 @@
   <link rel="icon" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="app.css?v=4.3.0" />
-  <link rel="stylesheet" href="tok.css?v=1.8" />
-  <link rel="stylesheet" href="catur.css?v=3.1" />
-  <link rel="stylesheet" href="theme.css?v=5.1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Amiri:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app.css?v=6.0.0" />
+  <link rel="stylesheet" href="tok.css?v=2.0" />
+  <link rel="stylesheet" href="catur.css?v=4.0" />
+  <link rel="stylesheet" href="theme.css?v=6.0.0" />
 </head>
 <body>
-  <!-- wallpaper (bisa diganti lewat fitur Wallpaper) -->
-  <div id="wallpaper"></div><div id="wallpaper-dim"></div>
-
   <div id="toasts" aria-live="polite"></div>
 
   <!-- ====================== MASUK / DAFTAR ====================== -->
@@ -30,10 +28,11 @@
     <video id="auth-video" class="bg" loop playsinline webkit-playsinline preload="metadata" src="https://files.catbox.moe/hnfdro.mp4"></video>
     <div class="shade"></div>
     <button id="auth-sound" type="button" class="sound-fab"><i class="fa-solid fa-volume-xmark"></i><span>Ketuk untuk suara</span></button>
+    <div class="auth-clock" aria-hidden="true"><div id="auth-clock">00:00</div><div id="auth-date"></div></div>
     <div class="auth-panel">
       <div class="auth-brand">
         <div class="auth-logo"><img src="profile.jpg" alt="Dimzz Prozet"/></div>
-        <div><div style="font-weight:800;font-size:20px;letter-spacing:-.01em">Dimzz Prozet</div><div style="font-size:12px;opacity:.75;font-weight:600">Semua tools favoritmu, satu aplikasi.</div></div>
+        <div class="auth-name"><b>Dimzz Prozet</b><span>Semua tools favoritmu, satu aplikasi.</span></div>
       </div>
       <div class="auth-tabs" role="tablist">
         <button type="button" id="tab-login" class="on" role="tab">Masuk</button>
@@ -44,10 +43,10 @@
         <div class="auth-field"><i class="fa-regular fa-user lead"></i><input id="a-user" type="text" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Username" maxlength="20" required /></div>
         <div class="auth-field"><i class="fa-solid fa-lock lead"></i><input id="a-pass" type="password" name="password" autocomplete="current-password" data-lpignore="true" data-1p-ignore placeholder="Kata sandi" required /><button type="button" class="eye" id="a-eye" aria-label="Tampilkan sandi"><i class="fa-regular fa-eye"></i></button></div>
         <div class="auth-field hidden" id="a-pass2-wrap"><i class="fa-solid fa-shield-halved lead"></i><input id="a-pass2" type="text" class="pw-mask" name="konfirmasi_sandi" autocomplete="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="Ulangi kata sandi" /></div>
-        <p id="a-hint" style="font-size:11px;opacity:.7;font-weight:600;margin:-2px 2px 12px" class="hidden">Username 3–20 karakter (huruf, angka, garis bawah). Sandi minimal 4 karakter.</p>
+        <p id="a-hint" class="auth-hint hidden">Username 3–20 karakter (huruf, angka, garis bawah). Sandi minimal 4 karakter.</p>
         <button type="submit" class="auth-btn" id="a-submit"><span>Masuk</span><i class="fa-solid fa-arrow-right"></i></button>
       </form>
-      <p style="text-align:center;font-size:11px;opacity:.6;margin:14px 0 0;font-weight:600">Dengan melanjutkan, kamu setuju memakai layanan ini dengan wajar dan sesuai hukum.</p>
+      <p class="auth-tos">Dengan melanjutkan, kamu setuju memakai layanan ini dengan wajar dan sesuai hukum.</p>
     </div>
   </section>
 
@@ -55,9 +54,9 @@
   <section id="welcome" class="hidden"><div class="confetti" id="confetti"></div>
     <div class="welcome-card">
       <div class="check"><svg viewBox="0 0 52 52"><path d="M12 27l10 10 19-21"/></svg></div>
-      <h2 id="w-title" style="font-size:24px;font-weight:800;margin:0 0 6px">Selamat datang!</h2>
-      <p id="w-sub" style="font-size:14px;opacity:.8;font-weight:500;margin:0 0 4px"></p>
-      <p style="font-size:12px;opacity:.6;font-weight:600;margin:14px 0 0"><i class="fa-solid fa-circle-notch spin"></i> Menyiapkan dasbor…</p>
+      <h2 id="w-title">Selamat datang!</h2>
+      <p id="w-sub"></p>
+      <p class="w-load"><i class="fa-solid fa-circle-notch spin"></i> Menyiapkan dasbor…</p>
     </div>
   </section>
 
@@ -122,39 +121,51 @@
 
   <!-- ====================== APLIKASI ====================== -->
   <main id="app" class="hidden">
-  <div class="cyberbg" aria-hidden="true"></div>
-    <div class="topbar">
-      <div class="row" style="min-width:0">
-        <div class="avatar" id="u-avatar"></div>
-        <div style="min-width:0"><div class="muted" style="font-size:11px;font-weight:700" id="u-greet">Selamat datang</div>
-          <div class="row" style="gap:6px"><b id="u-name" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">…</b><span class="rk-tag rk-user" id="u-role">Gratis</span></div></div>
+    <header class="sky" id="sky">
+      <div id="wallpaper"></div><div id="wallpaper-dim"></div>
+      <div class="sk-top">
+        <div class="sk-id">
+          <div class="avatar" id="u-avatar"></div>
+          <div class="sk-who">
+            <div id="u-greet">Selamat datang</div>
+            <div class="sk-name"><b id="u-name">…</b><span class="rk-tag rk-user" id="u-role">Gratis</span></div>
+          </div>
+        </div>
+        <div class="sk-btns">
+          <button class="btn btn-icon" id="btn-dev" onclick="Features.open('dev')" title="Panel Developer" aria-label="Panel Developer"><i class="fa-solid fa-user-shield"></i></button>
+          <button class="btn btn-icon" onclick="Features.open('wallpaper')" title="Ganti wallpaper" aria-label="Ganti wallpaper"><i class="fa-regular fa-image"></i></button>
+          <button class="btn btn-icon" onclick="App.openMenu()" title="Menu" aria-label="Menu"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        </div>
       </div>
-      <div class="row">
-        <button class="btn btn-icon" id="btn-dev" onclick="Features.open('dev')" title="Panel Developer" style="background:linear-gradient(135deg,#ffe27a,#f59e0b)"><i class="fa-solid fa-user-shield"></i></button>
-        <button class="btn btn-icon" onclick="Features.open('wallpaper')" title="Ganti wallpaper"><i class="fa-regular fa-image"></i></button>
-        <button class="btn btn-icon" onclick="App.openMenu()" title="Menu"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+      <div class="sk-main">
+        <button class="sk-loc" id="loc-chip" type="button" onclick="Features.open('adzan')"><i class="fa-solid fa-location-dot"></i><span id="loc-name">Atur lokasi</span></button>
+        <div id="clock" class="clock">00:00</div>
+        <div id="date" class="sk-date"></div>
+        <div id="next-line" class="sk-next">Memuat jadwal sholat…</div>
       </div>
+      <div class="ruler" id="ruler" aria-hidden="true">
+        <div class="rl-t"></div><div class="rl-t rl-past"></div><div class="rl-t rl-mj"></div><div class="rl-t rl-mj rl-past"></div>
+        <span class="rl-lb" style="--x:0">00</span><span class="rl-lb" style="--x:25">06</span><span class="rl-lb" style="--x:50">12</span><span class="rl-lb" style="--x:75">18</span>
+        <div id="rl-marks"></div>
+        <div class="rl-n"></div>
+      </div>
+    </header>
+
+    <div class="deck">
+      <div id="announce" class="banner hidden"><i class="fa-solid fa-bullhorn"></i><div id="announce-text"></div></div>
+
+      <section class="strip" aria-label="Jadwal sholat hari ini">
+        <div class="pray-grid" id="pray-grid"></div>
+        <div class="strip-act">
+          <button class="alarm" id="alarm-btn" type="button" onclick="Adzan.toggle()"><i class="fa-solid fa-bell"></i><span id="alarm-label">Alarm adzan</span></button>
+          <button class="alarm-set" type="button" onclick="Features.open('adzan')" aria-label="Pengaturan adzan"><i class="fa-solid fa-sliders"></i></button>
+        </div>
+      </section>
+
+      <div class="searchbar"><i class="fa-solid fa-magnifying-glass"></i><input id="f-q" type="search" placeholder="Cari fitur…" autocomplete="off" enterkeyhint="search"/><button class="ai-go" id="ai-go" title="Tanya Asisten AI" onclick="Features.open('ai')">AI</button></div>
+      <div class="tabs" id="cat-tabs"></div>
+      <div id="tiles"></div>
     </div>
-
-    <div id="announce" class="banner hidden" style="margin-bottom:12px"><i class="fa-solid fa-bullhorn" style="margin-top:2px"></i><div id="announce-text" style="flex:1"></div></div>
-
-    <section class="hero">
-      <video id="hero-video" muted loop playsinline preload="metadata" src="https://files.catbox.moe/son20v.mp4"></video>
-      <div class="row" style="justify-content:space-between;align-items:flex-start">
-        <div><div id="clock" class="clock">00:00</div><div id="date" style="font-size:12px;opacity:.8;font-weight:600;margin-top:6px"></div></div>
-        <button class="btn btn-sm" id="loc-chip" onclick="Features.open('adzan')" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)!important"><i class="fa-solid fa-location-dot"></i><span id="loc-name">Atur lokasi</span></button>
-      </div>
-      <div style="margin-top:14px;font-size:12px;font-weight:600;opacity:.9" id="next-line">Memuat jadwal sholat…</div>
-      <div class="pray-grid" id="pray-grid"></div>
-      <div class="row" style="margin-top:12px">
-        <button class="btn btn-sm" id="alarm-btn" onclick="Adzan.toggle()" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)!important;flex:1"><i class="fa-solid fa-bell"></i><span id="alarm-label">Alarm adzan</span></button>
-        <button class="btn btn-sm" onclick="Features.open('adzan')" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)!important"><i class="fa-solid fa-sliders"></i></button>
-      </div>
-    </section>
-
-    <div class="searchbar"><i class="fa-solid fa-magnifying-glass"></i><input id="f-q" type="search" placeholder="Cari fitur…" autocomplete="off" enterkeyhint="search"/><button class="ai-go" id="ai-go" title="Tanya Asisten AI" onclick="Features.open('ai')">AI</button></div>
-    <div class="tabs" id="cat-tabs"></div>
-    <div id="tiles"></div>
   </main>
 
   <!-- kaset berputar: musik latar -->
@@ -186,10 +197,10 @@
   <div id="yt-hidden" style="position:fixed;left:0;top:0;width:200px;height:200px;opacity:.01;z-index:-1;pointer-events:none"></div>
 
   <script src="00-config.js?v=3.1"></script>
-  <script src="01-core.js?v=3.20"></script>
+  <script src="01-core.js?v=6.0"></script>
   <script src="02-firebase.js?v=3.1"></script>
-  <script src="03-app.js?v=5.0"></script>
-  <script src="04-adzan.js?v=3.15"></script>
+  <script src="03-app.js?v=6.0"></script>
+  <script src="04-adzan.js?v=6.0"></script>
   <script src="05-music.js?v=3.10"></script>
   <script src="06-media.js?v=3.30.4"></script>
   <script src="07-quran-news.js?v=3.1"></script>
@@ -204,8 +215,8 @@
   <script src="16-wa.js?v=3.29.0"></script>
   <script src="17-push.js?v=3.28.0"></script>
   <script src="18-online.js?v=3.27.0"></script>
-  <script src="19-icons.js?v=3.30.0"></script>
-  <script src="20-v4.js?v=4.3.0"></script>
+  <script src="19-icons.js?v=6.0"></script>
+  <script src="20-v4.js?v=6.0"></script>
   <script src="21-tok.js?v=2.2"></script>
   <script src="22-catur.js?v=1.3"></script>
   <script>App.boot();</script>

@@ -63,8 +63,8 @@ const Adzan = {
   renderGrid() {
     const ll = this.s && this.s.lat != null ? `<small style="opacity:.65;font-weight:700"> (${this.s.lat}°, ${this.s.lng}°)</small>` : '';
     $('loc-name').innerHTML = esc((this.s && this.s.city) || 'Atur lokasi') + ll;
-    const PC = { subuh: '#a855f7', dzuhur: '#f59e0b', ashar: '#14b8a6', maghrib: '#22c55e', isya: '#3b82f6' };
-    $('pray-grid').innerHTML = PRAYERS.map(([k, n]) => `<div class="pray" id="pr-${k}" style="--pc:${PC[k]}"><small>${n}</small><b>${(this.times && this.times[k]) || '--:--'}</b><i class="wv"></i></div>`).join('');
+    $('pray-grid').innerHTML = PRAYERS.map(([k, n]) => `<div class="pz" id="pr-${k}"><small>${n}</small><b>${(this.times && this.times[k]) || '--:--'}</b></div>`).join('');
+    window.Waktu && Waktu.marks();
   },
   nextPrayer() {
     if (!this.times) return null; const now = new Date(), nm = now.getHours() * 60 + now.getMinutes();
@@ -75,7 +75,7 @@ const Adzan = {
     if (!this.times) return;
     const nx = this.nextPrayer(); if (nx) {
       const h = Math.floor(nx.mins / 60), m = nx.mins % 60;
-      $('next-line').innerHTML = `Menuju <b>${nx.n}</b> ${nx.tomorrow ? '(besok) ' : ''}— <b>${h ? h + ' jam ' : ''}${m} mnt ${String(nx.secs).padStart(2, '0')} dtk</b>`;
+      $('next-line').innerHTML = `<b>${h ? h + ' jam ' : ''}${m} mnt ${String(nx.secs).padStart(2, '0')} dtk</b> lagi ${nx.tomorrow ? 'ke ' : 'menuju '}<b>${nx.n}</b>${nx.tomorrow ? ' besok' : ''}`;
       PRAYERS.forEach(([k]) => { const e = $('pr-' + k); if (e) e.classList.toggle('next', k === nx.k); });
     }
     if (this.date && this.date !== this.today()) this.refresh();
@@ -85,7 +85,7 @@ const Adzan = {
   },
 
   /* ----- alarm ----- */
-  updateAlarmUi() { const on = this.s.on; $('alarm-label').textContent = on ? 'Alarm adzan aktif' : 'Alarm adzan mati'; $('alarm-btn').firstElementChild.className = 'fa-solid ' + (on ? 'fa-bell' : 'fa-bell-slash'); $('alarm-btn').style.background = on ? 'linear-gradient(135deg,#34d399,#10b981)' : 'rgba(255,255,255,.14)'; $('alarm-btn').style.color = on ? '#022c22' : '#fff'; },
+  updateAlarmUi() { const on = this.s.on; $('alarm-label').textContent = on ? 'Alarm adzan aktif' : 'Alarm adzan mati'; $('alarm-btn').firstElementChild.className = 'fa-solid ' + (on ? 'fa-bell' : 'fa-bell-slash'); $('alarm-btn').classList.toggle('on', !!on); },
   async toggle() {
     this.s.on = !this.s.on; this.save(); this.updateAlarmUi();
     if (this.s.on) { this.armKeepAlive(true); try { if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission(); } catch (e) {} this.scheduleNative(); UI.toast('Alarm adzan aktif — akan berbunyi otomatis saat waktunya', 'ok'); }

@@ -486,5 +486,5 @@ Object.assign(Chess, {
   }
 });
 
-CATS.push(['game', 'Game']);
+if (!CATS.some(c => c[0] === 'game')) CATS.push(['game', 'Game']);
 Features.reg({ id: 'catur', name: 'Catur', cat: 'game', icon: 'fa-chess-knight', grad: 'linear-gradient(135deg,#e2512f,#9c2f17)', open: () => Chess.open() });

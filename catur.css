@@ -1,10 +1,10 @@
 /* ===== Catur — ruang main kayu jati: latar cokelat tua, papan jati terang/gelap, aksen merah pernis =====
    Prinsip: daftar berbaris dengan garis tipis (bukan kartu seragam), satu blok besar untuk aksi utama,
    judul pakai Bricolage Grotesque, angka jam & peringkat tabular. */
-.ch-panel{--bg:#0c211d;--bg2:#13302b;--bg3:#1b3d37;--line:#ffffff14;--tx:#f3e9d6;--mu:#a69883;--lac:#e2512f;--lac2:#f27b52;--moss:#9cc17c;--brass:#f2b01e;--tx2:#2a1d00;
+.ch-panel{--bg:#161A2B;--bg2:#1F2440;--bg3:#2A3050;--line:#ffffff1a;--tx:#F2F3F7;--mu:#9AA0BA;--lac:#D9385F;--lac2:#F06A8A;--moss:#6EE7A8;--brass:#FFC53D;--tx2:#161A2B;
   background:var(--bg)!important;color:var(--tx)}
 .ch-panel .sheet-head{background:var(--bg)!important;color:var(--tx);border-color:var(--line)!important}
-.ch-panel .sheet-head h3{color:var(--tx);font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.ch-panel .sheet-head h3{color:var(--tx);font-family:var(--font);font-weight:700;font-size:17px;letter-spacing:-.01em}
 .ch-panel .sheet-head .btn{color:var(--tx);background:#ffffff12}
 .ch-body{padding:0!important;gap:0!important;background:var(--bg);color:var(--tx);font-variant-numeric:tabular-nums}
 #ch-root,#ch-root *{box-sizing:border-box}
@@ -14,7 +14,7 @@
 #ch-root button:disabled{opacity:.35;cursor:not-allowed}
 #ch-root button:focus-visible,#ch-root input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .ch-lob,.ch-pg{padding:18px 18px calc(var(--safe-b,0px) + 28px);display:flex;flex-direction:column;gap:14px;width:100%;max-width:540px;margin:0 auto}
-.ch-h,.ch-pg h3,.ch-hd h3,.ch-card h3,.ch-wait h3,.ch-th h3{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;letter-spacing:-.02em}
+.ch-h,.ch-pg h3,.ch-hd h3,.ch-card h3,.ch-wait h3,.ch-th h3{font-family:var(--font);letter-spacing:-.02em}
 
 /* profil: bukan kartu, hanya baris dengan inisial */
 .ch-hero{display:flex;align-items:center;gap:14px;padding:4px 0 16px;border-bottom:1px solid var(--line)}
