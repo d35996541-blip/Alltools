@@ -844,3 +844,10 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 .gc-menu button:active{background:rgba(255,255,255,.08)}.gc-menu .dng{color:#f87171}
 .gc-rules{margin:0;padding:16px 18px 24px 36px;display:flex;flex-direction:column;gap:12px;color:#e9e5f2;font-size:14.5px;line-height:1.5}
 .chatp .ch-pin{background:#1b1430;color:#d9d2f5;border:1px solid rgba(167,139,250,.25)}
+
+/* pesan sendiri di kanan */
+.gm.mine{flex-direction:row-reverse}
+.gm.mine .gm-col{align-items:flex-end}
+.chatp .gm.mine .cb,.chatp .gm.mine .cb.me{border-radius:20px 20px 8px 20px}
+.gm.mine .gm-meta{justify-content:flex-end}
+.gm.mine .gq{align-self:stretch}
