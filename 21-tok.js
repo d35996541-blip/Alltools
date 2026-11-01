@@ -17,11 +17,12 @@ const Tok = {
     Sheet.open({
       id: 'tok', title: 'Dimzz Play', full: true, cls: 'tk-panel', bodyCls: 'tk-bodywrap',
       body: `<div class="tk" id="tk"><div class="tk-aur"></div>
-        <div class="tk-top"><button class="tk-ib" id="tk-x" aria-label="Tutup"><i class="fa-solid fa-chevron-left"></i></button>
-          <div class="tk-tabs"><b data-t="fo">Mengikuti</b><b data-t="fy" class="on">Untuk Kamu</b><b data-t="lv">LIVE<i class="tk-dot"></i></b><span class="tk-ind"></span></div>
-          <button class="tk-ib" id="tk-s" aria-label="Segarkan"><i class="fa-solid fa-rotate"></i></button></div>
+        <div class="tk-top"><button class="tk-lvb" data-t="lv" aria-label="LIVE"><span>LIVE</span></button>
+          <div class="tk-tabs"><b data-t="fo">Mengikuti</b><b data-t="fy" class="on">Saran</b><span class="tk-ind"></span></div>
+          <button class="tk-sr" id="tk-s" aria-label="Cari"><i class="fa-solid fa-magnifying-glass"></i></button></div>
         <div class="tk-feed" id="tk-feed"></div><div class="tk-livebox hidden" id="tk-lvbox"></div>
-        <button class="tk-plus" id="tk-plus" aria-label="Buat"><i class="fa-solid fa-plus"></i></button>
+        <button class="tk-sb" id="tk-sb"><i class="fa-solid fa-magnifying-glass"></i><span>Cari video atau akun</span><i class="fa-solid fa-chevron-right"></i></button>
+        <nav class="tk-nav"><button data-n="home" class="on"><i class="fa-solid fa-house"></i><span>Beranda</span></button><button data-n="shop"><i class="fa-solid fa-bag-shopping"></i><span>Toko</span></button><button class="tk-plus" id="tk-plus" aria-label="Buat"><b><i class="fa-solid fa-plus"></i></b></button><button data-n="inbox"><i class="fa-regular fa-message"></i><span>Kotak Masuk</span></button><button data-n="me"><i class="fa-regular fa-user"></i><span>Saya</span></button></nav>
         <div class="tk-ov hidden" id="tk-ov"></div></div>`,
       onOpen: el => { this.root = el.querySelector('#tk'); this.bind(); this.load(); },
       onClose: () => { this.stopAll(); }
@@ -29,16 +30,21 @@ const Tok = {
   },
   bind() {
     const r = this.root, q = s => r.querySelector(s);
-    q('#tk-x').onclick = () => Sheet.close('tok');
-    q('#tk-s').onclick = () => this.load();
-    r.querySelectorAll('.tk-tabs b').forEach(b => b.onclick = () => this.setTab(b.dataset.t));
+    const go = () => { const t = prompt('Cari video atau akun:', this.q || ''); if (t === null) return; this.q = t.trim().toLowerCase(); this.setTab(this.q ? 'q' : 'fy'); };
+    q('#tk-s').onclick = go; q('#tk-sb').onclick = go;
+    r.querySelectorAll('.tk-tabs b,.tk-lvb').forEach(b => b.onclick = () => this.setTab(b.dataset.t));
+    r.querySelectorAll('.tk-nav [data-n]').forEach(b => b.onclick = () => {
+      const n = b.dataset.n; if (n === 'shop' || n === 'inbox') return UI.toast((n === 'shop' ? 'Toko' : 'Kotak Masuk') + ' segera hadir', 'info');
+      if (n === 'home' && this.tab === 'fy') return Sheet.close('tok');
+      r.querySelectorAll('.tk-nav [data-n]').forEach(x => x.classList.toggle('on', x === b)); this.setTab(n === 'me' ? 'me' : 'fy');
+    });
     q('#tk-plus').onclick = () => this.menu();
     this.setTab('fy', true);
   },
   setTab(t, quiet) {
     this.tab = t; const r = this.root, tabs = [...r.querySelectorAll('.tk-tabs b')], i = tabs.findIndex(b => b.dataset.t === t);
-    tabs.forEach(b => b.classList.toggle('on', b.dataset.t === t));
-    const ind = r.querySelector('.tk-ind'), b = tabs[i]; if (b) { ind.style.width = b.offsetWidth * .6 + 'px'; ind.style.transform = `translateX(${b.offsetLeft + b.offsetWidth * .2}px)`; }
+    tabs.forEach(b => b.classList.toggle('on', b.dataset.t === t)); r.querySelector('.tk-lvb').classList.toggle('on', t === 'lv');
+    const ind = r.querySelector('.tk-ind'), b = tabs[i]; ind.style.opacity = b ? 1 : 0; if (b) { ind.style.width = b.offsetWidth * .6 + 'px'; ind.style.transform = `translateX(${b.offsetLeft + b.offsetWidth * .2}px)`; }
     const lv = t === 'lv'; r.querySelector('#tk-feed').classList.toggle('hidden', lv); r.querySelector('#tk-lvbox').classList.toggle('hidden', !lv);
     if (lv) { this.pauseAll(); this.loadLive(); } else if (!quiet) this.renderFeed();
   },
@@ -54,15 +60,16 @@ const Tok = {
   },
   renderFeed() {
     const f = this.root.querySelector('#tk-feed'); if (this.io) this.io.disconnect();
-    const list = this.tab === 'fo' ? this.vids.filter(v => this.fol[v.uid]) : this.vids;
-    if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${this.tab === 'fo' ? 'Belum ada yang kamu ikuti' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.upload(); return; }
+    const T = this.tab, list = T === 'fo' ? this.vids.filter(v => this.fol[v.uid]) : T === 'me' ? this.vids.filter(v => v.uid === FB.st.uid) : T === 'q' ? this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(this.q)) : this.vids;
+    if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${T === 'fo' ? 'Belum ada yang kamu ikuti' : T === 'me' ? 'Kamu belum punya video' : T === 'q' ? 'Tidak ada hasil' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.upload(); return; }
     f.innerHTML = list.map(v => `<section class="tk-item" data-id="${esc(v.id)}" data-uid="${esc(v.uid)}"><video loop playsinline webkit-playsinline preload="none" data-src="${esc(v.url)}"></video><div class="tk-shade"></div><div class="tk-heart"></div>
       <div class="tk-rail"><div class="tk-av"><span class="tk-ring">${esc(String(v.u || '?').charAt(0).toUpperCase())}</span>${v.uid === FB.st.uid ? '' : `<button class="tk-fol${this.fol[v.uid] ? ' on' : ''}" data-a="fol"><i class="fa-solid ${this.fol[v.uid] ? 'fa-check' : 'fa-plus'}"></i></button>`}</div>
         <button class="tk-act" data-a="like"><i class="fa-solid fa-heart"></i><span class="n">–</span></button>
-        <button class="tk-act" data-a="cm"><i class="fa-solid fa-comment-dots"></i><span class="n">${v.cc || ''}</span></button>
+        <button class="tk-act" data-a="cm"><i class="fa-solid fa-comment-dots"></i><span class="n">Komentar</span></button>
+        <button class="tk-act${(LS.get('tk_bm', {}) || {})[v.id] ? ' on bm' : ''}" data-a="bm"><i class="fa-solid fa-bookmark"></i><span class="n">Simpan</span></button>
         <button class="tk-act" data-a="sh"><i class="fa-solid fa-share"></i><span class="n">Bagikan</span></button>
         <div class="tk-disc"><i class="fa-solid fa-music"></i></div></div>
-      <div class="tk-info"><div class="tk-nm"><b>@${esc(v.u)}</b><span class="tk-vfs"></span></div><p>${esc(v.cap || '')}</p><div class="tk-mu"><i class="fa-solid fa-music"></i><span>Suara asli · ${esc(v.u)}</span></div></div>
+      <div class="tk-info"><div class="tk-nm"><b>@${esc(v.u)}</b><span class="tk-vfs"></span></div><p>${esc(v.cap || '')}</p></div>
       <div class="tk-prog"><i></i></div></section>`).join('');
     f.querySelectorAll('.tk-item').forEach(it => this.wire(it));
     this.io = new IntersectionObserver(es => es.forEach(e => {
@@ -80,6 +87,7 @@ const Tok = {
   },
   wire(it) {
     const v = it.querySelector('video'), id = it.dataset.id, bar = it.querySelector('.tk-prog i'); let last = 0;
+    v.addEventListener('loadedmetadata', () => { if (v.videoWidth > v.videoHeight) v.style.objectFit = 'contain'; });
     v.addEventListener('timeupdate', () => { if (v.duration) bar.style.width = (v.currentTime / v.duration * 100) + '%'; });
     it.addEventListener('click', e => {
       if (e.target.closest('.tk-rail,.tk-info')) return;
@@ -88,7 +96,7 @@ const Tok = {
     });
     it.querySelector('.tk-rail').addEventListener('click', e => {
       const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
-      if (a === 'like') this.like(it); else if (a === 'cm') this.comments(id); else if (a === 'fol') this.follow(it.dataset.uid, b); else if (a === 'sh') this.share(id);
+      if (a === 'like') this.like(it); else if (a === 'cm') this.comments(id); else if (a === 'fol') this.follow(it.dataset.uid, b); else if (a === 'sh') this.share(id); else if (a === 'bm') { const m = LS.get('tk_bm', {}) || {}; if (m[id]) delete m[id]; else m[id] = 1; LS.set('tk_bm', m); b.classList.toggle('on', !!m[id]); b.classList.add('bm'); }
     });
   },
   burst(it, e) {
