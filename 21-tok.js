@@ -38,7 +38,7 @@ const Tok = {
       if (n === 'home' && this.tab === 'fy') return Sheet.close('tok');
       r.querySelectorAll('.tk-nav [data-n]').forEach(x => x.classList.toggle('on', x === b)); this.setTab(n === 'me' ? 'me' : 'fy');
     });
-    q('#tk-plus').onclick = () => this.camOpen();
+    q('#tk-plus').onclick = () => this.menu();
     this.setTab('fy', true);
   },
   setTab(t, quiet) {
@@ -61,8 +61,8 @@ const Tok = {
   renderFeed() {
     const f = this.root.querySelector('#tk-feed'); if (this.io) this.io.disconnect();
     const T = this.tab, list = T === 'fo' ? this.vids.filter(v => this.fol[v.uid]) : T === 'me' ? this.vids.filter(v => v.uid === FB.st.uid) : T === 'q' ? this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(this.q)) : this.vids;
-    if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${T === 'fo' ? 'Belum ada yang kamu ikuti' : T === 'me' ? 'Kamu belum punya video' : T === 'q' ? 'Tidak ada hasil' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.camOpen(); return; }
-    f.innerHTML = list.map(v => `<section class="tk-item" data-id="${esc(v.id)}" data-uid="${esc(v.uid)}">${v.k === 'img' ? `<img class="tk-img" src="${esc(v.url)}" alt="">` : `<video loop playsinline webkit-playsinline preload="none" data-src="${esc(v.url)}"></video>`}<div class="tk-shade"></div><div class="tk-heart"></div>
+    if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${T === 'fo' ? 'Belum ada yang kamu ikuti' : T === 'me' ? 'Kamu belum punya video' : T === 'q' ? 'Tidak ada hasil' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.camPick(); return; }
+    f.innerHTML = list.map(v => `<section class="tk-item" data-id="${esc(v.id)}" data-uid="${esc(v.uid)}">${v.k === 'img' ? `<img class="tk-img" ${String(v.url).startsWith(this.CHUNK_HOST) ? '' : `src="${esc(v.url)}"`} data-src="${esc(v.url)}" alt="">` : `<video loop playsinline webkit-playsinline preload="none" data-src="${esc(v.url)}"></video>`}<div class="tk-shade"></div><div class="tk-heart"></div>
       <div class="tk-rail"><div class="tk-av"><span class="tk-ring" data-pp="${esc(v.uid)}">${esc(String(v.u || '?').charAt(0).toUpperCase())}</span>${v.uid === FB.st.uid ? '' : `<button class="tk-fol${this.fol[v.uid] ? ' on' : ''}" data-a="fol"><i class="fa-solid ${this.fol[v.uid] ? 'fa-check' : 'fa-plus'}"></i></button>`}</div>
         <button class="tk-act" data-a="like"><i class="fa-solid fa-heart"></i><span class="n">–</span></button>
         <button class="tk-act" data-a="cm"><i class="fa-solid fa-comment-dots"></i><span class="n">Komentar</span></button>
@@ -73,16 +73,17 @@ const Tok = {
       <div class="tk-prog"><i></i></div></section>`).join('');
     f.querySelectorAll('.tk-item').forEach(it => this.wire(it)); this.fillPP(f);
     this.io = new IntersectionObserver(es => es.forEach(e => {
-      const it = e.target, v = it.querySelector('video'); if (!v) { if (e.intersectionRatio > .7) this.hydrate(it); return; }
-      if (e.isIntersecting && !v.src) { v.src = v.dataset.src; }
-      if (e.intersectionRatio > .7) { f.querySelectorAll('video').forEach(o => { if (o !== v) o.pause(); }); v.muted = false; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }); this.hydrate(it); }
-      else v.pause();
+      const it = e.target, v = it.querySelector('video'); it.dataset.vis = e.intersectionRatio > .7 ? '1' : '0'; if (!v) { if (e.intersectionRatio > .7) this.hydrate(it); return; }
+      const play = () => { f.querySelectorAll('video').forEach(o => { if (o !== v) o.pause(); }); v.muted = false; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }); };
+      if (e.isIntersecting && !v.src && !v.dataset.ld) { v.dataset.ld = 1; this.resolveUrl(v.dataset.src).then(u => { v.src = u; if (it.dataset.vis === '1') play(); }).catch(() => { delete v.dataset.ld; }); }
+      if (e.intersectionRatio > .7) { if (v.src) play(); this.hydrate(it); } else v.pause();
     }), { root: f, threshold: [0, .7] });
     f.querySelectorAll('.tk-item').forEach(it => this.io.observe(it));
   },
   async hydrate(it) {
     if (it.dataset.h) return; it.dataset.h = 1; const id = it.dataset.id, uid = it.dataset.uid, v = this.vids.find(x => x.id === id);
     try { const k = await this.db('tok/likes/' + id, { shallow: true }); const keys = Object.keys(k || {}); it.querySelector('[data-a=like] .n').textContent = keys.length; if (keys.includes(FB.st.uid)) it.querySelector('[data-a=like]').classList.add('on'); } catch (e) {}
+    const im = it.querySelector('img.tk-img'); if (im && !im.src) this.resolveUrl(im.dataset.src).then(u => { im.src = u; }).catch(() => {});
     if (v && await this.isVf(uid, userKey(v.u))) it.querySelector('.tk-vfs').innerHTML = VF_SVG;
   },
   wire(it) {
@@ -111,9 +112,10 @@ const Tok = {
   async follow(uid, b) {
     const on = !this.fol[uid]; this.fol[uid] = on ? true : undefined; if (!on) delete this.fol[uid];
     this.root.querySelectorAll(`.tk-item[data-uid="${uid}"] .tk-fol`).forEach(x => { x.classList.toggle('on', on); x.innerHTML = `<i class="fa-solid ${on ? 'fa-check' : 'fa-plus'}"></i>`; });
+    this.root.querySelectorAll('.tk-lfb').forEach(x => { if (x.dataset.uid === uid) x.classList.toggle('hidden', on); });
     try { await this.db('tok/fol/' + FB.st.uid + '/' + uid, null, on ? 'PUT' : 'DELETE', on ? true : undefined); } catch (e) { UI.toast('Gagal mengikuti', 'err'); }
   },
-  share(id) { const v = this.vids.find(x => x.id === id); const t = `Lihat video @${v ? v.u : ''} di Dimzz Play`; if (navigator.share) navigator.share({ title: 'Dimzz Play', text: t, url: v ? v.url : location.href }).catch(() => {}); else { try { navigator.clipboard.writeText(v ? v.url : location.href); UI.toast('Tautan disalin', 'ok'); } catch (e) {} } },
+  share(id) { const v = this.vids.find(x => x.id === id); const t = `Lihat video @${v ? v.u : ''} di Dimzz Play`, lk = v && !String(v.url).startsWith(this.CHUNK_HOST) ? v.url : location.href; if (navigator.share) navigator.share({ title: 'Dimzz Play', text: t, url: lk }).catch(() => {}); else { try { navigator.clipboard.writeText(lk); UI.toast('Tautan disalin', 'ok'); } catch (e) {} } },
   async comments(id) {
     const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden');
     ov.innerHTML = `<div class="tk-sheet"><div class="tk-grab"></div><div class="tk-sh-h"><b>Komentar</b><button class="tk-ib sm" data-x><i class="fa-solid fa-xmark"></i></button></div><div class="tk-cm" id="tk-cm"><div class="tk-spin"></div></div><div class="tk-in"><input id="tk-ci" maxlength="200" placeholder="Tambahkan komentar…" /><button id="tk-cs"><i class="fa-solid fa-paper-plane"></i></button></div></div>`;
@@ -126,38 +128,53 @@ const Tok = {
     ov.querySelector('#tk-cs').onclick = send; ov.querySelector('#tk-ci').onkeydown = e => { if (e.key === 'Enter') send(); };
   },
   menu() {
-    const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden');
-    ov.innerHTML = `<div class="tk-sheet sm"><div class="tk-grab"></div><button class="tk-mi" data-m="up"><i class="fa-solid fa-film"></i><div><b>Unggah video</b><small>Bagikan video ke Untuk Kamu</small></div></button><button class="tk-mi live" data-m="lv"><i class="fa-solid fa-tower-broadcast"></i><div><b>Mulai LIVE</b><small>Siaran langsung dari kameramu</small></div></button></div>`;
-    ov.onclick = e => { const b = e.target.closest('[data-m]'); if (b || e.target === ov) { ov.classList.add('hidden'); ov.innerHTML = ''; if (b) b.dataset.m === 'up' ? this.camOpen() : this.goLive(); } };
+    const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden', 'full');
+    ov.innerHTML = `<div class="tk-sheet sm"><div class="tk-grab"></div><button class="tk-mi" data-m="up"><i class="fa-regular fa-image"></i><div><b>Unggah dari galeri</b><small>Pilih video atau foto, langsung posting</small></div></button><button class="tk-mi" data-m="cam"><i class="fa-solid fa-camera"></i><div><b>Rekam dengan kamera</b><small>Buat video baru dengan efek &amp; filter</small></div></button><button class="tk-mi live" data-m="lv"><i class="fa-solid fa-tower-broadcast"></i><div><b>Mulai LIVE</b><small>Siaran langsung dari kameramu</small></div></button></div>`;
+    ov.onclick = e => { const b = e.target.closest('[data-m]'); if (b || e.target === ov) { ov.classList.add('hidden'); ov.innerHTML = ''; if (b) { const m = b.dataset.m; m === 'up' ? this.camPick() : m === 'cam' ? this.camOpen() : this.goLive(); } } };
   },
-  upload() {
-    const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden');
-    ov.innerHTML = `<div class="tk-sheet"><div class="tk-grab"></div><div class="tk-sh-h"><b>Unggah video</b><button class="tk-ib sm" data-x><i class="fa-solid fa-xmark"></i></button></div><div class="tk-form"><label class="tk-file"><i class="fa-solid fa-cloud-arrow-up"></i><span id="tk-fn">Pilih video (maks 60 MB)</span><input type="file" id="tk-f" accept="video/*" hidden/></label><div class="tk-or">atau tempel tautan video (.mp4)</div><input id="tk-u" placeholder="https://…/video.mp4" /><textarea id="tk-c" maxlength="150" rows="2" placeholder="Tulis keterangan…"></textarea><button class="tk-cta" id="tk-go"><i class="fa-solid fa-paper-plane"></i> Posting</button><div class="tk-pg hidden" id="tk-pg"><i></i></div></div></div>`;
-    ov.onclick = e => { if (e.target === ov || e.target.closest('[data-x]')) { ov.classList.add('hidden'); ov.innerHTML = ''; } };
-    const f = ov.querySelector('#tk-f'); f.onchange = () => { ov.querySelector('#tk-fn').textContent = f.files[0] ? f.files[0].name : 'Pilih video (maks 60 MB)'; };
-    ov.querySelector('#tk-go').onclick = async () => {
-      const file = f.files[0], link = ov.querySelector('#tk-u').value.trim(), cap = ov.querySelector('#tk-c').value.trim(), pg = ov.querySelector('#tk-pg'), bar = pg.querySelector('i'), go = ov.querySelector('#tk-go');
-      if (!file && !/^https:\/\//.test(link)) return UI.toast('Pilih video atau tempel tautan https', 'warn');
-      if (file && file.size > 60 * 1048576) return UI.toast('Ukuran video maksimal 60 MB', 'warn');
-      go.disabled = true; pg.classList.remove('hidden');
-      try {
-        let url = link;
-        if (file) url = await this.storeFile(file, p => bar.style.width = p + '%');
-        const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        await this.db('tok/videos/' + id, null, 'PUT', { u: App.user.username, uid: FB.st.uid, url, cap, ts: Date.now() });
-        ov.classList.add('hidden'); ov.innerHTML = ''; UI.toast('Video diposting!', 'ok'); this.setTab('fy', true); this.load();
-      } catch (e) { go.disabled = false; pg.classList.add('hidden'); UI.alert('Gagal mengunggah', (e && e.userMessage) || 'Periksa Firebase Storage Rules (harus mengizinkan tulis untuk pengguna login) atau pakai tautan video.', { type: 'warn' }); }
-    };
+  upload() { this.camPick(); },
+  /* Unggah: Firebase Storage dulu (coba beberapa nama bucket); kalau Storage belum aktif/ditolak dan berkas <= 12 MB, otomatis pakai cadangan lewat Realtime Database */
+  CHUNK_HOST: 'https://dimzz.chunk/',
+  async storeFile(file, prog) {
+    const c = FB.cfg(), pid = c.projectId, bks = [...new Set([c.storageBucket, pid && pid + '.appspot.com', pid && pid + '.firebasestorage.app'].filter(Boolean))];
+    let err = null;
+    for (const b of bks) {
+      try { return await this.putStorage(b, file, prog); } catch (e) { if (!err || (err.status === 404 && e.status !== 404)) err = e; if (e.status === 401) break; }
+    }
+    if (file.size <= 12 * 1048576) { try { return await this.storeChunks(file, prog); } catch (e) { if (!err) err = e; } }
+    const st = err && err.status, big = file.size > 12 * 1048576;
+    throw Object.assign(new Error('upload'), { userMessage:
+      st === 403 ? 'Firebase Storage menolak unggahan. Buka Firebase Console → Storage → Rules, tempel isi berkas storage.rules, lalu Publish.' :
+      st === 404 ? 'Firebase Storage belum diaktifkan di proyek ini. Buka Firebase Console → Storage → Get started.' + (big ? ' Video di atas 12 MB butuh Storage aktif.' : '') :
+      st === 0 ? 'Koneksi terputus saat mengunggah. Coba lagi dengan sinyal yang lebih stabil.' :
+      (big ? 'Video di atas 12 MB butuh Firebase Storage aktif (lihat panduan). ' : '') + 'Unggah gagal' + (err && err.message ? ': ' + err.message : '.') });
   },
-  storeFile(file, prog) {
+  putStorage(bucket, file, prog) {
     return new Promise(async (ok, no) => {
-      const b = FB.cfg().storageBucket, name = `tok/${FB.st.uid}/${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`, tok = await FB.token();
-      const x = new XMLHttpRequest(); x.open('POST', `https://firebasestorage.googleapis.com/v0/b/${b}/o?name=${encodeURIComponent(name)}`);
+      let tok; try { tok = await FB.token(); } catch (e) { return no(Object.assign(new Error('Sesi habis, masuk ulang'), { status: 401 })); }
+      const name = `tok/${FB.st.uid}/${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`, x = new XMLHttpRequest();
+      x.open('POST', `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodeURIComponent(name)}`);
       x.setRequestHeader('Authorization', 'Firebase ' + tok); x.setRequestHeader('Content-Type', file.type || 'video/mp4');
       x.upload.onprogress = e => e.lengthComputable && prog(Math.round(e.loaded / e.total * 100));
-      x.onload = () => { try { const j = JSON.parse(x.responseText); if (x.status !== 200) return no(new Error(j.error && j.error.message)); ok(`https://firebasestorage.googleapis.com/v0/b/${b}/o/${encodeURIComponent(j.name)}?alt=media&token=${j.downloadTokens}`); } catch (e) { no(e); } };
-      x.onerror = () => no(new Error('jaringan')); x.send(file);
+      x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {} if (x.status !== 200) return no(Object.assign(new Error((j.error && j.error.message) || ('HTTP ' + x.status)), { status: x.status })); ok(`https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(j.name)}?alt=media&token=${j.downloadTokens}`); };
+      x.onerror = () => no(Object.assign(new Error('jaringan'), { status: 0 })); x.send(file);
     });
+  },
+  async storeChunks(file, prog) {
+    const u8 = new Uint8Array(await file.arrayBuffer()), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7), SZ = 150000, n = Math.ceil(u8.length / SZ);
+    for (let i = 0; i < n; i++) {
+      const part = u8.subarray(i * SZ, (i + 1) * SZ); let bin = ''; for (let k = 0; k < part.length; k += 0x8000) bin += String.fromCharCode.apply(null, part.subarray(k, k + 0x8000));
+      await FB.request('tok/vchunk/' + id + '/c' + i, null, 'PUT', btoa(bin), 40000); prog(Math.round((i + 1) / n * 100));
+    }
+    return this.CHUNK_HOST + id + '?n=' + n + '&t=' + encodeURIComponent(file.type || 'video/mp4');
+  },
+  vcache: {},
+  async resolveUrl(url) {
+    if (!String(url).startsWith(this.CHUNK_HOST)) return url; if (this.vcache[url]) return this.vcache[url];
+    const m = url.slice(this.CHUNK_HOST.length).match(/^([\w]+)\?n=(\d+)&t=(.+)$/); if (!m) return '';
+    const o = await FB.request('tok/vchunk/' + m[1], null, 'GET', undefined, 90000) || {}, parts = [];
+    for (let i = 0; i < +m[2]; i++) { const bin = atob(o['c' + i] || ''), a = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) a[k] = bin.charCodeAt(k); parts.push(a); }
+    return this.vcache[url] = URL.createObjectURL(new Blob(parts, { type: decodeURIComponent(m[3]) }));
   },
   pauseAll() { this.root && this.root.querySelectorAll('video').forEach(v => v.pause()); },
   /* ---------- LIVE ---------- */
@@ -172,14 +189,42 @@ const Tok = {
     arr.forEach(x => this.isVf(x.uid, userKey(x.u)).then(v => { if (v) { const s = b.querySelector(`.tk-lc[data-h="${x.uid}"] small`); if (s) s.insertAdjacentHTML('beforeend', VF_SVG); } }));
   },
   livePanel(html) { const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden'); ov.classList.add('full'); ov.innerHTML = html; return ov; },
+  fmtN(n) { n = +n || 0; return n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1).replace('.0', '') + 'K' : String(n); },
+  /* tampilan LIVE ala TikTok: layar penuh, profil host + tombol Ikuti di kiri atas, penonton + tutup di kanan atas, komentar kiri bawah, bar input + hadiah/bagikan/suka */
+  liveHTML(o) {
+    const f = !o.host && o.uid !== FB.st.uid && !this.fol[o.uid];
+    return `<div class="tk-lv${o.host ? ' host' : ''}"><video id="${o.host ? 'tk-hv' : 'tk-rv'}" ${o.host ? 'muted' : ''} autoplay playsinline></video>${o.host ? '' : '<div class="tk-lvtap" id="tk-tap"></div>'}<div class="tk-shade lv"></div>
+      <div class="tk-lt"><div class="tk-hp"><span class="tk-la" data-pp="${esc(o.uid)}">${esc(String(o.u || '?').charAt(0).toUpperCase())}</span><div class="tk-hi"><b><span>${esc(o.u)}</span><i class="tk-hvf"></i></b><small><i class="fa-solid fa-heart"></i> <em id="tk-lk">0</em></small></div>${f ? `<button class="tk-lfb" id="tk-lf" data-uid="${esc(o.uid)}"><i class="fa-solid fa-plus"></i> Ikuti</button>` : ''}</div>
+        <div class="tk-lr"><span class="tk-vw"><i class="fa-solid fa-eye"></i> <b id="tk-hn">${o.vw || 0}</b></span><button class="tk-lx" id="tk-end" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div></div>
+      <div class="tk-lsub"><span class="tk-pill"><i></i>LIVE</span><span class="tk-ltt">${esc(o.title || '')}</span></div>
+      ${o.host ? '' : '<div class="tk-wait" id="tk-wt"><div class="tk-spin"></div><p>Menyambungkan ke siaran…</p></div>'}
+      <div class="tk-hearts" id="tk-hs"></div><div class="tk-chat" id="tk-lchat"></div>
+      <div class="tk-lbar"><div class="tk-lin"><input id="tk-li" maxlength="120" placeholder="${o.host ? 'Sapa penontonmu…' : 'Ketik…'}"/><button id="tk-ls" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button></div>
+        ${o.host ? '<button class="tk-lb" data-l="flip" aria-label="Balik kamera"><i class="fa-solid fa-camera-rotate"></i></button><button class="tk-lb" data-l="mic" aria-label="Mikrofon"><i class="fa-solid fa-microphone"></i></button>' : '<button class="tk-lb gift" data-l="gift" aria-label="Hadiah"><i class="fa-solid fa-gift"></i></button>'}
+        <button class="tk-lb" data-l="sh" aria-label="Bagikan"><i class="fa-solid fa-share"></i></button>${o.host ? '' : '<button class="tk-lb heart" data-l="like" aria-label="Suka"><i class="fa-solid fa-heart"></i></button>'}</div></div>`;
+  },
+  wireLive(ov, o, onClose, onBtn) {
+    const send = () => this.sendChat(o.uid, ov.querySelector('#tk-li')); ov.querySelector('#tk-ls').onclick = send; ov.querySelector('#tk-li').onkeydown = e => { if (e.key === 'Enter') send(); };
+    ov.querySelector('#tk-end').onclick = onClose; this.fillPP(ov);
+    this.isVf(o.uid, userKey(o.u)).then(v => { const s = ov.querySelector('.tk-hvf'); if (v && s) s.innerHTML = VF_SVG; });
+    const fb = ov.querySelector('#tk-lf'); if (fb) fb.onclick = () => this.follow(o.uid, fb);
+    ov.querySelector('.tk-lbar').addEventListener('click', e => {
+      const b = e.target.closest('[data-l]'); if (!b) return; const k = b.dataset.l;
+      if (k === 'gift') return UI.toast('Kirim hadiah segera hadir 🎁', 'info');
+      if (k === 'sh') { const t = `Nonton LIVE @${o.u} di Dimzz Play`; if (navigator.share) navigator.share({ title: 'Dimzz Play', text: t, url: location.href }).catch(() => {}); else { try { navigator.clipboard.writeText(location.href); UI.toast('Tautan disalin', 'ok'); } catch (x) {} } return; }
+      onBtn && onBtn(k, b);
+    });
+  },
+  heart(ov) {
+    const h = ov.querySelector('#tk-hs'); if (!h) return; const i = document.createElement('i'); i.className = 'fa-solid fa-heart tk-fh'; i.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px'); i.style.color = ['#fe2c55', '#ff6b9d', '#ffb703', '#22d3ee', '#a78bfa'][Math.floor(Math.random() * 5)]; h.appendChild(i); setTimeout(() => i.remove(), 1900);
+  },
   async goLive() {
     if (!navigator.mediaDevices || !window.RTCPeerConnection) return UI.alert('Tidak didukung', 'Browser belum mendukung siaran langsung (butuh HTTPS + Chrome/Safari terbaru).', { type: 'warn' });
-    const title = prompt('Judul LIVE kamu:', 'Ngobrol santai') ; if (title === null) return;
     let stream; try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } }, audio: true }); } catch (e) { return UI.alert('Izin ditolak', 'Izinkan kamera & mikrofon untuk mulai LIVE.', { type: 'warn' }); }
-    const me = this.me(), L = this.live = { stream, pcs: {}, seen: {}, last: 0, timers: [] };
-    const ov = this.livePanel(`<div class="tk-lv"><video id="tk-hv" muted autoplay playsinline></video><div class="tk-shade"></div><div class="tk-lvt"><span class="tk-pill"><i></i>LIVE</span><span class="tk-vw"><i class="fa-solid fa-eye"></i> <b id="tk-hn">0</b></span><button class="tk-end" id="tk-end">Akhiri</button></div><div class="tk-chat" id="tk-lchat"></div><div class="tk-in"><input id="tk-li" maxlength="120" placeholder="Sapa penontonmu…"/><button id="tk-ls"><i class="fa-solid fa-paper-plane"></i></button></div></div>`);
-    ov.querySelector('#tk-hv').srcObject = stream;
-    const put = () => this.db('tok/live/' + me.uid, null, 'PUT', { u: me.u, uid: me.uid, title: title || 'Siaran langsung', ts: Date.now(), vw: Object.keys(L.pcs).length }).catch(() => {});
+    const me = this.me(), title = 'LIVE @' + me.u, L = this.live = { stream, pcs: {}, seen: {}, last: 0, timers: [], facing: 'user' };
+    const ov = this.livePanel(this.liveHTML({ host: true, uid: me.uid, u: me.u, title }));
+    const hv = ov.querySelector('#tk-hv'); hv.srcObject = stream; hv.classList.add('mir');
+    const put = () => this.db('tok/live/' + me.uid, null, 'PUT', { u: me.u, uid: me.uid, title, ts: Date.now(), vw: Object.keys(L.pcs).length }).catch(() => {});
     await put(); L.timers.push(setInterval(put, 15000));
     L.timers.push(setInterval(async () => {
       let lv = {}; try { lv = await this.db('tok/lv/' + me.uid) || {}; } catch (e) { return; }
@@ -187,7 +232,7 @@ const Tok = {
         if (!d || !d.offer || L.seen[vid] === d.ts || Object.keys(L.pcs).length >= 8) continue; L.seen[vid] = d.ts;
         try {
           if (L.pcs[vid]) { try { L.pcs[vid].close(); } catch (x) {} }
-          const pc = L.pcs[vid] = new RTCPeerConnection(this.ICE()); stream.getTracks().forEach(t => pc.addTrack(t, stream));
+          const pc = L.pcs[vid] = new RTCPeerConnection(this.ICE()); L.stream.getTracks().forEach(t => pc.addTrack(t, L.stream));
           pc.onconnectionstatechange = () => { if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) { delete L.pcs[vid]; const n = ov.querySelector('#tk-hn'); if (n) n.textContent = Object.keys(L.pcs).length; } };
           await pc.setRemoteDescription(JSON.parse(d.offer)); await pc.setLocalDescription(await pc.createAnswer()); await this.waitIce(pc);
           await this.db('tok/lv/' + me.uid + '/' + vid + '/answer', null, 'PUT', JSON.stringify(pc.localDescription));
@@ -195,42 +240,69 @@ const Tok = {
         } catch (e) { delete L.pcs[vid]; }
       }
     }, 1500));
-    L.timers.push(setInterval(() => this.pollChat(me.uid, ov.querySelector('#tk-lchat'), L), 2000));
-    const send = () => this.sendChat(me.uid, ov.querySelector('#tk-li')); ov.querySelector('#tk-ls').onclick = send; ov.querySelector('#tk-li').onkeydown = e => { if (e.key === 'Enter') send(); };
-    ov.querySelector('#tk-end').onclick = () => this.endLive();
+    L.timers.push(setInterval(() => this.pollChat(me.uid, ov.querySelector('#tk-lchat'), L), 1500));
+    L.timers.push(setInterval(async () => { try { const ll = await this.db('tok/ll/' + me.uid) || {}, tot = Object.values(ll).reduce((a, b) => a + (+b || 0), 0), el = ov.querySelector('#tk-lk'); if (el) { if (tot > (L.tot || 0)) this.heart(ov); L.tot = tot; el.textContent = this.fmtN(tot); } } catch (e) {} }, 3000));
+    this.wireLive(ov, { uid: me.uid, u: me.u }, () => { if (confirm('Akhiri LIVE sekarang?')) this.endLive(); }, async (k, b) => {
+      if (k === 'mic') { const t = L.stream.getAudioTracks(); const on = !(t[0] && t[0].enabled); t.forEach(x => x.enabled = on); b.classList.toggle('off', !on); b.querySelector('i').className = 'fa-solid ' + (on ? 'fa-microphone' : 'fa-microphone-slash'); }
+      if (k === 'flip') {
+        L.facing = L.facing === 'user' ? 'environment' : 'user';
+        try {
+          const ns = await navigator.mediaDevices.getUserMedia({ video: { facingMode: L.facing, width: { ideal: 720 }, height: { ideal: 1280 } }, audio: false }), nt = ns.getVideoTracks()[0];
+          L.stream.getVideoTracks().forEach(t => { L.stream.removeTrack(t); t.stop(); }); L.stream.addTrack(nt);
+          Object.values(L.pcs).forEach(pc => { const s = pc.getSenders().find(x => x.track && x.track.kind === 'video'); if (s) s.replaceTrack(nt).catch(() => {}); });
+          hv.srcObject = L.stream; hv.classList.toggle('mir', L.facing === 'user');
+        } catch (e) { L.facing = L.facing === 'user' ? 'environment' : 'user'; UI.toast('Tidak bisa membalik kamera', 'warn'); }
+      }
+    });
   },
   async endLive() {
     const L = this.live; if (!L) return; const uid = FB.st.uid; this.live = null;
     L.timers.forEach(clearInterval); Object.values(L.pcs).forEach(p => { try { p.close(); } catch (e) {} }); L.stream.getTracks().forEach(t => t.stop());
-    ['live', 'lv', 'lc'].forEach(n => this.db('tok/' + n + '/' + uid, null, 'DELETE').catch(() => {}));
+    ['live', 'lv', 'lc', 'll'].forEach(n => this.db('tok/' + n + '/' + uid, null, 'DELETE').catch(() => {}));
     const ov = this.root && this.root.querySelector('#tk-ov'); if (ov) { ov.classList.add('hidden'); ov.classList.remove('full'); ov.innerHTML = ''; }
-    UI.toast('LIVE selesai', 'ok'); if (this.tab === 'lv') this.loadLive();
+    UI.toast('LIVE selesai', 'ok'); if (this.root && this.tab === 'lv') this.loadLive();
   },
-  async pollChat(host, box, S) {
-    if (!box) return; try {
-      const c = await this.db('tok/lc/' + host, { orderBy: 'ts', limitToLast: 30 }) || {}, l = Object.values(c).sort((a, b) => a.ts - b.ts);
-      box.innerHTML = l.map(x => `<div class="tk-lm"><b>${esc(x.u)}</b> ${esc(x.t)}</div>`).join(''); box.scrollTop = box.scrollHeight;
+  async pollChat(host, box) {
+    if (!box || !box.isConnected) return; try {
+      const c = await this.db('tok/lc/' + host, { orderBy: 'ts', limitToLast: 30 }) || {}, l = Object.values(c).sort((a, b) => a.ts - b.ts), near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+      box.innerHTML = l.map(x => `<div class="tk-lm"><b>${esc(x.u)}</b> ${esc(x.t)}</div>`).join(''); if (near) box.scrollTop = box.scrollHeight;
     } catch (e) {}
   },
   async sendChat(host, inp) { const t = inp.value.trim(); if (!t) return; inp.value = ''; try { await this.db('tok/lc/' + host, null, 'POST', { u: App.user.username, uid: FB.st.uid, t, ts: Date.now() }); } catch (e) { UI.toast('Gagal mengirim', 'err'); } },
+  tapLike(ov, V, host) {
+    this.heart(ov); V.add++; const el = ov.querySelector('#tk-lk'); if (el) el.textContent = this.fmtN((V.tot || 0) + V.add);
+    try { navigator.vibrate && navigator.vibrate(8); } catch (x) {}
+    clearTimeout(V.ft); V.ft = setTimeout(() => this.flushLike(V, host), 1200);
+  },
+  flushLike(V, host) { if (!V.add) return; V.lk += V.add; V.add = 0; this.db('tok/ll/' + host + '/' + FB.st.uid, null, 'PUT', V.lk).catch(() => {}); },
   async watch(h) {
-    if (!h) return; const me = this.me(), V = this.view = { pc: null, timers: [] }, ov = this.livePanel(`<div class="tk-lv"><video id="tk-rv" autoplay playsinline></video><div class="tk-shade"></div><div class="tk-lvt"><span class="tk-pill"><i></i>LIVE</span><b class="tk-hn2">@${esc(h.u)}</b><button class="tk-end" id="tk-end">Keluar</button></div><div class="tk-wait" id="tk-wt"><div class="tk-spin"></div><p>Menyambungkan ke siaran…</p></div><div class="tk-chat" id="tk-lchat"></div><div class="tk-in"><input id="tk-li" maxlength="120" placeholder="Ketik komentar…"/><button id="tk-ls"><i class="fa-solid fa-paper-plane"></i></button></div></div>`);
-    const out = () => this.leave(h.uid); ov.querySelector('#tk-end').onclick = out;
+    if (!h) return; const me = this.me(), V = this.view = { pc: null, timers: [], lk: 0, add: 0, tot: 0 };
+    const ov = this.livePanel(this.liveHTML({ host: false, uid: h.uid, u: h.u, title: h.title, vw: h.vw }));
+    this.wireLive(ov, h, () => this.leave(h.uid), k => { if (k === 'like') this.tapLike(ov, V, h.uid); });
+    ov.querySelector('#tk-tap').onclick = () => this.tapLike(ov, V, h.uid);
     try {
       const pc = V.pc = new RTCPeerConnection(this.ICE()); pc.addTransceiver('video', { direction: 'recvonly' }); pc.addTransceiver('audio', { direction: 'recvonly' });
       pc.ontrack = e => { const v = ov.querySelector('#tk-rv'); if (v) { v.srcObject = e.streams[0]; v.play().catch(() => {}); } const w = ov.querySelector('#tk-wt'); if (w) w.remove(); };
       await pc.setLocalDescription(await pc.createOffer()); await this.waitIce(pc);
       await this.db('tok/lv/' + h.uid + '/' + me.uid, null, 'PUT', { offer: JSON.stringify(pc.localDescription), ts: Date.now(), u: me.u });
       let tries = 0; V.timers.push(setInterval(async () => {
-        if (++tries > 30 || pc.signalingState === 'stable') return; try { const a = await this.db('tok/lv/' + h.uid + '/' + me.uid + '/answer'); if (a) await pc.setRemoteDescription(JSON.parse(a)); } catch (e) {}
-        if (tries > 30) { const w = ov.querySelector('#tk-wt'); if (w) w.innerHTML = '<p>Host tidak merespons. Coba lagi nanti.</p>'; }
+        if (pc.signalingState === 'stable') return;
+        if (++tries > 30) { const w = ov.querySelector('#tk-wt'); if (w) w.innerHTML = '<p>Host tidak merespons. Coba lagi nanti.</p>'; return; }
+        try { const a = await this.db('tok/lv/' + h.uid + '/' + me.uid + '/answer'); if (a) await pc.setRemoteDescription(JSON.parse(a)); } catch (e) {}
       }, 1000));
     } catch (e) { UI.toast('Gagal tersambung ke LIVE', 'err'); }
-    V.timers.push(setInterval(() => this.pollChat(h.uid, ov.querySelector('#tk-lchat')), 2000));
-    const send = () => this.sendChat(h.uid, ov.querySelector('#tk-li')); ov.querySelector('#tk-ls').onclick = send; ov.querySelector('#tk-li').onkeydown = e => { if (e.key === 'Enter') send(); };
+    V.timers.push(setInterval(() => this.pollChat(h.uid, ov.querySelector('#tk-lchat')), 1500));
+    V.timers.push(setInterval(async () => {
+      try {
+        const [lv, ll] = await Promise.all([this.db('tok/live/' + h.uid), this.db('tok/ll/' + h.uid)]);
+        if (this.view !== V) return; if (!lv) { UI.toast('LIVE telah berakhir', 'info'); return this.leave(h.uid); }
+        const n = ov.querySelector('#tk-hn'); if (n) n.textContent = lv.vw || 0;
+        V.tot = Object.values(ll || {}).reduce((a, b) => a + (+b || 0), 0); const el = ov.querySelector('#tk-lk'); if (el) el.textContent = this.fmtN(V.tot + V.add);
+      } catch (e) {}
+    }, 4000));
   },
   leave(host) {
-    const V = this.view; this.view = null; if (V) { V.timers.forEach(clearInterval); try { V.pc.close(); } catch (e) {} this.db('tok/lv/' + host + '/' + FB.st.uid, null, 'DELETE').catch(() => {}); }
+    const V = this.view; this.view = null; if (V) { V.timers.forEach(clearInterval); clearTimeout(V.ft); if (host) this.flushLike(V, host); try { V.pc.close(); } catch (e) {} this.db('tok/lv/' + host + '/' + FB.st.uid, null, 'DELETE').catch(() => {}); }
     const ov = this.root && this.root.querySelector('#tk-ov'); if (ov) { ov.classList.add('hidden'); ov.classList.remove('full'); ov.innerHTML = ''; }
   },
   stopAll() { this.camStop(); if (this.live) this.endLive(); if (this.view) this.leave(''); if (this.io) this.io.disconnect(); this.root = null; try { Bgm.resumeIfWanted(); } catch (e) {} },
@@ -469,23 +541,23 @@ Object.assign(Tok, {
   camShot() { const C = this.C; C.cv.toBlob(b => { if (b) this.camPreview(b, 'img'); }, 'image/jpeg', .9); },
   camPick() {
     const f = document.createElement('input'); f.type = 'file'; f.accept = 'video/*,image/*';
-    f.onchange = () => { const fl = f.files[0]; if (!fl) return; if (fl.size > 60 * 1048576) return UI.toast('Ukuran maksimal 60 MB', 'warn'); this.camPreview(fl, fl.type.startsWith('image') ? 'img' : 'video'); }; f.click();
+    f.onchange = () => { const fl = f.files[0]; if (!fl) return; if (fl.size > 60 * 1048576) return UI.toast('Ukuran maksimal 60 MB', 'warn'); this.camPreview(fl, fl.type.startsWith('image') ? 'img' : 'video', 'g'); }; f.click();
   },
   camStop() { const C = this.C; if (!C) return; this.C = null; cancelAnimationFrame(C.raf); clearInterval(C.pt); clearInterval(C.cd); C.keep = false; try { if (C.rec && C.rec.state !== 'inactive') C.rec.stop(); } catch (e) {} if (C.stream) C.stream.getTracks().forEach(t => t.stop()); },
   camClose() { this.camStop(); const ov = this.root && this.root.querySelector('#tk-ov'); if (ov) { ov.classList.add('hidden'); ov.classList.remove('full'); ov.innerHTML = ''; } },
-  camPreview(blob, kind) {
-    this.camStop(); const ov = this.root.querySelector('#tk-ov'), url = URL.createObjectURL(blob);
+  camPreview(blob, kind, from) {
+    this.camStop(); const ov = this.root.querySelector('#tk-ov'), url = URL.createObjectURL(blob); ov.classList.remove('hidden'); ov.classList.add('full');
     ov.innerHTML = `<div class="tkc pv">${kind === 'img' ? `<img src="${url}" alt="">` : `<video src="${url}" autoplay loop playsinline></video>`}<button class="tkc-x" data-a="back" aria-label="Ulangi"><i class="fa-solid fa-chevron-left"></i></button>
-      <div class="tkc-post"><textarea id="tkc-cap" maxlength="150" rows="2" placeholder="Tulis keterangan…"></textarea><div class="tk-pg hidden" id="tkc-pg"><i></i></div><div class="tkc-pb"><button data-a="back" class="tkc-ghost">Ulangi</button><button data-a="post" class="tk-cta" id="tkc-go"><i class="fa-solid fa-paper-plane"></i> Posting</button></div></div></div>`;
+      <div class="tkc-post"><textarea id="tkc-cap" maxlength="150" rows="2" placeholder="Tulis keterangan…"></textarea><div class="tk-pg hidden" id="tkc-pg"><i></i></div><div class="tkc-pb"><button data-a="back" class="tkc-ghost">${from === 'g' ? 'Batal' : 'Ulangi'}</button><button data-a="post" class="tk-cta" id="tkc-go"><i class="fa-solid fa-paper-plane"></i> Posting</button></div></div></div>`;
     ov.onclick = async e => {
-      const a = e.target.closest('[data-a]'); if (!a) return; if (a.dataset.a === 'back') { URL.revokeObjectURL(url); return this.camOpen(); }
+      const a = e.target.closest('[data-a]'); if (!a) return; if (a.dataset.a === 'back') { URL.revokeObjectURL(url); return from === 'g' ? this.camClose() : this.camOpen(); }
       const go = ov.querySelector('#tkc-go'), pg = ov.querySelector('#tkc-pg'), bar = pg.querySelector('i'); go.disabled = true; pg.classList.remove('hidden');
       try {
         const ext = kind === 'img' ? 'jpg' : (blob.type.includes('mp4') ? 'mp4' : 'webm'), file = blob instanceof File ? blob : new File([blob], 'rec_' + Date.now() + '.' + ext, { type: blob.type });
         const link = await this.storeFile(file, p => bar.style.width = p + '%'), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         const d = { u: App.user.username, uid: FB.st.uid, url: link, cap: ov.querySelector('#tkc-cap').value.trim(), ts: Date.now() }; if (kind === 'img') d.k = 'img';
         await this.db('tok/videos/' + id, null, 'PUT', d); URL.revokeObjectURL(url); this.camClose(); UI.toast('Berhasil diposting!', 'ok'); this.showPage('home'); this.setTab('fy', true); this.load();
-      } catch (er) { go.disabled = false; pg.classList.add('hidden'); if (confirm('Unggah gagal (pastikan Firebase Storage aktif & rules mengizinkan). Pakai tautan video saja?')) { this.camClose(); this.upload(); } }
+      } catch (er) { go.disabled = false; pg.classList.add('hidden'); UI.alert('Gagal mengunggah', (er && er.userMessage) || 'Unggah gagal. Coba lagi.', { type: 'warn' }); }
     };
   }
 });
