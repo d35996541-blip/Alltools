@@ -132,3 +132,8 @@
 .ch-mt .pl{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;font-weight:700;font-size:14px}.ch-mt .pl.win{background:#d9a44122;color:var(--brass)}.ch-mt .pl i{color:var(--mu);font-weight:500}
 .ch-mt .pl .pc{font-size:15px}.ch-mt small{color:var(--mu);font-size:11px;padding:2px 8px}.ch-mt button{margin:4px 6px 4px}
 .ch-mt .cd{width:12px;height:12px;border-radius:50%;flex:none;border:1.5px solid var(--mu)}.ch-mt .cd.w{background:#fdf6e6}.ch-mt .cd.b{background:#1c120a}
+
+/* deretan buah: ciri lobi, seperti barisan belakang papan */
+.ch-rank{display:grid;grid-template-columns:repeat(8,1fr);border-radius:4px;overflow:hidden;box-shadow:0 0 0 4px #4a2f1b,0 10px 24px #0008;margin:6px 4px 10px}
+.ch-rank i{font-style:normal;aspect-ratio:1;display:grid;place-items:center;font-size:clamp(20px,7vw,34px);line-height:1;color:#1c120a;background:#a97649}
+.ch-rank i:nth-child(odd){background:#e6cfa5}

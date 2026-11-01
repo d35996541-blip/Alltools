@@ -159,7 +159,7 @@ const Chess = {
   stopT() { this.T.forEach(clearInterval); this.T = []; if (this.qk) { this.q(this.qk, null, 'DELETE').catch(() => {}); this.qk = null; } },
   err(e) { UI.toast(e && (e.permission || e.status === 401) ? 'Aturan Firebase belum diperbarui (lihat panduan)' : 'Koneksi bermasalah, coba lagi', 'warn'); },
   open() {
-    Sheet.open({ id: 'catur', title: 'Catur', icon: 'fa-chess-knight', grad: 'linear-gradient(135deg,#0f766e,#164e63)', cls: 'ch-panel', bodyCls: 'ch-body', full: true, body: '<div id="ch-root"></div>',
+    Sheet.open({ id: 'catur', title: 'Catur', icon: 'fa-chess-knight', grad: 'linear-gradient(135deg,#e2512f,#9c2f17)', cls: 'ch-panel', bodyCls: 'ch-body', full: true, body: '<div id="ch-root"></div>',
       onClose: () => { this.stopT(); this.G = null; }, onOpen: () => { this.root = $('ch-root'); this.boot(); } });
   },
   async boot() {
@@ -178,7 +178,7 @@ const Chess = {
     this.stopT(); this.G = null; const r = this.root, me = this.name(), on = this.on();
     r.innerHTML = `<div class="ch-lob"><div class="ch-hero"><div class="ch-av">${esc(me.charAt(0).toUpperCase())}</div><div class="ch-hi"><b>${esc(me)}</b><small id="ch-rt">Memuat peringkat…</small></div><div class="ch-sc" id="ch-sc"></div></div>
       ${!on ? '<div class="ch-warn">Mode online butuh akun yang terhubung ke Firebase. Kamu tetap bisa berlatih melawan bot.</div>' : this.rulesErr ? '<div class="ch-warn">Fitur online belum aktif: tempel Rules Firebase terbaru (berkas firebase-rules.json), lalu buka ulang Catur.</div>' : ''}
-      <div id="ch-resume"></div>
+      <div class="ch-rank" aria-hidden="true">${['♜','♞','♝','♛','♚','♝','♞','♜'].map(c => `<i>${c}</i>`).join('')}</div><div id="ch-resume"></div>
       <h4 class="ch-h">Main cepat</h4>${this.chips()}
       <button class="ch-cta" id="ch-find" ${on ? '' : 'disabled'}><i class="fa-solid fa-bolt"></i> Cari lawan</button>
       <div class="ch-grid"><button data-g="friend" ${on ? '' : 'disabled'}><i class="fa-solid fa-user-group"></i><b>Dengan teman</b><small>Kode kamar atau tantang username</small></button>
@@ -409,7 +409,10 @@ Object.assign(Chess, {
         el.innerHTML = l.length ? l.map(t => { const n = Object.keys(t.p || {}).length, st = t.z ? 'Selesai · juara ' + esc(t.z.u) : t.b ? 'Berlangsung' : 'Pendaftaran';
           return `<button class="ch-tr" data-t="${esc(t.id)}"><i class="fa-solid fa-trophy"></i><div><b>${esc(t.m.n)}</b><small>${n}/${t.m.max} pemain · ${esc(tcName(t.m.tc))} · oleh ${esc(t.m.bu)}</small></div><span class="${t.z ? 'dn' : t.b ? 'lv' : 'op'}">${st}</span></button>`; }).join('') : '<div class="ch-load">Belum ada turnamen. Buat yang pertama!</div>';
         el.querySelectorAll('[data-t]').forEach(b => b.onclick = () => this.tourView(b.dataset.t));
-      } catch (e) { const el = $('lst'); if (el) el.innerHTML = `<div class="ch-load err"><b>Daftar turnamen tidak terbaca</b><p>${e && (e.status === 401 || e.status === 403 || e.permission) ? 'Database menolak akses. Publikasikan firebase-rules.json ke Realtime Database (bukan Firestore), lalu muat ulang.' : 'Cek koneksi lalu coba lagi.'}</p><small>Kode: ${esc(String(e && (e.status || e.message) || 'tidak diketahui'))}</small></div>`; }
+      } catch (e) { const el = $('lst'); if (!el) return; const denied = e && (e.status === 401 || e.status === 403 || e.permission); let why = denied ? 'Database menolak akses.' : 'Cek koneksi lalu coba lagi.';
+        if (denied) { let old = false; try { await this.q('chess/st', { shallow: true }); old = true; } catch (_) {}
+          why = old ? 'Rules yang aktif di database ini masih versi lama: bagian turnamen belum ada. Tempel ulang seluruh isi firebase-rules.json lalu tekan Publikasikan.' : 'Rules chess belum aktif di database ini. Tempel seluruh isi firebase-rules.json di Realtime Database, lalu tekan Publikasikan.'; }
+        el.innerHTML = `<div class="ch-load err"><b>Daftar turnamen tidak terbaca</b><p>${why}</p><small>Kode ${esc(String(e && (e.status || e.message) || '?'))} · database ${esc(String((FB.st.dbUrl || '').replace('https://', '')))}</small></div>`; }
     };
     this.timer(load, 6000); load();
   },
@@ -483,4 +486,4 @@ Object.assign(Chess, {
 });
 
 CATS.push(['game', 'Game']);
-Features.reg({ id: 'catur', name: 'Catur', cat: 'game', icon: 'fa-chess-knight', grad: 'linear-gradient(135deg,#0f766e,#164e63)', open: () => Chess.open() });
+Features.reg({ id: 'catur', name: 'Catur', cat: 'game', icon: 'fa-chess-knight', grad: 'linear-gradient(135deg,#e2512f,#9c2f17)', open: () => Chess.open() });
