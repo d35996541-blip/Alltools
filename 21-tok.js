@@ -245,13 +245,11 @@ const Tok = {
     this.wireLive(ov, { uid: me.uid, u: me.u }, () => { if (confirm('Akhiri LIVE sekarang?')) this.endLive(); }, async (k, b) => {
       if (k === 'mic') { const t = L.stream.getAudioTracks(); const on = !(t[0] && t[0].enabled); t.forEach(x => x.enabled = on); b.classList.toggle('off', !on); b.querySelector('i').className = 'fa-solid ' + (on ? 'fa-microphone' : 'fa-microphone-slash'); }
       if (k === 'flip') {
-        L.facing = L.facing === 'user' ? 'environment' : 'user';
-        try {
-          const ns = await navigator.mediaDevices.getUserMedia({ video: { facingMode: L.facing, width: { ideal: 720 }, height: { ideal: 1280 } }, audio: false }), nt = ns.getVideoTracks()[0];
-          L.stream.getVideoTracks().forEach(t => { L.stream.removeTrack(t); t.stop(); }); L.stream.addTrack(nt);
-          Object.values(L.pcs).forEach(pc => { const s = pc.getSenders().find(x => x.track && x.track.kind === 'video'); if (s) s.replaceTrack(nt).catch(() => {}); });
-          hv.srcObject = L.stream; hv.classList.toggle('mir', L.facing === 'user');
-        } catch (e) { L.facing = L.facing === 'user' ? 'environment' : 'user'; UI.toast('Tidak bisa membalik kamera', 'warn'); }
+        const old = L.facing, want = old === 'user' ? 'environment' : 'user'; b.disabled = true;
+        L.stream.getVideoTracks().forEach(t => { L.stream.removeTrack(t); t.stop(); });
+        let ns = null; try { ns = await this.getCam(want, false); L.facing = want; } catch (e) { try { ns = await this.getCam(old, false); } catch (x) {} UI.toast('Kamera ' + (want === 'user' ? 'depan' : 'belakang') + ' tidak bisa dibuka', 'warn'); }
+        if (ns) { const nt = ns.getVideoTracks()[0]; L.stream.addTrack(nt); Object.values(L.pcs).forEach(pc => { const s = pc.getSenders().find(x => x.track && x.track.kind === 'video' || x.track === null); if (s) s.replaceTrack(nt).catch(() => {}); }); hv.srcObject = L.stream; hv.play().catch(() => {}); hv.classList.toggle('mir', L.facing === 'user'); }
+        b.disabled = false;
       }
     });
   },
@@ -472,7 +470,7 @@ Object.assign(Tok, {
     ov.onclick = e => {
       const m = e.target.closest('[data-m]'), a = e.target.closest('[data-a]'); if (m) return this.camMode(m, q);
       if (!a) return; const k = a.dataset.a;
-      if (k === 'x') this.camClose(); else if (k === 'flip') { C.facing = C.facing === 'user' ? 'environment' : 'user'; this.camStream(); } else if (k === 'flash') this.camFlash(a);
+      if (k === 'x') this.camClose(); else if (k === 'flip') { C.facing = C.facing === 'user' ? 'environment' : 'user'; C.retry = 0; this.camStream(); } else if (k === 'flash') this.camFlash(a);
       else if (k === 'timer') { C.timer = C.timer === 0 ? 3 : C.timer === 3 ? 10 : 0; q('#tkc-tl').textContent = C.timer ? C.timer + ' dtk' : 'Pewaktu'; a.classList.toggle('on', !!C.timer); }
       else if (k === 'filter' || k === 'fx') this.camFx(k === 'filter' ? 'Filter' : 'Trending');
       else if (k === 'beauty') { C.beauty = !C.beauty; a.classList.toggle('on', C.beauty); }
@@ -482,11 +480,22 @@ Object.assign(Tok, {
     q('#tkc-rec').onclick = () => this.camRec();
     if (!(await this.camStream())) return; this.camLoop();
   },
+  /* ambil kamera depan/belakang: wajib (exact) dulu, lalu longgar, lalu cari lewat daftar perangkat */
+  async getCam(facing, audio) {
+    const base = { width: { ideal: 1280 }, height: { ideal: 720 } }, md = navigator.mediaDevices;
+    for (const f of [{ exact: facing }, facing]) { try { return await md.getUserMedia({ video: Object.assign({ facingMode: f }, base), audio }); } catch (e) { if (e.name === 'NotAllowedError' || e.name === 'SecurityError') throw e; } }
+    try {
+      const d = (await md.enumerateDevices()).filter(x => x.kind === 'videoinput'), back = d.find(x => /back|rear|belakang|environment/i.test(x.label)), front = d.find(x => /front|depan|user/i.test(x.label));
+      const pick = facing === 'environment' ? (back || (d.length > 1 ? d[d.length - 1] : null)) : (front || d[0]);
+      if (pick) return await md.getUserMedia({ video: Object.assign({ deviceId: { exact: pick.deviceId } }, base), audio });
+    } catch (e) {}
+    throw Object.assign(new Error('nocam'), { name: 'NotFoundError' });
+  },
   async camStream() {
     const C = this.C; if (!C) return false; if (C.stream) C.stream.getTracks().forEach(t => t.stop());
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { this.camClose(); UI.alert('Tidak didukung', 'Kamera butuh HTTPS dan browser terbaru.', { type: 'warn' }); return false; }
-    try { try { C.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: C.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true }); } catch (e) { if (e.name === 'NotAllowedError') throw e; C.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: C.facing } }); C.mic = false; } }
-    catch (e) { this.camClose(); UI.alert('Izin ditolak', 'Izinkan kamera (dan mikrofon) untuk merekam.', { type: 'warn' }); return false; }
+    try { try { C.stream = await this.getCam(C.facing, true); } catch (e) { if (e.name === 'NotAllowedError') throw e; C.stream = await this.getCam(C.facing, false); C.mic = false; } }
+    catch (e) { if (e.name !== 'NotAllowedError' && !C.retry) { C.retry = 1; C.facing = C.facing === 'user' ? 'environment' : 'user'; UI.toast('Kamera ' + (C.facing === 'user' ? 'belakang' : 'depan') + ' tidak tersedia di perangkat ini', 'warn'); return this.camStream(); } this.camClose(); UI.alert('Izin ditolak', 'Izinkan kamera (dan mikrofon) untuk merekam.', { type: 'warn' }); return false; }
     C.v.srcObject = C.stream; try { await C.v.play(); } catch (e) {} C.flash = false; return true;
   },
   async camFlash(btn) {
