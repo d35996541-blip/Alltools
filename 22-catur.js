@@ -148,6 +148,11 @@ const Chess = {
   T: [], G: null, off: 0, root: null, tc: '300_0', rating: 1000, qk: null,
   on() { return FB.mode === 'firebase' && !!FB.st.idToken; },
   q(p, qq, m, b, t) { return FB.request(p, qq, m || 'GET', b, t); },
+  /* Ambil data terbaru. Pakai indeks bila ada; kalau indeks belum terpasang, urutkan lewat $key (id memuat waktu) agar tidak gagal. */
+  async recent(path, idx, n) {
+    try { return await this.q(path, { orderBy: idx, limitToLast: n }); }
+    catch (e) { if (e.status === 401 || e.status === 403) throw e; return this.q(path, { orderBy: '$key', limitToLast: n }); }
+  },
   now() { return Date.now() + this.off; },
   uid() { return FB.st.uid; }, name() { return App.user.username; },
   timer(fn, ms) { const t = setInterval(fn, ms); this.T.push(t); return t; },
@@ -386,7 +391,7 @@ const Chess = {
   async rank() {
     this.stopT(); const r = this.root; r.innerHTML = '<div class="ch-pg"><button class="ch-back" id="bk"><i class="fa-solid fa-arrow-left"></i> Lobi</button><h3>Peringkat</h3><div id="lst" class="ch-lst"><div class="ch-load">Memuat…</div></div></div>'; $('bk').onclick = () => this.lobby();
     try {
-      const o = await this.q('chess/st', { orderBy: 'r', limitToLast: 20 }) || {}, l = Object.entries(o).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.r - a.r), me = this.uid();
+      const o = await this.recent('chess/st', 'r', 20) || {}, l = Object.entries(o).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.r - a.r), me = this.uid();
       $('lst').innerHTML = l.length ? l.map((x, i) => `<div class="ch-row2${x.id === me ? ' me' : ''}"><span class="rk r${i + 1}">${i + 1}</span><div class="ch-av s">${esc(String(x.u || '?').charAt(0).toUpperCase())}</div><div class="ch-pi"><b>${esc(x.u || 'Pemain')}</b><small>${x.w || 0} menang · ${x.d || 0} seri · ${x.l || 0} kalah</small></div><b class="ch-pt">${x.r}</b></div>`).join('') : '<div class="ch-load">Belum ada pertandingan. Jadilah yang pertama!</div>';
     } catch (e) { $('lst').innerHTML = '<div class="ch-load">Gagal memuat peringkat.</div>'; }
   }
@@ -400,11 +405,11 @@ Object.assign(Chess, {
     $('bk').onclick = () => this.lobby(); $('nw').onclick = () => this.newTour();
     const load = async () => {
       try {
-        const o = await this.q('chess/tour', { orderBy: 'm/ts', limitToLast: 15 }) || {}, l = Object.entries(o).filter(([, v]) => v && v.m).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.m.ts - a.m.ts), el = $('lst'); if (!el) return;
+        const o = await this.recent('chess/tour', 'm/ts', 15) || {}, l = Object.entries(o).filter(([, v]) => v && v.m).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.m.ts - a.m.ts), el = $('lst'); if (!el) return;
         el.innerHTML = l.length ? l.map(t => { const n = Object.keys(t.p || {}).length, st = t.z ? 'Selesai · juara ' + esc(t.z.u) : t.b ? 'Berlangsung' : 'Pendaftaran';
           return `<button class="ch-tr" data-t="${esc(t.id)}"><i class="fa-solid fa-trophy"></i><div><b>${esc(t.m.n)}</b><small>${n}/${t.m.max} pemain · ${esc(tcName(t.m.tc))} · oleh ${esc(t.m.bu)}</small></div><span class="${t.z ? 'dn' : t.b ? 'lv' : 'op'}">${st}</span></button>`; }).join('') : '<div class="ch-load">Belum ada turnamen. Buat yang pertama!</div>';
         el.querySelectorAll('[data-t]').forEach(b => b.onclick = () => this.tourView(b.dataset.t));
-      } catch (e) { const el = $('lst'); if (el) el.innerHTML = '<div class="ch-load">Gagal memuat turnamen. Pastikan Rules Firebase terbaru sudah dipublikasikan.</div>'; }
+      } catch (e) { const el = $('lst'); if (el) el.innerHTML = `<div class="ch-load err"><b>Daftar turnamen tidak terbaca</b><p>${e && (e.status === 401 || e.status === 403 || e.permission) ? 'Database menolak akses. Publikasikan firebase-rules.json ke Realtime Database (bukan Firestore), lalu muat ulang.' : 'Cek koneksi lalu coba lagi.'}</p><small>Kode: ${esc(String(e && (e.status || e.message) || 'tidak diketahui'))}</small></div>`; }
     };
     this.timer(load, 6000); load();
   },
