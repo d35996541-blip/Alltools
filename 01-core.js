@@ -83,7 +83,7 @@ const Sheet = {
   open(o) {
     const exist = this.stack.find(s => s.id === o.id); if (exist) { exist.el.remove(); this.stack = this.stack.filter(s => s !== exist); }
     const el = document.createElement('div'); el.className = 'sheet' + (o.full ? ' full' : ''); el.id = 'sheet-' + o.id;
-    el.innerHTML = `<div class="panel ${o.cls || ''}"><div class="sheet-head"><div class="gi" style="background:${o.grad || 'var(--ink)'}"><i class="fa-solid ${o.icon || 'fa-star'}"></i></div><h3>${esc(o.title)}</h3>${o.head || ''}<button class="btn btn-icon btn-ghost" data-close aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div><div class="sheet-body ${o.bodyCls || 'custom-scrollbar'}" id="sb-${o.id}">${o.body || ''}</div>${o.foot || ''}</div>`;
+    el.innerHTML = `<div class="panel ${o.cls || ''}"><div class="sheet-head">${(typeof Ico !== 'undefined' && Ico.has(o.id)) ? `<div class="gi gi2" style="--c:${Ico.hex(o.grad)}">${Ico.svg(o.id, 20)}</div>` : `<div class="gi" style="background:${o.grad || 'var(--ink)'}"><i class="fa-solid ${o.icon || 'fa-star'}"></i></div>`}<h3>${esc(o.title)}</h3>${o.head || ''}<button class="btn btn-icon btn-ghost" data-close aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div><div class="sheet-body ${o.bodyCls || 'custom-scrollbar'}" id="sb-${o.id}">${o.body || ''}</div>${o.foot || ''}</div>`;
     el.addEventListener('mousedown', e => { if (e.target === el) this.close(o.id); });
     el.querySelector('[data-close]').onclick = () => this.close(o.id);
     document.body.appendChild(el);

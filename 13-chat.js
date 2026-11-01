@@ -6,19 +6,24 @@ const Chat = {
   tick: () => '<svg viewBox="0 0 24 24" width="15" height="15" style="flex:none;vertical-align:-3px" role="img" aria-label="Developer terverifikasi"><title>Developer terverifikasi</title><circle cx="12" cy="12" r="11" fill="#1d9bf0"/><path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   open() {
     const dev = App.isDev();
-    Sheet.open({ id: 'chat', title: 'Chat Global', icon: 'fa-comments', grad: 'linear-gradient(135deg,#0ea5e9,#2563eb)', full: true, cls: 'chatp', onClose: () => { clearInterval(this.timer); this.unbind(); },
-      head: `<span class="chip" id="ch-live" style="background:#dcfce7;color:#15803d;border-color:#bbf7d0"><span class="dot-ok" style="width:7px;height:7px"></span> LIVE</span>${dev ? '<button class="btn btn-sm btn-danger" id="ch-clear" title="Fitur eksklusif Developer"><i class="fa-solid fa-trash"></i></button>' : ''}`,
-      body: `<div id="ch-pin" class="ch-pin hidden"></div><div id="ch-list" style="display:flex;flex-direction:column;gap:8px;flex:1">${loadingHtml('Memuat chat…')}</div>`,
+    const sh = Sheet.open({ id: 'chat', title: 'Global Chat', icon: 'fa-comments', grad: 'linear-gradient(135deg,#0ea5e9,#2563eb)', full: true, cls: 'chatp', onClose: () => { clearInterval(this.timer); this.unbind(); this.rp = null; },
+      head: `<button class="gc-ib" id="ch-rules" type="button" aria-label="Aturan chat">${Ico.svg('gavel', 21)}</button><span class="gc-live" id="ch-live"><span class="dot-ok" style="width:7px;height:7px"></span>LIVE</span><button class="gc-ib round" id="ch-menu" type="button" aria-label="Menu">${Ico.svg('menu', 21)}</button>`,
+      body: `<div id="ch-rl" class="gc-rule ${LS.get('ch_rule_x') ? 'hidden' : ''}">${Ico.svg('megaphone', 18)}<span>BACA RULE — KLIK ICON PALU DIATAS</span><button id="ch-rlx" type="button" aria-label="Tutup">${Ico.svg('x', 16)}</button></div><div id="ch-pin" class="ch-pin hidden"></div><div id="ch-list" class="gc-list">${loadingHtml('Memuat chat...')}</div>`,
       foot: `<div class="ch-foot">
         <button id="ch-new" class="ch-new hidden" type="button"><i class="fa-solid fa-arrow-down"></i> Pesan baru</button>
         <div id="ch-pnl" class="ch-pnl hidden"><div class="ch-stk">${this.STICKERS.map(s => `<button data-s="${s}">${s}</button>`).join('')}<button id="ch-mk" class="ch-mk" title="Jadikan foto galeri sebagai stiker"><i class="fa-solid fa-plus"></i> Dari galeri</button></div></div>
+        <div id="ch-rp" class="gc-rp hidden"></div>
         <div class="ch-bar">
-          <button class="ch-b" id="ch-img" title="Kirim foto" aria-label="Kirim foto"><i class="fa-solid fa-image"></i></button>
-          <button class="ch-b" id="ch-stk" title="Stiker" aria-label="Stiker"><i class="fa-regular fa-face-smile"></i></button>
-          <textarea id="ch-in" class="ch-in" rows="1" maxlength="300" placeholder="Ketik pesan…" enterkeyhint="send" autocomplete="off" autocapitalize="sentences"></textarea>
-          <button class="ch-b ch-go" id="ch-send" aria-label="Kirim" disabled><i class="fa-solid fa-paper-plane"></i></button>
+          <button class="ch-b" id="ch-img" title="Kirim foto" aria-label="Kirim foto" type="button">${Ico.svg('img', 22)}</button>
+          <button class="ch-b" id="ch-stk" title="Stiker" aria-label="Stiker" type="button">${Ico.svg('smile', 22)}</button>
+          <textarea id="ch-in" class="ch-in" rows="1" maxlength="300" placeholder="Ketik pesan..." enterkeyhint="send" autocomplete="off" autocapitalize="sentences"></textarea>
+          <button class="ch-b ch-go" id="ch-send" aria-label="Kirim" type="button" disabled>${Ico.svg('send', 22)}</button>
         </div><div class="ch-cnt" id="ch-cnt"></div>
         <input type="file" id="ch-f1" accept="image/*" hidden/><input type="file" id="ch-f2" accept="image/*" hidden/></div>` });
+    { const gi = sh.querySelector('.sheet-head .gi'); if (gi) { gi.className = 'gi gc-back'; gi.removeAttribute('style'); gi.innerHTML = Ico.svg('back', 24); gi.setAttribute('role', 'button'); gi.onclick = () => Sheet.close('chat'); }
+      $('ch-rules').onclick = () => this.rules(); $('ch-menu').onclick = e => { e.stopPropagation(); this.menu(); };
+      const rl = $('ch-rl'); rl.onclick = e => { if (e.target.closest('#ch-rlx')) { rl.classList.add('hidden'); LS.set('ch_rule_x', 1); } else this.rules(); };
+      $('ch-list').addEventListener('click', e => { if (e.target.closest('img,button,a')) return; const el = e.target.closest('.cb[data-mid]'); if (!el) return; const m = this.msgs.find(x => x.id === el.dataset.mid); if (m && !m.pending) this.setReply(m); }); }
     if (!Ban.on()) { $('ch-list').innerHTML = emptyHtml('fa-plug-circle-xmark', 'Chat global butuh koneksi Firebase.<br>Saat ini web berjalan dalam mode lokal.'); ['ch-in', 'ch-send', 'ch-img', 'ch-stk'].forEach(i => $(i).disabled = true); return; }
     const inp = $('ch-in'), snd = $('ch-send'), cnt = $('ch-cnt'), touch = window.matchMedia && matchMedia('(pointer:coarse)').matches;
     this.fit = () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 130) + 'px'; snd.disabled = !inp.value.trim(); const n = inp.value.length; cnt.textContent = n > 240 ? n + '/300' : ''; };
@@ -35,8 +40,28 @@ const Chat = {
     $('ch-f2').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) this.sendImage(f, true); };
     $('ch-stk').onclick = () => $('ch-pnl').classList.toggle('hidden');
     $('ch-pnl').querySelectorAll('[data-s]').forEach(b => b.onclick = () => this.sendSticker(b.dataset.s));
-    if (dev) $('ch-clear').onclick = async () => { if (await UI.confirm('Hapus semua pesan?', 'Seluruh riwayat chat global (termasuk foto) akan dihapus untuk semua orang.', { ok: 'Hapus semua', danger: true, icon: 'fa-trash' })) { try { await FB.request('chat/global', null, 'DELETE'); await FB.request('chatimg', null, 'DELETE').catch(() => {}); this.msgs = []; this.imgs.clear(); this.sig = ''; this.render(true); UI.toast('Chat dibersihkan', 'ok'); } catch (e) { UI.toast('Ditolak Firebase — periksa Rules', 'err'); } } };
+    this.clearAll = async () => { if (!dev) return; if (await UI.confirm('Hapus semua pesan?', 'Seluruh riwayat chat global (termasuk foto) akan dihapus untuk semua orang.', { ok: 'Hapus semua', danger: true, icon: 'fa-trash' })) { try { await FB.request('chat/global', null, 'DELETE'); await FB.request('chatimg', null, 'DELETE').catch(() => {}); this.msgs = []; this.imgs.clear(); this.sig = ''; this.render(true); UI.toast('Chat dibersihkan', 'ok'); } catch (e) { UI.toast('Ditolak Firebase — periksa Rules', 'err'); } } };
     this.sig = ''; this.poll(true); clearInterval(this.timer); this.timer = setInterval(() => { if (!document.hidden) this.poll(); }, 2500);
+  },
+  rules() {
+    Sheet.open({ id: 'chrules', title: 'Aturan Chat', icon: 'fa-gavel', grad: 'linear-gradient(135deg,#7c3aed,#5b21b6)', cls: 'chatp',
+      body: `<ol class="gc-rules"><li>Hormati semua anggota. Dilarang menghina, SARA, atau menyerang pribadi.</li><li>Dilarang jualan atau promosi tanpa izin Developer/Admin.</li><li>Dilarang spam, flood, atau mengirim link berbahaya.</li><li>Dilarang konten dewasa, kekerasan, dan perjudian.</li><li>Jangan menyebarkan data pribadi orang lain.</li><li>Pelanggaran: peringatan 1/3, 2/3, 3/3, lalu akun diblokir.</li></ol>` });
+  },
+  menu() {
+    const old = document.querySelector('.gc-menu'); if (old) return old.remove(); const dev = App.isDev(), sh = document.getElementById('sheet-chat'); if (!sh) return;
+    const m = document.createElement('div'); m.className = 'gc-menu'; m.innerHTML = `<button data-a="rules">Aturan chat</button><button data-a="reload">Muat ulang</button>${dev ? '<button data-a="clear" class="dng">Hapus semua pesan</button>' : ''}`; sh.querySelector('.panel').appendChild(m);
+    const close = () => { m.remove(); document.removeEventListener('click', close); }; setTimeout(() => document.addEventListener('click', close), 0);
+    m.querySelectorAll('button').forEach(b => b.onclick = () => { close(); const a = b.dataset.a; if (a === 'rules') this.rules(); else if (a === 'reload') { this.sig = ''; this.poll(true); } else if (a === 'clear') this.clearAll && this.clearAll(); });
+  },
+  setReply(m) {
+    this.rp = { u: m.u, t: (m.t || (m.s ? '[stiker]' : '[foto]')).slice(0, 80) }; const el = $('ch-rp'); if (!el) return;
+    el.innerHTML = `<span class="gc-rp-b"></span><div><b>${esc(m.u)}</b><span>${esc(this.rp.t)}</span></div><button type="button" id="ch-rpx" aria-label="Batal balas">${Ico.svg('x', 18)}</button>`; el.classList.remove('hidden'); $('ch-rpx').onclick = () => this.clearReply(); const i = $('ch-in'); if (i) i.focus();
+  },
+  clearReply() { this.rp = null; const el = $('ch-rp'); if (el) { el.classList.add('hidden'); el.innerHTML = ''; } },
+  av(m) {
+    const k = userKey(m.u); let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) % 360;
+    try { if (typeof WA !== 'undefined' && WA.avatar) return WA.avatar(k, m.u, 40); } catch (e) {}
+    return `<span class="gm-ini" style="--h:${h}">${esc(String(m.u || '?').charAt(0).toUpperCase())}</span>`;
   },
   unbind() { const vv = window.visualViewport; if (vv && this._vv) { vv.removeEventListener('resize', this._vv); vv.removeEventListener('scroll', this._vv); } this._vv = null; },
   async pinLoad() {
@@ -72,21 +97,23 @@ const Chat = {
     const body = Sheet.$('chat'), near = body.scrollHeight - body.scrollTop - body.clientHeight < 160, me = String(App.user.username).toLowerCase(), dev = App.isDev();
     let lastDay = '';
     l.innerHTML = this.msgs.length ? this.msgs.map(m => {
-      const mine = String(m.u).toLowerCase() === me, isDev = String(m.r).toLowerCase() === 'developer', al = mine ? 'flex-end' : 'flex-start';
+      const mine = String(m.u).toLowerCase() === me, isDev = String(m.r).toLowerCase() === 'developer';
       const sep = m.ts && this.dayLabel(m.ts) !== lastDay ? (lastDay = this.dayLabel(m.ts), `<div class="ch-day"><span>${lastDay}</span></div>`) : '';
-      const nameRow = `<div class="cn"><b class="cnm ${isDev ? 'dev' : ''}">${esc(m.u)}</b>${isDev ? this.tick() : ''}${Rank.badge(m.r, true)}${dev && !m.pending ? `<button class="cdel" data-del="${esc(m.id)}" data-im="${esc(m.im || '')}" title="Hapus (khusus Developer)"><i class="fa-solid fa-trash"></i></button>` : ''}</div>`;
+      const meta = `<div class="gm-meta"><b class="cnm ${isDev ? 'dev' : ''}">${esc(m.u)}</b>${isDev ? this.tick() : ''}${Rank.badge(m.r, true)}<time>${m.pending ? 'Mengirim…' : m.ts ? new Date(m.ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''}</time>${dev && !m.pending ? `<button class="cdel" data-del="${esc(m.id)}" data-im="${esc(m.im || '')}" title="Hapus (khusus Developer)"><i class="fa-solid fa-trash"></i></button>` : ''}</div>`;
       const imgTag = (st) => `<img data-im="${esc(m.im)}" alt="" style="display:block;${st}"/>`;
       let inner;
-      if (m.s) inner = `<div style="padding:0 6px">${nameRow}</div><div style="font-size:64px;line-height:1.15;padding:0 6px">${esc(m.s)}</div>`;
-      else if (m.im && m.ty === 'g') inner = `<div style="padding:0 6px">${nameRow}${imgTag('width:140px;height:140px;object-fit:contain;cursor:zoom-in')}</div>`;
+      if (m.s) inner = `<div class="gm-stk">${esc(m.s)}</div>`;
+      else if (m.im && m.ty === 'g') inner = `<div>${imgTag('width:140px;height:140px;object-fit:contain;cursor:zoom-in')}</div>`;
       else {
+        const q = m.rp && m.rp.u ? `<div class="gq"><b>${esc(m.rp.u)}</b><span>${esc(String(m.rp.t || '').slice(0, 80))}</span></div>` : '';
         const cap = m.t ? `<div class="selectable ctx" style="${m.im ? 'margin-top:6px' : ''}">${esc(m.t)}</div>` : '';
-        const ph = m.im ? imgTag('max-width:100%;width:230px;min-height:120px;border-radius:12px;background:rgba(255,255,255,.12);cursor:zoom-in;object-fit:cover') : '';
-        inner = `<div class="cb ${mine ? 'me' : ''} ${isDev ? 'dev' : ''} ${m.pending ? 'pend' : ''}" style="--rc:${Rank.color(m.r)}">${nameRow}${ph}${cap}</div>`;
+        const ph = m.im ? imgTag('max-width:100%;width:230px;min-height:120px;border-radius:12px;background:rgba(255,255,255,.08);cursor:zoom-in;object-fit:cover') : '';
+        inner = `<div class="cb ${mine ? 'me' : ''} ${isDev ? 'dev' : ''} ${m.pending ? 'pend' : ''}" data-mid="${esc(m.id)}">${q}${ph}${cap}</div>`;
       }
-      return `${sep}<div style="display:flex;flex-direction:column;align-items:${al}">${inner}<small class="muted" style="font-size:9.5px;font-weight:700;margin:2px 6px">${m.pending ? 'Mengirim…' : m.ts ? new Date(m.ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''}</small></div>`;
+      return `${sep}<div class="gm ${mine ? 'mine' : ''}" style="--rc:${Rank.color(m.r)}"><span class="gm-av">${this.av(m)}</span><div class="gm-col">${inner}${meta}</div></div>`;
     }).join('') : emptyHtml('fa-comments', 'Belum ada pesan. Jadilah yang pertama menyapa!');
     l.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => { try { await FB.request('chat/global/' + b.dataset.del, null, 'DELETE'); if (b.dataset.im) { this.imgs.delete(b.dataset.im); FB.request('chatimg/' + b.dataset.im, null, 'DELETE').catch(() => {}); } this.poll(); } catch (e) { UI.toast('Gagal menghapus', 'err'); } });
+    try { if (typeof WA !== 'undefined' && WA.hydrate) WA.hydrate(l); } catch (e) {}
     l.querySelectorAll('img[data-im]').forEach(im => this.loadImg(im));
     if (near || force) body.scrollTop = body.scrollHeight; else if (grew) { const nw = $('ch-new'); if (nw) nw.classList.remove('hidden'); }
   },
@@ -130,10 +157,10 @@ const Chat = {
   },
   async send() {
     const i = $('ch-in'), t = i.value.trim(); if (!t) return; i.value = ''; this.fit && this.fit();
-    const tmp = { id: '~' + Date.now(), u: App.user.username, r: App.user.role, t: t.slice(0, 300), ts: Date.now(), pending: 1 };
+    const rp = this.rp ? { u: this.rp.u, t: this.rp.t } : null, tmp = { id: '~' + Date.now(), u: App.user.username, r: App.user.role, t: t.slice(0, 300), ts: Date.now(), pending: 1, ...(rp ? { rp } : {}) }; this.clearReply();
     this.msgs.push(tmp); this.render(true);
     let ok = false;
-    try { ok = await this.post({ t: t.slice(0, 300) }, 1200); }
+    try { ok = await this.post({ t: t.slice(0, 300), ...(rp ? { rp } : {}) }, 1200); }
     catch (e) { UI.toast(e.permission ? 'Ditolak Firebase — periksa Rules' : 'Pesan gagal dikirim', 'err'); }
     if (!ok) { this.msgs = this.msgs.filter(m => m !== tmp); this.render(true); i.value = t; this.fit && this.fit(); }
     i.focus();

@@ -225,7 +225,7 @@ this.renderTabs(); this.renderTiles(); { const fq = $('f-q'); if (fq) fq.oninput
     const list = Features.list.filter(f => !f.dev && (!f.devOnly || this.isDev()) && (q ? String(f.name).toLowerCase().includes(q) : (this.cat === 'semua' || f.cat === this.cat)));
     const usage = LS.get('usage', {});
     const sorted = this.cat === 'semua' ? [...list] : list;
-    $('tiles').innerHTML = (this.cat === 'semua' ? '<div class="sec-title"><i class="fa-solid fa-sparkles" style="color:#f59e0b"></i>Semua fitur</div>' : '') + `<div class="tile-grid">${sorted.map(f => `<button class="tile ${Features.enabled(f) ? '' : 'off'}" data-f="${f.id}" style="--c:${(String(f.grad).match(/#[0-9a-fA-F]{3,8}/) || ['#6366f1'])[0]}"><div class="ic" style="background:${f.grad}"><i class="fa-solid ${f.icon}"></i></div><span>${esc(f.name)}</span><i class="dot"></i></button>`).join('')}</div>`;
+    $('tiles').innerHTML = (this.cat === 'semua' ? '<div class="sec-title"><i class="fa-solid fa-sparkles" style="color:#f59e0b"></i>Semua fitur</div>' : '') + `<div class="tile-grid">${sorted.map(f => `<button class="tile ${Features.enabled(f) ? '' : 'off'}" data-f="${f.id}" style="--c:${(String(f.grad).match(/#[0-9a-fA-F]{3,8}/) || ['#6366f1'])[0]}">${Ico.has(f.id) ? `<div class="ic ic2">${Ico.svg(f.id, 26)}</div>` : `<div class="ic" style="background:${f.grad}"><i class="fa-solid ${f.icon}"></i></div>`}<span>${esc(f.name)}</span><i class="dot"></i></button>`).join('')}</div>`;
     $('tiles').querySelectorAll('.tile').forEach(t => t.onclick = () => Features.open(t.dataset.f));
   },
 
