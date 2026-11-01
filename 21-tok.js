@@ -63,7 +63,7 @@ const Tok = {
     const T = this.tab, list = T === 'fo' ? this.vids.filter(v => this.fol[v.uid]) : T === 'me' ? this.vids.filter(v => v.uid === FB.st.uid) : T === 'q' ? this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(this.q)) : this.vids;
     if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${T === 'fo' ? 'Belum ada yang kamu ikuti' : T === 'me' ? 'Kamu belum punya video' : T === 'q' ? 'Tidak ada hasil' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.upload(); return; }
     f.innerHTML = list.map(v => `<section class="tk-item" data-id="${esc(v.id)}" data-uid="${esc(v.uid)}"><video loop playsinline webkit-playsinline preload="none" data-src="${esc(v.url)}"></video><div class="tk-shade"></div><div class="tk-heart"></div>
-      <div class="tk-rail"><div class="tk-av"><span class="tk-ring">${esc(String(v.u || '?').charAt(0).toUpperCase())}</span>${v.uid === FB.st.uid ? '' : `<button class="tk-fol${this.fol[v.uid] ? ' on' : ''}" data-a="fol"><i class="fa-solid ${this.fol[v.uid] ? 'fa-check' : 'fa-plus'}"></i></button>`}</div>
+      <div class="tk-rail"><div class="tk-av"><span class="tk-ring" data-pp="${esc(v.uid)}">${esc(String(v.u || '?').charAt(0).toUpperCase())}</span>${v.uid === FB.st.uid ? '' : `<button class="tk-fol${this.fol[v.uid] ? ' on' : ''}" data-a="fol"><i class="fa-solid ${this.fol[v.uid] ? 'fa-check' : 'fa-plus'}"></i></button>`}</div>
         <button class="tk-act" data-a="like"><i class="fa-solid fa-heart"></i><span class="n">–</span></button>
         <button class="tk-act" data-a="cm"><i class="fa-solid fa-comment-dots"></i><span class="n">Komentar</span></button>
         <button class="tk-act${(LS.get('tk_bm', {}) || {})[v.id] ? ' on bm' : ''}" data-a="bm"><i class="fa-solid fa-bookmark"></i><span class="n">Simpan</span></button>
@@ -71,7 +71,7 @@ const Tok = {
         <div class="tk-disc"><i class="fa-solid fa-music"></i></div></div>
       <div class="tk-info"><div class="tk-nm"><b>@${esc(v.u)}</b><span class="tk-vfs"></span></div><p>${esc(v.cap || '')}</p></div>
       <div class="tk-prog"><i></i></div></section>`).join('');
-    f.querySelectorAll('.tk-item').forEach(it => this.wire(it));
+    f.querySelectorAll('.tk-item').forEach(it => this.wire(it)); this.fillPP(f);
     this.io = new IntersectionObserver(es => es.forEach(e => {
       const it = e.target, v = it.querySelector('video');
       if (e.isIntersecting && !v.src) { v.src = v.dataset.src; }
@@ -248,7 +248,26 @@ Features.reg({ id: 'tok', name: 'Dimzz Play', cat: 'media', icon: 'fa-clapperboa
 /* ---------- Kotak Masuk (chat antar-akun), Saya (profil), notifikasi ---------- */
 Object.assign(Tok, {
   fmt(ts) { const d = new Date(ts), n = new Date(); return d.toDateString() === n.toDateString() ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
-  av(n, c) { return `<span class="tkp-av ${c || ''}">${esc(String(n || '?').charAt(0).toUpperCase())}</span>`; },
+  av(n, c, uid) { return `<span class="tkp-av ${c || ''}" data-pp="${esc(uid || '')}">${esc(String(n || '?').charAt(0).toUpperCase())}</span>`; },
+  ppc: {},
+  async pp(uid) {
+    if (this.ppc[uid] === undefined) { this.ppc[uid] = null; try { const v = await this.db('tok/prof/' + uid + '/pp'); if (typeof v === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(v)) this.ppc[uid] = v; } catch (e) {} }
+    return this.ppc[uid];
+  },
+  fillPP(root) { if (!root) return; root.querySelectorAll('[data-pp]').forEach(el => { const u = el.dataset.pp; if (!u || el.dataset.pd) return; el.dataset.pd = 1; this.pp(u).then(url => { if (url) { el.style.backgroundImage = `url("${url}")`; el.classList.add('pp'); } }); }); },
+  changePP() {
+    const f = document.createElement('input'); f.type = 'file'; f.accept = 'image/*';
+    f.onchange = () => {
+      const file = f.files[0]; if (!file) return; const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = async () => {
+        const c = document.createElement('canvas'), n = 200, m = Math.min(img.width, img.height); c.width = c.height = n;
+        c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, n, n); URL.revokeObjectURL(url);
+        let q = .85, d = c.toDataURL('image/jpeg', q); while (d.length > 38000 && q > .3) { q -= .1; d = c.toDataURL('image/jpeg', q); }
+        try { await this.db('tok/prof/' + FB.st.uid, null, 'PATCH', { pp: d }); this.ppc[FB.st.uid] = d; UI.toast('Foto profil diperbarui', 'ok'); const box = this.root && this.root.querySelector('#tk-pg'); if (box && this.root.classList.contains('pg')) this.profile(box); } catch (e) { UI.toast('Gagal menyimpan foto profil', 'err'); }
+      };
+      img.onerror = () => UI.toast('Gambar tidak bisa dibaca', 'warn'); img.src = url;
+    }; f.click();
+  },
   async follow(uid) {
     const on = !this.fol[uid], nm = (this.vids.find(v => v.uid === uid) || {}).u || 'user';
     if (on) this.fol[uid] = nm; else delete this.fol[uid];
@@ -271,20 +290,20 @@ Object.assign(Tok, {
     ib = ib || {}; ac = ac || {}; fans = fans || {};
     const chats = Object.entries(ib).map(([uid, x]) => Object.assign({ uid }, x)).sort((a, b) => b.ts - a.ts), la = Object.values(ac)[0], nf = Object.keys(fans).length;
     const stories = Object.entries(this.fol || {}).slice(0, 12);
-    box.querySelector('.tkp-sc').innerHTML = `<div class="tkp-st"><button data-new><span class="tkp-av big add">${'<i class="fa-solid fa-plus"></i>'}</span><small>Buat</small></button>${stories.map(([u, n]) => `<button data-c="${esc(u)}" data-n="${esc(typeof n === 'string' ? n : 'user')}">${this.av(typeof n === 'string' ? n : 'user', 'big ring')}<small>${esc(typeof n === 'string' ? n : 'user')}</small></button>`).join('')}</div>
+    box.querySelector('.tkp-sc').innerHTML = `<div class="tkp-st"><button data-new><span class="tkp-av big add">${'<i class="fa-solid fa-plus"></i>'}</span><small>Buat</small></button>${stories.map(([u, n]) => `<button data-c="${esc(u)}" data-n="${esc(typeof n === 'string' ? n : 'user')}">${this.av(typeof n === 'string' ? n : 'user', 'big ring', u)}<small>${esc(typeof n === 'string' ? n : 'user')}</small></button>`).join('')}</div>
       <button class="tkp-r" data-act="a"><span class="tkp-ic" style="background:#fe2c55"><i class="fa-solid fa-bell"></i></span><div><b>Aktivitas</b><p>${la ? esc(la.u) + (la.type === 'cm' ? ' mengomentari: ' + esc(la.t || '') : ' mulai mengikuti Anda.') : 'Belum ada aktivitas.'}</p></div></button>
       <button class="tkp-r" data-act="f"><span class="tkp-ic" style="background:#20a4f3"><i class="fa-solid fa-user-group"></i></span><div><b>Pengikut baru</b><p>${nf} orang mengikutimu.</p></div><i class="fa-solid fa-chevron-right mut"></i></button>
-      ${chats.map(c => `<button class="tkp-r" data-c="${esc(c.uid)}" data-n="${esc(c.u)}">${this.av(c.u)}<div><b>${esc(c.u)}</b><p>${esc(c.last || '')} · ${this.fmt(c.ts)}</p></div>${c.unread ? `<em class="tkp-bg">${c.unread}</em>` : ''}</button>`).join('') || '<p class="tkp-mt">Belum ada percakapan. Ketuk + untuk mulai chat.</p>'}`;
+      ${chats.map(c => `<button class="tkp-r" data-c="${esc(c.uid)}" data-n="${esc(c.u)}">${this.av(c.u, '', c.uid)}<div><b>${esc(c.u)}</b><p>${esc(c.last || '')} · ${this.fmt(c.ts)}</p></div>${c.unread ? `<em class="tkp-bg">${c.unread}</em>` : ''}</button>`).join('') || '<p class="tkp-mt">Belum ada percakapan. Ketuk + untuk mulai chat.</p>'}`;
     const nw = async () => { const t = prompt('Chat dengan username:'); if (!t) return; let uid = null; try { uid = await this.db('keys/' + userKey(t.trim())); } catch (e) {} if (!uid) return UI.toast('Username tidak ditemukan', 'warn'); if (uid === me) return UI.toast('Itu akunmu sendiri', 'warn'); this.chat(uid, t.trim()); };
     box.querySelector('#tkp-new').onclick = nw;
     box.onclick = e => { const b = e.target.closest('[data-new],[data-c],[data-act]'); if (!b) return; if (b.dataset.new !== undefined) nw(); else if (b.dataset.c) this.chat(b.dataset.c, b.dataset.n); else this.acts(box, b.dataset.act); };
-    this.unread();
+    this.fillPP(box); this.unread();
   },
   async acts(box, k) {
     const me = FB.st.uid; box.innerHTML = `<div class="tkp-top"><button data-b><i class="fa-solid fa-chevron-left"></i></button><b>${k === 'f' ? 'Pengikut baru' : 'Aktivitas'}</b><span></span></div><div class="tkp-sc"><div class="tk-spin dk"></div></div>`;
     let a = {}; try { a = await this.db('tok/act/' + me, { orderBy: 'ts', limitToLast: 40 }) || {}; } catch (e) {}
     const l = Object.values(a).filter(x => k !== 'f' || x.type === 'follow').sort((x, y) => y.ts - x.ts);
-    box.querySelector('.tkp-sc').innerHTML = l.map(x => `<div class="tkp-r">${this.av(x.u)}<div><b>${esc(x.u)}</b><p>${x.type === 'cm' ? 'mengomentari: ' + esc(x.t || '') : 'mulai mengikuti Anda.'} · ${this.fmt(x.ts)}</p></div></div>`).join('') || '<p class="tkp-mt">Belum ada.</p>';
+    box.querySelector('.tkp-sc').innerHTML = l.map(x => `<div class="tkp-r">${this.av(x.u, '', x.uid)}<div><b>${esc(x.u)}</b><p>${x.type === 'cm' ? 'mengomentari: ' + esc(x.t || '') : 'mulai mengikuti Anda.'} · ${this.fmt(x.ts)}</p></div></div>`).join('') || '<p class="tkp-mt">Belum ada.</p>'; this.fillPP(box);
     box.onclick = e => { if (e.target.closest('[data-b]')) this.inbox(box); };
   },
   async chat(peer, name) {
@@ -314,7 +333,7 @@ Object.assign(Tok, {
   async profile(box, tabSel) {
     const me = FB.st.uid, u = App.user.username, tb = tabSel || 'g';
     const mine = this.vids.filter(v => v.uid === me), bm = LS.get('tk_bm', {}) || {}, saved = this.vids.filter(v => bm[v.id]), list = tb === 'g' ? mine : saved;
-    box.innerHTML = `<div class="tkp-top"><button id="tkp-up"><i class="fa-solid fa-user-plus"></i></button><span></span><button id="tkp-lo" title="Keluar dari Dimzz Play"><i class="fa-solid fa-xmark"></i></button></div><div class="tkp-sc"><div class="tkp-pf"><div class="tkp-av xl ring"><span>${esc(u.charAt(0).toUpperCase())}</span><button class="tkp-ad" id="tkp-ad"><i class="fa-solid fa-plus"></i></button></div>
+    box.innerHTML = `<div class="tkp-top"><button id="tkp-up"><i class="fa-solid fa-user-plus"></i></button><span></span><button id="tkp-lo" title="Keluar dari Dimzz Play"><i class="fa-solid fa-xmark"></i></button></div><div class="tkp-sc"><div class="tkp-pf"><div class="tkp-av xl ring" id="tkp-pp" data-pp="${esc(me)}"><span>${esc(u.charAt(0).toUpperCase())}</span><button class="tkp-ad" id="tkp-ad"><i class="fa-solid fa-plus"></i></button></div>
       <div class="tkp-nm"><b>${esc(u)}</b><span id="tkp-vf"></span><button class="tkp-ed" id="tkp-ed">Edit</button></div><small class="mut">@${esc(userKey(u))}</small>
       <div class="tkp-sts"><div><b id="tkp-a">…</b><small>Mengikuti</small></div><div><b id="tkp-b">…</b><small>Pengikut</small></div><div><b id="tkp-c">…</b><small>Suka</small></div></div>
       <button class="tkp-bio" id="tkp-bio">+ Tambahkan bio</button></div>
@@ -328,8 +347,8 @@ Object.assign(Tok, {
     };
     q('#tkp-lo').onclick = () => Sheet.close('tok'); q('#tkp-up').onclick = () => { this.showPage('home'); this.upload(); };
     const t = q('#tkp-try'); if (t) t.onclick = () => { this.showPage('home'); this.upload(); };
-    q('#tkp-ad').onclick = () => { this.showPage('home'); this.upload(); };
-    const bioSet = async () => { const cur = (q('#tkp-bio').dataset.b || ''), t = prompt('Bio kamu:', cur); if (t === null) return; try { await this.db('tok/prof/' + me, null, 'PUT', { bio: t.trim().slice(0, 80) }); this.profile(box, tb); } catch (e) { UI.toast('Gagal menyimpan bio', 'err'); } };
+    q('#tkp-ad').onclick = () => this.changePP(); q('#tkp-pp').onclick = e => { if (!e.target.closest('#tkp-ad')) this.changePP(); }; this.fillPP(box);
+    const bioSet = async () => { const cur = (q('#tkp-bio').dataset.b || ''), t = prompt('Bio kamu:', cur); if (t === null) return; try { await this.db('tok/prof/' + me, null, 'PATCH', { bio: t.trim().slice(0, 80) }); this.profile(box, tb); } catch (e) { UI.toast('Gagal menyimpan bio', 'err'); } };
     q('#tkp-ed').onclick = bioSet; q('#tkp-bio').onclick = bioSet;
     try {
       const [fo, fa, pf] = await Promise.all([this.db('tok/fol/' + me, { shallow: true }), this.db('tok/fans/' + me, { shallow: true }), this.db('tok/prof/' + me)]);
