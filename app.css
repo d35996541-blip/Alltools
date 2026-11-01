@@ -892,3 +892,143 @@ pre.code{background:#0b1220;color:#a7f3d0;border-radius:14px;padding:.8rem;font-
 @keyframes stRun{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 @keyframes stBlink{0%,100%{opacity:1}50%{opacity:.3}}
 @media (max-width:360px){.st-h{font-size:21px}.st-admin{flex-direction:column;align-items:stretch}.st-btn.wa{width:100%}}
+
+/* ================= v4.0 — Tema "Langit Senja" =================
+   Langit hero berubah mengikuti waktu (subuh/pagi/siang/sore/maghrib/malam).
+   Satu aksen (koral), satu gaya ikon, satu radius per tingkat. */
+:root{
+  --night:#12163a; --night2:#0b0e26; --coral:#ff7a5c; --sand:#f7d9a0; --jade:#38d9b0; --mist:#eef0ff;
+  --sky-a:#1a1f52; --sky-b:#2b2f7a; --sky-c:#ff7a5c; --orb:#f7d9a0; --orb-x:78%; --orb-y:24%;
+  --r-lg:26px; --r-md:18px; --r-sm:12px;
+  --f-disp:'Bricolage Grotesque','Plus Jakarta Sans',system-ui,sans-serif;
+}
+html[data-sky=subuh]{--sky-a:#1d2158;--sky-b:#6b4a9a;--sky-c:#ff9a8b;--orb:#ffd9c2;--orb-x:16%;--orb-y:62%}
+html[data-sky=pagi]{--sky-a:#1f5fae;--sky-b:#4fa3d8;--sky-c:#ffd9a0;--orb:#fff1c2;--orb-x:26%;--orb-y:40%}
+html[data-sky=siang]{--sky-a:#0f4c9a;--sky-b:#2f86d6;--sky-c:#8fd0f0;--orb:#fffbe0;--orb-x:50%;--orb-y:14%}
+html[data-sky=sore]{--sky-a:#2a4a96;--sky-b:#e08a4f;--sky-c:#ffc46b;--orb:#ffe3a1;--orb-x:76%;--orb-y:46%}
+html[data-sky=maghrib]{--sky-a:#2a1f63;--sky-b:#b8456f;--sky-c:#ff8a5c;--orb:#ffb27a;--orb-x:84%;--orb-y:70%}
+html[data-sky=malam]{--sky-a:#0b0e26;--sky-b:#1a1f52;--sky-c:#3b3f8f;--orb:#e8ecff;--orb-x:80%;--orb-y:22%}
+
+body,button,input,textarea,select{font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.hero .clock,.auth-brand b,.sheet-head h3,#u-name{font-family:var(--f-disp)}
+:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* --- latar: langit malam bertekstur ringan, mengikuti waktu --- */
+.cyberbg::before{background:
+  radial-gradient(60% 38% at var(--orb-x) var(--orb-y),color-mix(in srgb,var(--orb) 22%,transparent),transparent 70%),
+  linear-gradient(180deg,var(--night2) 0%,var(--night) 55%,color-mix(in srgb,var(--sky-b) 40%,var(--night)) 100%)!important;
+  animation:none!important}
+.cyberbg::after{opacity:.55}
+
+/* --- bilah atas --- */
+.topbar{margin-bottom:14px}
+.avatar{border-radius:50%;background:linear-gradient(135deg,var(--coral),#ff4f7b);box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.dark-wall .topbar .btn-icon{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)!important;border-radius:50%;backdrop-filter:none}
+.dark-wall .topbar #btn-dev{background:var(--sand)!important;color:#2a1a05}
+#u-name{font-weight:700;letter-spacing:-.01em}
+.rk-tag{text-transform:none;letter-spacing:0;font-size:10px}
+.rk-tag.rk-user{background:rgba(255,255,255,.14);color:var(--mist);box-shadow:none}
+.rk-tag.rk-dev{background:var(--sand);color:#2a1a05;box-shadow:none}
+
+/* --- hero: langit dengan matahari/bulan --- */
+.hero,.dark-wall .hero{border-radius:var(--r-lg);padding:20px 18px 16px;border:0;overflow:hidden;
+  background:linear-gradient(180deg,var(--sky-a) 0%,var(--sky-b) 62%,var(--sky-c) 130%);
+  box-shadow:0 28px 50px -26px rgba(0,0,0,.75);backdrop-filter:none;-webkit-backdrop-filter:none}
+.dark-wall .hero::before{display:none}
+.hero::after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;left:var(--orb-x);top:var(--orb-y);transform:translate(-50%,-50%);
+  background:radial-gradient(circle,var(--orb) 0 22%,color-mix(in srgb,var(--orb) 30%,transparent) 42%,transparent 70%);opacity:.9;pointer-events:none;transition:left 1.2s,top 1.2s}
+.hero video,.dark-wall .hero video{opacity:.14;mix-blend-mode:soft-light}
+.hero .clock{font-size:58px;font-weight:700;letter-spacing:-.04em;text-shadow:none;color:#fff}
+#date{opacity:.85}
+.hero #next-line{font-weight:600;opacity:1;margin-top:16px;font-size:13px}
+.hero #next-line b{color:var(--sand)}
+.dark-wall .hero .btn-sm,.hero .btn-sm{background:rgba(11,14,38,.35)!important;border-color:rgba(255,255,255,.18)!important;color:#fff!important;border-radius:999px}
+.pray-grid{gap:6px;margin-top:12px}
+.pray{border-radius:var(--r-sm);background:rgba(11,14,38,.38);border:0!important;box-shadow:none;padding:.6rem .1rem}
+.dark-wall .pray{background:rgba(11,14,38,.38);border:0}
+.pray b{color:#fff;font-size:12.5px}
+.pray small{text-transform:none;font-size:10px;font-weight:600;opacity:.8}
+.pray .wv{display:none}
+.pray.next{background:var(--sand);color:#2a1a05;box-shadow:0 10px 22px -10px rgba(0,0,0,.6)}
+.pray.next b,.pray.next small{color:#2a1a05;opacity:1}
+
+/* --- pencarian & kategori --- */
+.searchbar input,.dark-wall .searchbar input{border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;box-shadow:none;padding:.9rem 3rem .9rem 42px}
+.searchbar input:focus,.dark-wall .searchbar input:focus{border-color:var(--coral);box-shadow:0 0 0 4px rgba(255,122,92,.18)}
+.searchbar .ai-go{background:var(--coral);border-radius:50%;width:32px;height:32px;right:6px;box-shadow:none;font-size:11px}
+.tabs{margin:14px 0 8px}
+.tabs .chip,.dark-wall .tabs .chip{background:transparent;border:1px solid rgba(255,255,255,.16);color:rgba(255,255,255,.8);backdrop-filter:none;padding:.45rem .9rem;font-size:12px}
+.tabs .chip.on,.dark-wall .tabs .chip.on{background:var(--mist);color:var(--night);border-color:var(--mist)}
+
+/* --- judul bagian (tanpa huruf kapital semua) --- */
+.sec-title{text-transform:none;letter-spacing:-.005em;font-size:14px;font-weight:700;font-family:var(--f-disp);color:#fff;margin:20px 2px 10px}
+.sec-title i{color:var(--sand)!important}
+
+/* --- ikon fitur: satu gaya, bentuk seragam, warna fitur sebagai tinta --- */
+.tile-grid{gap:8px}
+.tile,.dark-wall .tile{border-radius:var(--r-md);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:.85rem .15rem .7rem;transition:background .18s,transform .15s}
+.dark-wall .tile::before,.tile::after{display:none!important}
+.tile:hover{background:rgba(255,255,255,.09)}
+.tile:active{transform:scale(.96)}
+.tile .ic,.dark-wall .tile .ic,.tile .ic.ic2,.dark-wall .tile .ic.ic2{width:48px;height:48px;border-radius:15px!important;border:0;box-shadow:none;
+  background:color-mix(in srgb,var(--c) 24%,transparent)!important;color:color-mix(in srgb,var(--c) 45%,#fff)!important}
+.tile .ic.ic2::after{display:none}
+.tile .ic .ico,.tile .ic.ic2 .ico{filter:none}
+.tile span,.dark-wall .tile span{color:var(--mist);text-shadow:none;font-weight:600;font-size:11px}
+.tile .dot{top:8px;right:8px;width:5px;height:5px;box-shadow:none;animation:none;background:var(--jade)}
+.feat-card{border-radius:var(--r-md);box-shadow:none}
+.feat-card::after{display:none}
+
+/* --- dock: pil melayang, penanda aktif koral --- */
+.dock,.dark-wall .dock{background:rgba(18,22,58,.86);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:6px;backdrop-filter:blur(18px);box-shadow:0 18px 40px -14px rgba(0,0,0,.8)}
+.dock button{color:rgba(255,255,255,.62);border-radius:999px;font-size:10.5px;font-weight:600;position:relative}
+.dock button.on,.dark-wall .dock button.on{background:rgba(255,255,255,.1);color:#fff}
+.dock button.on i{color:var(--coral)}
+.dock button.on::after{content:"";position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--coral)}
+
+/* --- mini player & kaset --- */
+#mini{background:rgba(18,22,58,.94);color:var(--mist);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-md)}
+#mini .btn-dark{background:var(--coral);color:#fff}
+#cassette .hub{background:var(--coral);color:#fff}
+
+/* --- halaman fitur (sheet): lebih bersih, hangat --- */
+.sheet{background:rgba(11,14,38,.62)}
+.sheet>.panel{background:#f6f5fb;border-radius:var(--r-lg) var(--r-lg) 0 0}
+.sheet-head{background:rgba(246,245,251,.92)}
+.sheet-head h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.item,.stat{border-radius:var(--r-md);border-color:rgba(18,22,58,.08)}
+.btn,.neo-btn{border-radius:999px;font-weight:600}
+.btn-sm{border-radius:999px}
+.btn-icon{border-radius:50%}
+.btn-pri{background:var(--coral);box-shadow:0 8px 18px -9px rgba(255,122,92,.9)}
+.btn-acc{background:var(--sand);box-shadow:none;color:#2a1a05}
+.btn-dark{background:var(--night)}
+.chip.on{background:var(--night);border-color:var(--night)}
+.seg button.on{color:var(--night)}
+.inp:focus,.sheet input:focus,.sheet textarea:focus,.sheet select:focus{border-color:var(--coral)!important;box-shadow:0 0 0 4px rgba(255,122,92,.16)}
+
+/* --- masuk / daftar --- */
+.auth-panel{border-radius:var(--r-lg);background:rgba(11,14,38,.74);border:1px solid rgba(255,255,255,.12)}
+.auth-brand b{font-size:22px!important;font-weight:700!important}
+.auth-logo{border-radius:50%}
+.auth-tabs{border-radius:999px;background:rgba(255,255,255,.08)}
+.auth-tabs button{border-radius:999px;font-weight:600}
+.auth-tabs button.on{background:var(--mist);color:var(--night);box-shadow:none}
+.auth-field input{border-radius:999px!important;font-weight:500}
+.auth-field input:focus{border-color:var(--coral)!important;box-shadow:0 0 0 4px rgba(255,122,92,.22)}
+.auth-btn{border-radius:999px;background:var(--coral);color:#fff;box-shadow:0 14px 28px -12px rgba(255,122,92,.9);font-weight:700}
+.sound-fab{background:rgba(11,14,38,.6)}
+#intro .bar>div{background:var(--coral)}
+
+/* --- toast --- */
+#toasts>*{border-radius:999px}
+
+/* --- tampilan mode terang (tanpa wallpaper gelap) tetap terbaca --- */
+body:not(.dark-wall) .tile span{color:var(--ink2)}
+body:not(.dark-wall) .tile{background:rgba(255,255,255,.85);border-color:var(--line)}
+body:not(.dark-wall) .sec-title{color:var(--ink)}
+body:not(.dark-wall) .tabs .chip{color:var(--ink2);border-color:var(--line)}
+body:not(.dark-wall) .tabs .chip.on{background:var(--night);color:#fff}
+body:not(.dark-wall) .searchbar input{background:#fff;color:var(--ink);border-color:var(--line)}
+body:not(.dark-wall) .searchbar i{color:var(--ink)}
