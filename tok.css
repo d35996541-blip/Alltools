@@ -128,3 +128,27 @@
 .tk [data-pp].pp,.tkp-av.pp{background-size:cover;background-position:center;color:transparent!important}.tkp-av.pp>span{display:none}
 .tk-ring.pp{border-color:#fff}
 .tkp-av.xl{cursor:pointer}
+
+/* ===== Kamera ===== */
+.tk-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.tkc{position:relative;flex:1;width:100%;background:#000;overflow:hidden;color:#fff}.tkc button{color:#fff}
+.tkc canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.tkc>video:first-of-type[id=tkc-v]{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
+.tkc.pv>video,.tkc.pv>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.tkc-x{position:absolute;z-index:5;left:14px;top:calc(var(--safe-t,0px) + 16px);width:40px;height:40px;font-size:24px;text-shadow:0 1px 6px #000}
+.tkc-side{position:absolute;z-index:5;right:6px;top:calc(var(--safe-t,0px) + 16px);display:flex;flex-direction:column;gap:14px;align-items:center}
+.tkc-side button,.tkc-row>button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;text-shadow:0 1px 5px #000;min-width:56px}.tkc-side i{font-size:24px;filter:drop-shadow(0 1px 4px #0009)}.tkc-side button.on i{color:#25f4ee}.tkc-side button.on small{color:#25f4ee}
+.tkc-bot{position:absolute;z-index:5;left:0;right:0;bottom:0;padding:0 0 calc(var(--safe-b,0px) + 18px);background:linear-gradient(transparent,#000a 55%)}
+.tkc-modes{display:flex;justify-content:center;gap:20px;font-size:14px;font-weight:700;margin-bottom:14px}.tkc-modes b{opacity:.75;padding:6px 12px;border-radius:99px;text-shadow:0 1px 5px #000;cursor:pointer}.tkc-modes b.on{background:#fff;color:#000;opacity:1;text-shadow:none}
+.tkc-row{display:flex;align-items:center;justify-content:space-around}
+.tkc-th{width:46px;height:46px;border-radius:10px;display:grid;place-items:center;border:2px solid #fff;font-size:20px;background-size:cover}.tkc-th.up{border-color:transparent;background:#1f2937}
+.tkc-rec{width:78px;height:78px;border-radius:50%;border:5px solid #fff;display:grid;place-items:center;background:conic-gradient(#fe2c55 var(--p,0deg),transparent 0)}
+.tkc-rec i{width:58px;height:58px;border-radius:50%;background:#fe2c55;transition:.2s}.tkc-rec.photo i{background:#fff}
+.tkc.rec .tkc-rec i{width:30px;height:30px;border-radius:8px}.tkc.rec .tkc-modes,.tkc.rec .tkc-row>button:not(.tkc-rec),.tkc.rec .tkc-side,.tkc.rec .tkc-x{opacity:0;pointer-events:none}
+.tkc-cnt{position:absolute;z-index:6;inset:0;display:grid;place-items:center;font-size:120px;font-weight:900;text-shadow:0 4px 30px #000;pointer-events:none}
+.tkc-tm{position:absolute;z-index:6;top:calc(var(--safe-t,0px) + 22px);left:50%;transform:translateX(-50%);background:rgba(254,44,85,.9);padding:4px 12px;border-radius:99px;font-weight:800;font-size:13px}
+.tkc-fxp{position:absolute;z-index:8;left:0;right:0;bottom:0;background:rgba(18,18,22,.94);backdrop-filter:blur(18px);border-radius:16px 16px 0 0;padding:6px 0 calc(var(--safe-b,0px) + 14px);animation:up .25s both}
+.tkc-ft{display:flex;gap:22px;align-items:center;padding:10px 16px;font-weight:700;font-size:15px;overflow-x:auto}.tkc-ft b{opacity:.5;padding-bottom:6px;border-bottom:2px solid transparent;cursor:pointer}.tkc-ft b.on{opacity:1;border-color:#fff}.tkc-ft button{margin-left:auto;font-size:16px}
+.tkc-fg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;padding:8px 12px 4px}.tkc-fg button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px}.tkc-fg span{width:62px;height:62px;border-radius:12px;border:2px solid transparent}.tkc-fg .on span{border-color:#fe2c55;box-shadow:0 0 0 2px #0009 inset}.tkc-fg .on small{color:#fe2c55;font-weight:800}
+.tkc-post{position:absolute;z-index:5;left:0;right:0;bottom:0;padding:40px 14px calc(var(--safe-b,0px) + 14px);background:linear-gradient(transparent,#000d 40%);display:flex;flex-direction:column;gap:10px}
+.tkc-post textarea{width:100%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:16px;color:#fff;padding:.7rem 1rem;font-size:14px;outline:0;resize:none}
+.tkc-pb{display:flex;gap:10px}.tkc-pb .tk-cta{flex:1;margin:0;justify-content:center;background:#fe2c55;box-shadow:none}.tkc-ghost{padding:.8rem 1.4rem;border-radius:16px;background:rgba(255,255,255,.16);font-weight:800;font-size:14px}

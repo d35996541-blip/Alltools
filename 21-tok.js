@@ -38,7 +38,7 @@ const Tok = {
       if (n === 'home' && this.tab === 'fy') return Sheet.close('tok');
       r.querySelectorAll('.tk-nav [data-n]').forEach(x => x.classList.toggle('on', x === b)); this.setTab(n === 'me' ? 'me' : 'fy');
     });
-    q('#tk-plus').onclick = () => this.menu();
+    q('#tk-plus').onclick = () => this.camOpen();
     this.setTab('fy', true);
   },
   setTab(t, quiet) {
@@ -61,8 +61,8 @@ const Tok = {
   renderFeed() {
     const f = this.root.querySelector('#tk-feed'); if (this.io) this.io.disconnect();
     const T = this.tab, list = T === 'fo' ? this.vids.filter(v => this.fol[v.uid]) : T === 'me' ? this.vids.filter(v => v.uid === FB.st.uid) : T === 'q' ? this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(this.q)) : this.vids;
-    if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${T === 'fo' ? 'Belum ada yang kamu ikuti' : T === 'me' ? 'Kamu belum punya video' : T === 'q' ? 'Tidak ada hasil' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.upload(); return; }
-    f.innerHTML = list.map(v => `<section class="tk-item" data-id="${esc(v.id)}" data-uid="${esc(v.uid)}"><video loop playsinline webkit-playsinline preload="none" data-src="${esc(v.url)}"></video><div class="tk-shade"></div><div class="tk-heart"></div>
+    if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${T === 'fo' ? 'Belum ada yang kamu ikuti' : T === 'me' ? 'Kamu belum punya video' : T === 'q' ? 'Tidak ada hasil' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.camOpen(); return; }
+    f.innerHTML = list.map(v => `<section class="tk-item" data-id="${esc(v.id)}" data-uid="${esc(v.uid)}">${v.k === 'img' ? `<img class="tk-img" src="${esc(v.url)}" alt="">` : `<video loop playsinline webkit-playsinline preload="none" data-src="${esc(v.url)}"></video>`}<div class="tk-shade"></div><div class="tk-heart"></div>
       <div class="tk-rail"><div class="tk-av"><span class="tk-ring" data-pp="${esc(v.uid)}">${esc(String(v.u || '?').charAt(0).toUpperCase())}</span>${v.uid === FB.st.uid ? '' : `<button class="tk-fol${this.fol[v.uid] ? ' on' : ''}" data-a="fol"><i class="fa-solid ${this.fol[v.uid] ? 'fa-check' : 'fa-plus'}"></i></button>`}</div>
         <button class="tk-act" data-a="like"><i class="fa-solid fa-heart"></i><span class="n">–</span></button>
         <button class="tk-act" data-a="cm"><i class="fa-solid fa-comment-dots"></i><span class="n">Komentar</span></button>
@@ -73,7 +73,7 @@ const Tok = {
       <div class="tk-prog"><i></i></div></section>`).join('');
     f.querySelectorAll('.tk-item').forEach(it => this.wire(it)); this.fillPP(f);
     this.io = new IntersectionObserver(es => es.forEach(e => {
-      const it = e.target, v = it.querySelector('video');
+      const it = e.target, v = it.querySelector('video'); if (!v) { if (e.intersectionRatio > .7) this.hydrate(it); return; }
       if (e.isIntersecting && !v.src) { v.src = v.dataset.src; }
       if (e.intersectionRatio > .7) { f.querySelectorAll('video').forEach(o => { if (o !== v) o.pause(); }); v.muted = false; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }); this.hydrate(it); }
       else v.pause();
@@ -86,7 +86,7 @@ const Tok = {
     if (v && await this.isVf(uid, userKey(v.u))) it.querySelector('.tk-vfs').innerHTML = VF_SVG;
   },
   wire(it) {
-    const v = it.querySelector('video'), id = it.dataset.id, bar = it.querySelector('.tk-prog i'); let last = 0;
+    const v = it.querySelector('video') || { addEventListener() {}, paused: true, play() {}, pause() {} }, id = it.dataset.id, bar = it.querySelector('.tk-prog i'); let last = 0;
     v.addEventListener('loadedmetadata', () => { if (v.videoWidth > v.videoHeight) v.style.objectFit = 'contain'; });
     v.addEventListener('timeupdate', () => { if (v.duration) bar.style.width = (v.currentTime / v.duration * 100) + '%'; });
     it.addEventListener('click', e => {
@@ -128,7 +128,7 @@ const Tok = {
   menu() {
     const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden');
     ov.innerHTML = `<div class="tk-sheet sm"><div class="tk-grab"></div><button class="tk-mi" data-m="up"><i class="fa-solid fa-film"></i><div><b>Unggah video</b><small>Bagikan video ke Untuk Kamu</small></div></button><button class="tk-mi live" data-m="lv"><i class="fa-solid fa-tower-broadcast"></i><div><b>Mulai LIVE</b><small>Siaran langsung dari kameramu</small></div></button></div>`;
-    ov.onclick = e => { const b = e.target.closest('[data-m]'); if (b || e.target === ov) { ov.classList.add('hidden'); ov.innerHTML = ''; if (b) b.dataset.m === 'up' ? this.upload() : this.goLive(); } };
+    ov.onclick = e => { const b = e.target.closest('[data-m]'); if (b || e.target === ov) { ov.classList.add('hidden'); ov.innerHTML = ''; if (b) b.dataset.m === 'up' ? this.camOpen() : this.goLive(); } };
   },
   upload() {
     const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden');
@@ -233,7 +233,7 @@ const Tok = {
     const V = this.view; this.view = null; if (V) { V.timers.forEach(clearInterval); try { V.pc.close(); } catch (e) {} this.db('tok/lv/' + host + '/' + FB.st.uid, null, 'DELETE').catch(() => {}); }
     const ov = this.root && this.root.querySelector('#tk-ov'); if (ov) { ov.classList.add('hidden'); ov.classList.remove('full'); ov.innerHTML = ''; }
   },
-  stopAll() { if (this.live) this.endLive(); if (this.view) this.leave(''); if (this.io) this.io.disconnect(); this.root = null; try { Bgm.resumeIfWanted(); } catch (e) {} },
+  stopAll() { this.camStop(); if (this.live) this.endLive(); if (this.view) this.leave(''); if (this.io) this.io.disconnect(); this.root = null; try { Bgm.resumeIfWanted(); } catch (e) {} },
   /* ---------- centang biru di profil sendiri (otomatis untuk Developer) ---------- */
   decorate() {
     const n = document.getElementById('u-name'); if (!n || !App.user || !n.textContent || n.textContent === '…') return false;
@@ -345,8 +345,8 @@ Object.assign(Tok, {
       const g = e.target.closest('[data-g]'), v = e.target.closest('[data-v]');
       if (g) this.profile(box, g.dataset.g); else if (v) { this.showPage('home'); this.setTab('me', true); this.tab = tb === 'g' ? 'me' : 'fy'; this.renderFeed(); setTimeout(() => { const it = this.root && this.root.querySelector(`.tk-item[data-id="${v.dataset.v}"]`); if (it) it.scrollIntoView(); }, 60); }
     };
-    q('#tkp-lo').onclick = () => Sheet.close('tok'); q('#tkp-up').onclick = () => { this.showPage('home'); this.upload(); };
-    const t = q('#tkp-try'); if (t) t.onclick = () => { this.showPage('home'); this.upload(); };
+    q('#tkp-lo').onclick = () => Sheet.close('tok'); q('#tkp-up').onclick = () => { this.showPage('home'); this.camOpen(); };
+    const t = q('#tkp-try'); if (t) t.onclick = () => { this.showPage('home'); this.camOpen(); };
     q('#tkp-ad').onclick = () => this.changePP(); q('#tkp-pp').onclick = e => { if (!e.target.closest('#tkp-ad')) this.changePP(); }; this.fillPP(box);
     const bioSet = async () => { const cur = (q('#tkp-bio').dataset.b || ''), t = prompt('Bio kamu:', cur); if (t === null) return; try { await this.db('tok/prof/' + me, null, 'PATCH', { bio: t.trim().slice(0, 80) }); this.profile(box, tb); } catch (e) { UI.toast('Gagal menyimpan bio', 'err'); } };
     q('#tkp-ed').onclick = bioSet; q('#tkp-bio').onclick = bioSet;
@@ -373,3 +373,119 @@ Object.assign(Tok, {
   };
   Tok.stopAll = function () { clearInterval(this.pt); clearInterval(this.ut); os.call(this); };
 })();
+
+/* ---------- Kamera: rekam video / foto, efek, unggah dari galeri ---------- */
+const TKFX = [
+  ['none', 'Tanpa', '', 'linear-gradient(135deg,#444,#222)'], ['vivid', 'Cerah', 'saturate(1.6) contrast(1.1)', 'linear-gradient(135deg,#f97316,#ec4899)'],
+  ['warm', 'Hangat', 'sepia(.35) saturate(1.4) hue-rotate(-10deg)', 'linear-gradient(135deg,#fbbf24,#f97316)'], ['cool', 'Dingin', 'contrast(1.05) saturate(.9) hue-rotate(20deg)', 'linear-gradient(135deg,#38bdf8,#6366f1)'],
+  ['bw', 'Hitam Putih', 'grayscale(1) contrast(1.2)', 'linear-gradient(135deg,#e5e5e5,#111)'], ['vintage', 'Vintage', 'sepia(.7) contrast(.95) brightness(1.05)', 'linear-gradient(135deg,#a16207,#78350f)'],
+  ['fade', 'Pudar', 'contrast(.85) brightness(1.15) saturate(.8)', 'linear-gradient(135deg,#e9d5ff,#bae6fd)'], ['neon', 'Neon', 'saturate(2.4) contrast(1.25) brightness(1.05)', 'linear-gradient(135deg,#22d3ee,#d946ef)'],
+  ['glitch', 'Glitch', '', 'linear-gradient(135deg,#f43f5e,#22d3ee)'], ['glow', 'Glow', '', 'linear-gradient(135deg,#fde68a,#f9a8d4)'], ['pixel', 'Pixel', '', 'linear-gradient(135deg,#4ade80,#166534)'],
+  ['kaca', 'Cermin', '', 'linear-gradient(90deg,#818cf8,#c084fc)'], ['sinema', 'Sinema', 'contrast(1.15) saturate(1.2)', 'linear-gradient(135deg,#0f172a,#7c2d12)'], ['neg', 'Negatif', 'invert(1) hue-rotate(180deg)', 'linear-gradient(135deg,#fff,#000)']
+];
+const TKTAB = { Trending: ['neon', 'glitch', 'glow', 'vivid', 'pixel', 'bw'], Filter: ['none', 'vivid', 'warm', 'cool', 'bw', 'vintage', 'fade', 'neon'], Visual: ['glitch', 'glow', 'pixel', 'kaca', 'sinema', 'neg'] };
+Object.assign(Tok, {
+  C: null,
+  async camOpen() {
+    this.camStop(); const ov = this.root.querySelector('#tk-ov'); ov.classList.remove('hidden'); ov.classList.add('full'); ov.onclick = null;
+    const C = this.C = { facing: 'user', fx: 'none', beauty: false, mic: true, max: 60, mode: 'v', timer: 0, flash: false, rec: null };
+    ov.innerHTML = `<div class="tkc"><canvas id="tkc-cv" width="720" height="1280"></canvas><video id="tkc-v" playsinline muted></video>
+      <button class="tkc-x" data-a="x" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+      <div class="tkc-side"><button data-a="flip"><i class="fa-solid fa-camera-rotate"></i><small>Balik</small></button><button data-a="flash"><i class="fa-solid fa-bolt"></i><small>Flash</small></button><button data-a="timer"><i class="fa-solid fa-stopwatch"></i><small id="tkc-tl">Pewaktu</small></button><button data-a="filter"><i class="fa-solid fa-circle-nodes"></i><small>Filter</small></button><button data-a="beauty"><i class="fa-solid fa-wand-magic-sparkles"></i><small>Percantik</small></button><button data-a="mic"><i class="fa-solid fa-microphone"></i><small id="tkc-ml">Mic</small></button></div>
+      <div class="tkc-cnt hidden" id="tkc-cnt"></div><div class="tkc-tm hidden" id="tkc-tm">0:00</div>
+      <div class="tkc-bot"><div class="tkc-modes"><b data-m="180">3 mnt</b><b data-m="60" class="on">60 dtk</b><b data-m="15">15 dtk</b><b data-m="p">Foto</b><b data-m="live">LIVE</b></div>
+        <div class="tkc-row"><button data-a="fx"><span class="tkc-th" id="tkc-th"><i class="fa-solid fa-star"></i></span><small>Efek</small></button><button class="tkc-rec" id="tkc-rec" aria-label="Rekam"><i></i></button><button data-a="up"><span class="tkc-th up"><i class="fa-regular fa-image"></i></span><small>Unggah</small></button></div></div>
+      <div class="tkc-fxp hidden" id="tkc-fxp"></div></div>`;
+    const q = x => ov.querySelector(x); C.cv = q('#tkc-cv'); C.x = C.cv.getContext('2d'); C.v = q('#tkc-v'); C.sm = document.createElement('canvas'); C.sm.width = 54; C.sm.height = 96; C.sx = C.sm.getContext('2d');
+    ov.onclick = e => {
+      const m = e.target.closest('[data-m]'), a = e.target.closest('[data-a]'); if (m) return this.camMode(m, q);
+      if (!a) return; const k = a.dataset.a;
+      if (k === 'x') this.camClose(); else if (k === 'flip') { C.facing = C.facing === 'user' ? 'environment' : 'user'; this.camStream(); } else if (k === 'flash') this.camFlash(a);
+      else if (k === 'timer') { C.timer = C.timer === 0 ? 3 : C.timer === 3 ? 10 : 0; q('#tkc-tl').textContent = C.timer ? C.timer + ' dtk' : 'Pewaktu'; a.classList.toggle('on', !!C.timer); }
+      else if (k === 'filter' || k === 'fx') this.camFx(k === 'filter' ? 'Filter' : 'Trending');
+      else if (k === 'beauty') { C.beauty = !C.beauty; a.classList.toggle('on', C.beauty); }
+      else if (k === 'mic') { C.mic = !C.mic; a.classList.toggle('on', !C.mic); q('#tkc-ml').textContent = C.mic ? 'Mic' : 'Mic mati'; }
+      else if (k === 'up') this.camPick();
+    };
+    q('#tkc-rec').onclick = () => this.camRec();
+    if (!(await this.camStream())) return; this.camLoop();
+  },
+  async camStream() {
+    const C = this.C; if (!C) return false; if (C.stream) C.stream.getTracks().forEach(t => t.stop());
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { this.camClose(); UI.alert('Tidak didukung', 'Kamera butuh HTTPS dan browser terbaru.', { type: 'warn' }); return false; }
+    try { try { C.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: C.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true }); } catch (e) { if (e.name === 'NotAllowedError') throw e; C.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: C.facing } }); C.mic = false; } }
+    catch (e) { this.camClose(); UI.alert('Izin ditolak', 'Izinkan kamera (dan mikrofon) untuk merekam.', { type: 'warn' }); return false; }
+    C.v.srcObject = C.stream; try { await C.v.play(); } catch (e) {} C.flash = false; return true;
+  },
+  async camFlash(btn) {
+    const C = this.C, t = C.stream && C.stream.getVideoTracks()[0]; try { if (!t || !(t.getCapabilities && t.getCapabilities().torch)) throw 0; C.flash = !C.flash; await t.applyConstraints({ advanced: [{ torch: C.flash }] }); btn.classList.toggle('on', C.flash); } catch (e) { UI.toast('Flash hanya tersedia di kamera belakang yang mendukung', 'warn'); }
+  },
+  camMode(m, q) {
+    const C = this.C, v = m.dataset.m; if (C.rec) return; if (v === 'live') { this.camClose(); return this.goLive(); }
+    q('.tkc-modes').querySelectorAll('b').forEach(b => b.classList.toggle('on', b === m)); if (v === 'p') C.mode = 'p'; else { C.mode = 'v'; C.max = +v; }
+    q('#tkc-rec').classList.toggle('photo', C.mode === 'p');
+  },
+  camFx(tab) {
+    const C = this.C, p = this.root.querySelector('#tkc-fxp'); p.classList.remove('hidden');
+    const draw = t => { p.innerHTML = `<div class="tkc-ft">${Object.keys(TKTAB).map(k => `<b data-t="${k}" class="${k === t ? 'on' : ''}">${k}</b>`).join('')}<button data-c aria-label="Tutup"><i class="fa-solid fa-chevron-down"></i></button></div><div class="tkc-fg">${TKTAB[t].map(id => { const f = TKFX.find(x => x[0] === id); return `<button data-f="${id}" class="${C.fx === id ? 'on' : ''}"><span style="background:${f[3]}"></span><small>${f[1]}</small></button>`; }).join('')}</div>`; };
+    draw(tab); p.onclick = e => {
+      e.stopPropagation(); const t = e.target.closest('[data-t]'), f = e.target.closest('[data-f]'), c = e.target.closest('[data-c]');
+      if (t) draw(t.dataset.t); else if (c) p.classList.add('hidden'); else if (f) { C.fx = f.dataset.f; const x = TKFX.find(z => z[0] === C.fx); this.root.querySelector('#tkc-th').style.background = C.fx === 'none' ? '' : x[3]; p.querySelectorAll('[data-f]').forEach(b => b.classList.toggle('on', b === f)); }
+    };
+  },
+  camLoop() {
+    const C = this.C; if (!C) return; const v = C.v, x = C.x, W = C.cv.width, H = C.cv.height;
+    if (v.readyState >= 2 && v.videoWidth) {
+      const vw = v.videoWidth, vh = v.videoHeight, tr = W / H; let sw = vw, sh = vh, sx = 0, sy = 0; if (vw / vh > tr) { sw = vh * tr; sx = (vw - sw) / 2; } else { sh = vw / tr; sy = (vh - sh) / 2; }
+      const mir = C.facing === 'user', f = (TKFX.find(z => z[0] === C.fx) || [])[2] || '';
+      const base = (flt, dx, al, comp) => { x.save(); x.globalAlpha = al == null ? 1 : al; x.globalCompositeOperation = comp || 'source-over'; x.filter = flt || 'none'; if (mir) { x.translate(W, 0); x.scale(-1, 1); } x.drawImage(v, sx, sy, sw, sh, dx || 0, 0, W, H); x.restore(); };
+      const bt = C.beauty ? ' brightness(1.05) saturate(1.08)' : '';
+      if (C.fx === 'glitch') { base(bt); base('hue-rotate(90deg)', 12, .45, 'screen'); base('hue-rotate(-90deg)', -12, .45, 'screen'); }
+      else if (C.fx === 'glow') { base(bt); base('blur(16px) brightness(1.25)', 0, .5, 'screen'); }
+      else base(f + bt);
+      if (C.beauty) base((f || '') + ' blur(4px)', 0, .3);
+      if (C.fx === 'pixel') { C.sx.drawImage(C.cv, 0, 0, 54, 96); x.imageSmoothingEnabled = false; x.drawImage(C.sm, 0, 0, 54, 96, 0, 0, W, H); x.imageSmoothingEnabled = true; }
+      if (C.fx === 'kaca') { x.save(); x.translate(W, 0); x.scale(-1, 1); x.drawImage(C.cv, 0, 0, W / 2, H, 0, 0, W / 2, H); x.restore(); }
+      if (C.fx === 'sinema') { const g = x.createRadialGradient(W / 2, H / 2, H * .25, W / 2, H / 2, H * .7); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.7)'); x.fillStyle = g; x.fillRect(0, 0, W, H); x.fillStyle = '#000'; x.fillRect(0, 0, W, 110); x.fillRect(0, H - 110, W, 110); }
+    }
+    C.raf = requestAnimationFrame(() => this.camLoop());
+  },
+  camRec() {
+    const C = this.C; if (!C) return; if (C.rec) return this.camStopRec(); if (C.mode === 'p') return this.camShot();
+    if (!C.timer) return this.camStart(); let n = C.timer; const c = this.root.querySelector('#tkc-cnt'); c.classList.remove('hidden'); c.textContent = n;
+    C.cd = setInterval(() => { n--; if (n <= 0) { clearInterval(C.cd); c.classList.add('hidden'); this.camStart(); } else c.textContent = n; }, 1000);
+  },
+  camStart() {
+    const C = this.C; if (!C || !window.MediaRecorder) return UI.toast('Browser belum mendukung rekam video', 'warn');
+    const st = C.cv.captureStream(30); if (C.mic) C.stream.getAudioTracks().forEach(t => st.addTrack(t));
+    const mime = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '', ch = [];
+    const r = C.rec = new MediaRecorder(st, Object.assign(mime ? { mimeType: mime } : {}, { videoBitsPerSecond: 2000000 }));
+    r.ondataavailable = e => { if (e.data.size) ch.push(e.data); };
+    r.onstop = () => { const keep = C.keep !== false; clearInterval(C.pt); if (keep && ch.length) this.camPreview(new Blob(ch, { type: (r.mimeType || 'video/webm').split(';')[0] }), 'video'); };
+    r.start(500); const ov = this.root.querySelector('.tkc'), rec = ov.querySelector('#tkc-rec'), tm = ov.querySelector('#tkc-tm'); ov.classList.add('rec'); tm.classList.remove('hidden'); const t0 = Date.now();
+    C.pt = setInterval(() => { const sec = (Date.now() - t0) / 1000; rec.style.setProperty('--p', Math.min(1, sec / C.max) * 360 + 'deg'); tm.textContent = Math.floor(sec / 60) + ':' + String(Math.floor(sec % 60)).padStart(2, '0'); if (sec >= C.max) this.camStopRec(); }, 200);
+  },
+  camStopRec() { const C = this.C; if (C && C.rec && C.rec.state !== 'inactive') C.rec.stop(); },
+  camShot() { const C = this.C; C.cv.toBlob(b => { if (b) this.camPreview(b, 'img'); }, 'image/jpeg', .9); },
+  camPick() {
+    const f = document.createElement('input'); f.type = 'file'; f.accept = 'video/*,image/*';
+    f.onchange = () => { const fl = f.files[0]; if (!fl) return; if (fl.size > 60 * 1048576) return UI.toast('Ukuran maksimal 60 MB', 'warn'); this.camPreview(fl, fl.type.startsWith('image') ? 'img' : 'video'); }; f.click();
+  },
+  camStop() { const C = this.C; if (!C) return; this.C = null; cancelAnimationFrame(C.raf); clearInterval(C.pt); clearInterval(C.cd); C.keep = false; try { if (C.rec && C.rec.state !== 'inactive') C.rec.stop(); } catch (e) {} if (C.stream) C.stream.getTracks().forEach(t => t.stop()); },
+  camClose() { this.camStop(); const ov = this.root && this.root.querySelector('#tk-ov'); if (ov) { ov.classList.add('hidden'); ov.classList.remove('full'); ov.innerHTML = ''; } },
+  camPreview(blob, kind) {
+    this.camStop(); const ov = this.root.querySelector('#tk-ov'), url = URL.createObjectURL(blob);
+    ov.innerHTML = `<div class="tkc pv">${kind === 'img' ? `<img src="${url}" alt="">` : `<video src="${url}" autoplay loop playsinline></video>`}<button class="tkc-x" data-a="back" aria-label="Ulangi"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="tkc-post"><textarea id="tkc-cap" maxlength="150" rows="2" placeholder="Tulis keterangan…"></textarea><div class="tk-pg hidden" id="tkc-pg"><i></i></div><div class="tkc-pb"><button data-a="back" class="tkc-ghost">Ulangi</button><button data-a="post" class="tk-cta" id="tkc-go"><i class="fa-solid fa-paper-plane"></i> Posting</button></div></div></div>`;
+    ov.onclick = async e => {
+      const a = e.target.closest('[data-a]'); if (!a) return; if (a.dataset.a === 'back') { URL.revokeObjectURL(url); return this.camOpen(); }
+      const go = ov.querySelector('#tkc-go'), pg = ov.querySelector('#tkc-pg'), bar = pg.querySelector('i'); go.disabled = true; pg.classList.remove('hidden');
+      try {
+        const ext = kind === 'img' ? 'jpg' : (blob.type.includes('mp4') ? 'mp4' : 'webm'), file = blob instanceof File ? blob : new File([blob], 'rec_' + Date.now() + '.' + ext, { type: blob.type });
+        const link = await this.storeFile(file, p => bar.style.width = p + '%'), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const d = { u: App.user.username, uid: FB.st.uid, url: link, cap: ov.querySelector('#tkc-cap').value.trim(), ts: Date.now() }; if (kind === 'img') d.k = 'img';
+        await this.db('tok/videos/' + id, null, 'PUT', d); URL.revokeObjectURL(url); this.camClose(); UI.toast('Berhasil diposting!', 'ok'); this.showPage('home'); this.setTab('fy', true); this.load();
+      } catch (er) { go.disabled = false; pg.classList.add('hidden'); if (confirm('Unggah gagal (pastikan Firebase Storage aktif & rules mengizinkan). Pakai tautan video saja?')) { this.camClose(); this.upload(); } }
+    };
+  }
+});
