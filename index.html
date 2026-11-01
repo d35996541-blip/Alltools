@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="app.css?v=3.30.2" />
+  <link rel="stylesheet" href="app.css?v=3.30.3" />
 </head>
 <body>
   <!-- wallpaper (bisa diganti lewat fitur Wallpaper) -->
@@ -68,9 +68,54 @@
   </section>
 
   <!-- layar pemeliharaan (dikontrol Developer) -->
-  <section id="maint" class="hidden"><div><div style="font-size:54px">🛠️</div><h2 style="font-size:22px;font-weight:800;margin:10px 0 6px">Sedang pemeliharaan</h2><p id="maint-msg" style="opacity:.8;font-size:14px;max-width:320px;margin:0 auto 18px">Kami sedang memperbarui layanan. Coba lagi sebentar lagi.</p><button class="btn btn-acc" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Muat ulang</button> <button class="btn" onclick="App.logout()">Keluar</button></div></section>
+  <section id="maint" class="hidden st-screen st-maint" aria-live="polite">
+    <div class="st-card">
+      <div class="st-tape" aria-hidden="true"></div>
+      <div class="st-top">
+        <img class="st-logo" src="profile.jpg" alt="" />
+        <span class="st-brand">Dimzz Prozet</span>
+        <span class="st-pill"><i></i>Perbaikan</span>
+      </div>
+      <div class="st-body">
+        <div class="st-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.9 1.9 0 0 0 2.7 2.7l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
+        </div>
+        <h2 class="st-h">Lagi dalam perbaikan</h2>
+        <p class="st-p" id="maint-msg">Kami sedang memperbarui layanan. Coba lagi sebentar lagi.</p>
+        <div class="st-bar" aria-hidden="true"><span></span></div>
+        <p class="st-note">Halaman ini menutup sendiri begitu perbaikan selesai.</p>
+      </div>
+      <div class="st-actions">
+        <button type="button" class="st-btn pri" onclick="location.reload()"><i class="fa-solid fa-rotate"></i> Muat ulang</button>
+        <button type="button" class="st-btn" onclick="App.logout()">Keluar</button>
+      </div>
+    </div>
+  </section>
 
-  <section id="banned" class="hidden" style="position:fixed;inset:0;z-index:9650;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(circle at 50% 25%,#7f1d1d,#1c0a0a 70%);color:#fff"><div style="max-width:340px"><div style="width:84px;height:84px;margin:0 auto 16px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:38px;color:#fecaca"><i class="fa-solid fa-ban"></i></div><h2 style="font-size:22px;font-weight:800;margin:0 0 8px">Akun dibatasi</h2><p style="opacity:.85;font-size:14px;line-height:1.6;margin:0 0 6px">Akunmu diblokir oleh Developer.</p><p id="ban-reason" style="background:rgba(255,255,255,.1);border-radius:14px;padding:.7rem .9rem;font-size:13px;font-weight:600;margin:10px 0 18px"></p><a class="btn btn-acc" id="ban-wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Hubungi admin</a> <button class="btn" onclick="App.leave()">Keluar</button></div></section>
+  <!-- layar akun diblokir -->
+  <section id="banned" class="hidden st-screen st-ban" aria-live="assertive">
+    <div class="st-card">
+      <div class="st-tape" aria-hidden="true"></div>
+      <div class="st-top">
+        <img class="st-logo" src="profile.jpg" alt="" />
+        <span class="st-brand">Dimzz Prozet</span>
+        <span class="st-pill"><i></i>Dibatasi</span>
+      </div>
+      <div class="st-body">
+        <div class="st-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+        </div>
+        <h2 class="st-h">Akun ini dibatasi</h2>
+        <p class="st-p"><b id="ban-user">Akunmu</b> diblokir oleh Developer.</p>
+        <div class="st-reason"><small>Alasan</small><span id="ban-reason"></span></div>
+        <div class="st-admin">
+          <div><small>Hubungi admin</small><b id="ban-num"></b></div>
+          <a class="st-btn wa" id="ban-wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Chat</a>
+        </div>
+      </div>
+      <div class="st-actions"><button type="button" class="st-btn" onclick="App.leave()">Keluar dari akun</button></div>
+    </div>
+  </section>
 
   <!-- ====================== APLIKASI ====================== -->
   <main id="app" class="hidden">
@@ -140,7 +185,7 @@
   <script src="00-config.js?v=3.1"></script>
   <script src="01-core.js?v=3.20"></script>
   <script src="02-firebase.js?v=3.1"></script>
-  <script src="03-app.js?v=3.30.0"></script>
+  <script src="03-app.js?v=3.30.3"></script>
   <script src="04-adzan.js?v=3.15"></script>
   <script src="05-music.js?v=3.10"></script>
   <script src="06-media.js?v=3.1"></script>
@@ -150,7 +195,7 @@
   <script src="10-social.js?v=3.4"></script>
   <script src="11-anime-manga.js?v=3.12"></script>
   <script src="12-dev.js?v=3.20"></script>
-  <script src="13-chat.js?v=3.30.0"></script>
+  <script src="13-chat.js?v=3.30.3"></script>
   <script src="14-boost.js?v=3.16"></script>
   <script src="15-roles.js?v=3.18"></script>
   <script src="16-wa.js?v=3.29.0"></script>

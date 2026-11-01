@@ -110,7 +110,7 @@ const Chat = {
         const ph = m.im ? imgTag('max-width:100%;width:230px;min-height:120px;border-radius:12px;background:rgba(255,255,255,.08);cursor:zoom-in;object-fit:cover') : '';
         inner = `<div class="cb ${mine ? 'me' : ''} ${isDev ? 'dev' : ''} ${m.pending ? 'pend' : ''}" data-mid="${esc(m.id)}">${q}${ph}${cap}</div>`;
       }
-      return `${sep}<div class="gm ${mine ? 'mine' : ''}" style="--rc:${Rank.color(m.r)}"><span class="gm-av">${this.av(m)}</span><div class="gm-col">${inner}${meta}</div></div>`;
+      return `${sep}<div class="gm ${mine ? 'mine' : ''}" style="--rc:${Rank.color(m.r)}"><span class="gm-av">${this.av(m)}</span><div class="gm-col">${meta}${inner}</div></div>`;
     }).join('') : emptyHtml('fa-comments', 'Belum ada pesan. Jadilah yang pertama menyapa!');
     l.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => { try { await FB.request('chat/global/' + b.dataset.del, null, 'DELETE'); if (b.dataset.im) { this.imgs.delete(b.dataset.im); FB.request('chatimg/' + b.dataset.im, null, 'DELETE').catch(() => {}); } this.poll(); } catch (e) { UI.toast('Gagal menghapus', 'err'); } });
     try { if (typeof WA !== 'undefined' && WA.hydrate) WA.hydrate(l); } catch (e) {}

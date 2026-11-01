@@ -245,7 +245,9 @@ this.renderTabs(); this.renderTiles(); { const fq = $('f-q'); if (fq) fq.oninput
     try { Bgm.stop(); Music.stop(); Adzan.stopRing && Adzan.stopRing(); } catch (e) {}
     while (Sheet.stack.length) Sheet.close(null, true);
     ['app', 'dock', 'cassette', 'mini', 'maint', 'auth', 'intro', 'welcome'].forEach(id => $(id) && $(id).classList.add('hidden'));
-    $('ban-reason').textContent = (ban && ban.reason) ? 'Alasan: ' + ban.reason : 'Hubungi admin untuk informasi lebih lanjut.';
+    $('ban-reason').textContent = (ban && ban.reason) ? ban.reason : 'Tidak ada alasan tertulis. Hubungi admin untuk informasi lebih lanjut.';
+    $('ban-user').textContent = this.user && this.user.username ? '@' + this.user.username : 'Akunmu';
+    $('ban-num').textContent = '+' + String(CONFIG.ADMIN_WA).replace(/^(62)(\d{3})(\d{4})(\d+)$/, '$1 $2-$3-$4');
     $('ban-wa').href = `https://wa.me/${CONFIG.ADMIN_WA}?text=${encodeURIComponent('Halo Admin, akun saya (' + this.user.username + ') diblokir. Mohon bantuannya.')}`;
     $('banned').classList.remove('hidden'); this.banned = true;
   },
