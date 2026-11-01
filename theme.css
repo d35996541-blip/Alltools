@@ -35,10 +35,9 @@ body{background:var(--forest);color:var(--ink)}
 .custom-scrollbar{scrollbar-color:#b9c3bd transparent}
 
 /* ---------- masuk / daftar ---------- */
-#auth{padding:0!important;align-items:flex-end}
-#auth .shade{background:linear-gradient(180deg,rgba(12,33,29,.25) 0%,rgba(12,33,29,.55) 45%,rgba(12,33,29,.92) 100%)}
-.auth-panel{width:100%!important;max-width:460px!important;margin:auto 0 0!important;padding:28px 24px calc(var(--safe-b) + 24px)!important;background:var(--forest)!important;border:0!important;border-radius:22px 22px 0 0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 -24px 60px -20px rgba(0,0,0,.6)!important}
-@media(min-width:600px){#auth{align-items:center}.auth-panel{margin:auto!important;border-radius:20px!important;padding-bottom:28px!important}}
+#auth{padding:calc(var(--safe-t) + 16px) 0 calc(var(--safe-b) + 16px)!important;align-items:center}
+#auth .shade{background:linear-gradient(180deg,rgba(12,33,29,.35) 0%,rgba(12,33,29,.55) 50%,rgba(12,33,29,.8) 100%)}
+.auth-panel{width:calc(100% - 32px)!important;max-width:420px!important;margin:auto!important;padding:28px 24px 22px!important;background:var(--forest)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:20px!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 30px 70px -20px rgba(0,0,0,.7)!important}
 .auth-brand{flex-direction:column;align-items:flex-start;gap:14px;margin-bottom:22px}
 .auth-logo{width:44px;height:44px;border-radius:11px;box-shadow:0 0 0 2px var(--kunyit)}
 .auth-brand>div:last-child>div:first-child{font-family:var(--disp);font-size:34px!important;line-height:1;letter-spacing:-.03em!important;font-weight:700!important;color:var(--tulang)}
