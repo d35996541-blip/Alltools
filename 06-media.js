@@ -3,7 +3,7 @@ const Yt = {
   items: [],
   open() {
     Sheet.open({ id: 'youtube', title: 'YouTube', icon: 'fa-brands fa-youtube'.replace('fa-brands ', ''), grad: 'linear-gradient(135deg,#ef4444,#b91c1c)', onClose: () => this.stopPlayer(), body: `${searchBar('yt-q', 'Cari video atau tempel link YouTube…')}<div id="yt-player" class="hidden"></div><div id="yt-out">${emptyHtml('fa-play', 'Cari video, atau tempel link YouTube untuk memutar & mengunduh (MP4 / MP3).')}</div>` });
-    $('sheet-youtube').querySelector('.gi i').className = 'fa-brands fa-youtube';
+    { const gi = $('sheet-youtube').querySelector('.gi i'); if (gi) gi.className = 'fa-brands fa-youtube'; }
     bindSearch('yt-q', () => this.search($('yt-q').value.trim()));
   },
   vid(u) { const m = String(u).match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|music\.youtube\.com\/watch\?(?:.*&)?v=)([\w-]{11})/); return m ? m[1] : (/^[\w-]{11}$/.test(u) ? u : null); },
@@ -12,7 +12,7 @@ const Yt = {
     if (id) { this.items = [{ id, title: 'Video YouTube', author: q.replace(/^https?:\/\//, '').slice(0, 30), duration: '', thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg` }]; fetchJSON('https://www.youtube.com/oembed?url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + id) + '&format=json', {}, 6000).then(m => { this.items[0].title = m.title; this.items[0].author = m.author_name; this.render(); }).catch(() => {}); return this.render(); }
     out.innerHTML = loadingHtml('Mencari video…');
     try { this.items = (await API.get('yt', { a: 'search', q }, 30000)).items; this.render(); }
-    catch (e) { out.innerHTML = errHtml(e.message) + '<div style="text-align:center"><button class="btn" id="yt-retry"><i class="fa-solid fa-rotate"></i> Coba lagi</button></div>'; $('yt-retry').onclick = () => this.search(q); }
+    catch (e) { try { ErrLog.push('YouTube cari: ' + (e.message || e), 'youtube'); } catch (x) {} out.innerHTML = errHtml('Pencarian YouTube sedang bermasalah. Coba lagi sebentar, atau cari langsung di YouTube.') + `<div class="row" style="justify-content:center"><button class="btn" id="yt-retry"><i class="fa-solid fa-rotate"></i> Coba lagi</button><a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}">Cari di YouTube</a></div>`; $('yt-retry').onclick = () => this.search(q); }
   },
   render() {
     const out = $('yt-out'); if (!this.items.length) return void (out.innerHTML = emptyHtml('fa-face-sad-tear', 'Video tidak ditemukan.'));

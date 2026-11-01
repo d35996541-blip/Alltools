@@ -40,7 +40,7 @@ const Wallpaper = {
     const cur = Wall.get();
     Sheet.open({ id: 'wallpaper', title: 'Ganti Wallpaper', icon: 'fa-regular fa-image'.replace('fa-regular ', ''), grad: 'linear-gradient(135deg,#0ea5e9,#6366f1)', body: `${seg('wp-seg', [['preset', 'Pilihan'], ['upload', 'Dari galeri'], ['online', 'Cari online']], 'preset')}
       <div class="card" style="padding:12px 14px"><div class="row" style="justify-content:space-between"><b style="font-size:12px">Redupkan latar</b><span id="wp-dv" class="muted" style="font-size:11px;font-weight:800">${Math.round((cur.dim || 0) * 100)}%</span></div><input type="range" id="wp-dim" min="0" max="70" value="${Math.round((cur.dim || 0) * 100)}" style="width:100%;margin-top:6px"/></div><div id="wp-out"></div>` });
-    $('sheet-wallpaper').querySelector('.gi i').className = 'fa-regular fa-image';
+    { const gi = $('sheet-wallpaper').querySelector('.gi i'); if (gi) gi.className = 'fa-regular fa-image'; }
     bindSeg('wp-seg', k => this.tab(k)); $('wp-dim').oninput = e => { const w = { ...Wall.get(), dim: e.target.value / 100 }; $('wp-dv').textContent = e.target.value + '%'; $('wallpaper-dim').style.opacity = w.dim; clearTimeout(this._t); this._t = setTimeout(() => LS.set('wall', w), 300); };
     this.tab('preset');
   },
