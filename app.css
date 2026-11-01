@@ -1051,3 +1051,25 @@ body:not(.dark-wall) .searchbar i{color:var(--ink)}
   transform:scale(0);opacity:.9;animation:ripple .65s ease-out forwards}
 @keyframes ripple{to{transform:scale(14);opacity:0}}
 .lite .rip{display:none}
+
+/* ================= v4.2 — usulan polesan: 3 kolom, mini player, bersih, kontras jam ================= */
+.tile-grid,.tile-grid.fav{grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:640px){.tile-grid{grid-template-columns:repeat(4,1fr)}}
+.tile,.dark-wall .tile{padding:1rem .3rem .85rem;gap:9px}
+.tile .ic,.dark-wall .tile .ic,.tile .ic.ic2,.dark-wall .tile .ic.ic2{width:54px;height:54px;border-radius:17px!important}
+.tile span,.dark-wall .tile span{font-size:12px}
+.tile .dot{display:none}
+.hero .clock{text-shadow:0 2px 14px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.5)}
+#app{padding-bottom:calc(170px + var(--safe-b))}
+/* mini player: bilah memanjang menempel di atas dock */
+#mini{width:min(calc(100vw - 20px),560px);bottom:calc(78px + var(--safe-b));border-radius:20px 20px 8px 8px;padding:8px 10px}
+/* kaset: kecil, di kanan, tidak menutupi grid */
+#cassette{left:auto;right:12px;width:46px;height:46px;bottom:calc(88px + var(--safe-b));opacity:.92}
+body.has-mini #cassette{bottom:calc(150px + var(--safe-b))}
+#cassette .wave{left:auto;right:52px}
+#cassette .st{width:20px;height:20px;font-size:8px}
+/* baris "Sering dibuka" + cuaca */
+.fav-row .sec-title i{color:var(--coral)!important}
+.fav-row{margin-bottom:4px}
+.wx{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--mist);background:rgba(255,255,255,.1);border-radius:999px;padding:.18rem .5rem;white-space:nowrap}
+body:not(.dark-wall) .wx{color:var(--ink2);background:rgba(15,23,42,.06)}
