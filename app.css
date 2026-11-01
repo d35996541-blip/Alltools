@@ -1032,3 +1032,22 @@ body:not(.dark-wall) .tabs .chip{color:var(--ink2);border-color:var(--line)}
 body:not(.dark-wall) .tabs .chip.on{background:var(--night);color:#fff}
 body:not(.dark-wall) .searchbar input{background:#fff;color:var(--ink);border-color:var(--line)}
 body:not(.dark-wall) .searchbar i{color:var(--ink)}
+
+/* ================= v4.1 — sentuhan hidup (feedback saat fitur disentuh) ================= */
+.tile,.feat-card,.dock button,.tabs .chip{position:relative;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.tile{transition:transform .38s cubic-bezier(.34,1.56,.64,1),background .2s,box-shadow .25s,border-color .25s}
+.tile .ic{transition:transform .38s cubic-bezier(.34,1.56,.64,1),background .2s}
+.tile.pressing{transform:scale(.91)!important;background:color-mix(in srgb,var(--c,#ff7a5c) 16%,rgba(255,255,255,.06))!important;border-color:color-mix(in srgb,var(--c,#ff7a5c) 65%,transparent)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--c,#ff7a5c) 40%,transparent),0 14px 30px -10px var(--c,#ff7a5c)!important;transition-duration:.12s}
+.tile.pressing .ic{transform:scale(1.14) rotate(-5deg)}
+.tile.popped .ic{animation:icpop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes icpop{0%{transform:scale(1.14) rotate(-5deg)}45%{transform:scale(.94) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+.feat-card{transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.feat-card.pressing{transform:scale(.93)}
+.dock button.pressing{transform:scale(.88);transition:transform .12s}
+.dock button.popped i{animation:icpop .5s cubic-bezier(.34,1.56,.64,1)}
+.tabs .chip.pressing{transform:scale(.92)}
+.rip{position:absolute;border-radius:50%;pointer-events:none;width:20px;height:20px;margin:-10px 0 0 -10px;
+  background:radial-gradient(circle,color-mix(in srgb,var(--c,#ffffff) 55%,transparent),transparent 70%);
+  transform:scale(0);opacity:.9;animation:ripple .65s ease-out forwards}
+@keyframes ripple{to{transform:scale(14);opacity:0}}
+.lite .rip{display:none}
