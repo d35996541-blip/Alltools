@@ -31,7 +31,7 @@ const Tok = {
   bind() {
     const r = this.root, q = s => r.querySelector(s);
     const go = () => { const t = prompt('Cari video atau akun:', this.q || ''); if (t === null) return; this.q = t.trim().toLowerCase(); this.setTab(this.q ? 'q' : 'fy'); };
-    q('#tk-sb').onclick = go;
+    q('#tk-sb').onclick = () => this.searchPage();
     r.querySelectorAll('.tk-tabs b,.tk-lvb').forEach(b => b.onclick = () => this.setTab(b.dataset.t));
     r.querySelectorAll('.tk-nav [data-n]').forEach(b => b.onclick = () => {
       const n = b.dataset.n; if (n === 'shop' || n === 'inbox') return UI.toast((n === 'shop' ? 'Toko' : 'Kotak Masuk') + ' segera hadir', 'info');
@@ -60,7 +60,7 @@ const Tok = {
   },
   renderFeed() {
     const f = this.root.querySelector('#tk-feed'); if (this.io) this.io.disconnect();
-    const T = this.tab, list = T === 'fo' ? this.vids.filter(v => this.fol[v.uid]) : T === 'me' ? this.vids.filter(v => v.uid === FB.st.uid) : T === 'q' ? this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(this.q)) : this.vids;
+    const T = this.tab, list = T === 'fo' ? this.vids.filter(v => this.fol[v.uid]) : T === 'me' ? this.vids.filter(v => v.uid === FB.st.uid) : T === 'u' ? this.vids.filter(v => v.uid === this.uT) : T === 'q' ? this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(this.q)) : this.vids;
     if (!list.length) { f.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-clapperboard"></i><h3>${T === 'fo' ? 'Belum ada yang kamu ikuti' : T === 'me' ? 'Kamu belum punya video' : T === 'q' ? 'Tidak ada hasil' : 'Belum ada video'}</h3><p>Jadilah yang pertama membagikan sesuatu.</p><button class="tk-cta" id="tk-up0"><i class="fa-solid fa-plus"></i> Unggah video</button></div>`; const b = f.querySelector('#tk-up0'); if (b) b.onclick = () => this.camPick(); return; }
     f.innerHTML = list.map(v => `<section class="tk-item" data-id="${esc(v.id)}" data-uid="${esc(v.uid)}">${v.k === 'img' ? `<img class="tk-img" ${String(v.url).startsWith(this.CHUNK_HOST) ? '' : `src="${esc(v.url)}"`} data-src="${esc(v.url)}" alt="">` : `<video loop playsinline webkit-playsinline preload="none" data-src="${esc(v.url)}"></video>`}<div class="tk-shade"></div><div class="tk-heart"></div>
       <div class="tk-rail"><div class="tk-av"><span class="tk-ring" data-pp="${esc(v.uid)}">${esc(String(v.u || '?').charAt(0).toUpperCase())}</span>${v.uid === FB.st.uid ? '' : `<button class="tk-fol${this.fol[v.uid] ? ' on' : ''}" data-a="fol"><i class="fa-solid ${this.fol[v.uid] ? 'fa-check' : 'fa-plus'}"></i></button>`}</div>
@@ -90,6 +90,7 @@ const Tok = {
     const v = it.querySelector('video') || { addEventListener() {}, paused: true, play() {}, pause() {} }, id = it.dataset.id, bar = it.querySelector('.tk-prog i'); let last = 0;
     v.addEventListener('loadedmetadata', () => { if (v.videoWidth > v.videoHeight) v.style.objectFit = 'contain'; });
     v.addEventListener('timeupdate', () => { if (v.duration) bar.style.width = (v.currentTime / v.duration * 100) + '%'; });
+    it.addEventListener('click', e => { if (e.target.closest('.tk-ring,.tk-nm')) this.userPage(it.dataset.uid, (this.vids.find(x => x.id === id) || {}).u); });
     it.addEventListener('click', e => {
       if (e.target.closest('.tk-rail,.tk-info')) return;
       const n = Date.now(); if (n - last < 280) { this.like(it, true); last = 0; this.burst(it, e); return; } last = n;
@@ -207,7 +208,7 @@ const Tok = {
     const send = () => this.sendChat(o.uid, ov.querySelector('#tk-li')); ov.querySelector('#tk-ls').onclick = send; ov.querySelector('#tk-li').onkeydown = e => { if (e.key === 'Enter') send(); };
     ov.querySelector('#tk-end').onclick = onClose; this.fillPP(ov);
     this.isVf(o.uid, userKey(o.u)).then(v => { const s = ov.querySelector('.tk-hvf'); if (v && s) s.innerHTML = VF_SVG; });
-    const fb = ov.querySelector('#tk-lf'); if (fb) fb.onclick = () => this.follow(o.uid, fb);
+    const fb = ov.querySelector('#tk-lf'); if (fb) fb.onclick = () => this.follow(o.uid, o.u);
     ov.querySelector('.tk-lbar').addEventListener('click', e => {
       const b = e.target.closest('[data-l]'); if (!b) return; const k = b.dataset.l;
       if (k === 'gift') return UI.toast('Kirim hadiah segera hadir 🎁', 'info');
@@ -338,9 +339,10 @@ Object.assign(Tok, {
       img.onerror = () => UI.toast('Gambar tidak bisa dibaca', 'warn'); img.src = url;
     }; f.click();
   },
-  async follow(uid) {
-    const on = !this.fol[uid], nm = (this.vids.find(v => v.uid === uid) || {}).u || 'user';
+  async follow(uid, b) {
+    const on = !this.fol[uid], nm = (typeof b === 'string' && b) || (this.vids.find(v => v.uid === uid) || {}).u || 'user';
     if (on) this.fol[uid] = nm; else delete this.fol[uid];
+    this.root.querySelectorAll('.tk-lfb').forEach(x => { if (x.dataset.uid === uid) x.classList.toggle('hidden', on); });
     this.root.querySelectorAll(`.tk-item[data-uid="${uid}"] .tk-fol`).forEach(x => { x.classList.toggle('on', on); x.innerHTML = `<i class="fa-solid ${on ? 'fa-check' : 'fa-plus'}"></i>`; });
     try {
       await this.db('tok/fol/' + FB.st.uid + '/' + uid, null, on ? 'PUT' : 'DELETE', on ? nm : undefined);
@@ -568,5 +570,95 @@ Object.assign(Tok, {
         await this.db('tok/videos/' + id, null, 'PUT', d); URL.revokeObjectURL(url); this.camClose(); UI.toast('Berhasil diposting!', 'ok'); this.showPage('home'); this.setTab('fy', true); this.load();
       } catch (er) { go.disabled = false; pg.classList.add('hidden'); UI.alert('Gagal mengunggah', (er && er.userMessage) || 'Unggah gagal. Coba lagi.', { type: 'warn' }); }
     };
+  }
+});
+
+/* ---------- Pencarian ala TikTok + halaman akun orang lain + centang biru (hanya Developer yang bisa memberi) ---------- */
+Object.assign(Tok, {
+  uT: null, keyList: null,
+  async loadKeys() { if (this.keyList) return this.keyList; try { this.keyList = Object.keys(await this.db('keys', { shallow: true }) || {}); } catch (e) { this.keyList = []; } return this.keyList; },
+  hist() { const h = LS.get('tk_sh', []); return Array.isArray(h) ? h : []; },
+  histAdd(t) { const h = this.hist().filter(x => x !== t); h.unshift(t); LS.set('tk_sh', h.slice(0, 20)); },
+  sugList() {
+    const seen = new Set(), out = [], add = t => { t = String(t || '').trim().replace(/\s+/g, ' ').slice(0, 40); const k = t.toLowerCase(); if (t.length > 1 && !seen.has(k)) { seen.add(k); out.push(t); } };
+    this.vids.forEach(v => add(v.cap)); this.vids.forEach(v => add(v.u)); ['LIVE hari ini', 'video lucu', 'musik santai'].forEach(add); return out.slice(0, 10);
+  },
+  thumb(v) { const u = String(v.url); if (u.startsWith(this.CHUNK_HOST)) return '<i class="fa-solid fa-film"></i>'; return v.k === 'img' ? `<img src="${esc(u)}" alt="">` : `<video muted preload="metadata" playsinline src="${esc(u)}#t=0.1"></video>`; },
+  rankKeys(ks, n) { return ks.filter(k => k.includes(n)).sort((a, b) => (a === n ? -1 : b === n ? 1 : 0) || (a.startsWith(n) ? -1 : b.startsWith(n) ? 1 : 0) || a.length - b.length); },
+  searchPage() {
+    const r = this.root; if (r.querySelector('.tks')) return;
+    const playing = [...r.querySelectorAll('#tk-feed video')].filter(v => !v.paused); this.pauseAll();
+    const el = document.createElement('div'); el.className = 'tks';
+    el.innerHTML = `<div class="tks-top"><button class="tks-bk" aria-label="Kembali"><i class="fa-solid fa-arrow-left"></i></button><div class="tks-in"><i class="fa-solid fa-magnifying-glass"></i><input id="tks-q" placeholder="Cari video atau akun" enterkeyhint="search" autocomplete="off"/><button class="tks-cl hidden" aria-label="Hapus"><i class="fa-solid fa-circle-xmark"></i></button></div><button class="tks-go">Cari</button></div><div class="tks-body" id="tks-b"></div>`;
+    r.appendChild(el);
+    const q = s => el.querySelector(s), inp = q('#tks-q'), body = q('#tks-b'), me = FB.st.uid; let all = false, timer = null;
+    this.loadKeys();
+    const close = () => { el.remove(); if (!r.querySelector('.tku')) playing.forEach(v => v.play().catch(() => {})); };
+    const home = () => {
+      const h = this.hist(), shown = all ? h : h.slice(0, 5), sg = this.sugList(), dots = ['#e11d48', '#f97316', '#eab308'];
+      body.innerHTML = (h.length ? `<div>${shown.map(t => `<div class="tks-r" data-s="${esc(t)}"><i class="fa-regular fa-clock"></i><span>${esc(t)}</span><button data-x="${esc(t)}" aria-label="Hapus"><i class="fa-solid fa-xmark"></i></button></div>`).join('')}${h.length > 5 && !all ? '<button class="tks-more" data-more>Lihat lainnya <i class="fa-solid fa-chevron-down"></i></button>' : ''}</div>` : '') +
+        `<h3 class="tks-t">Anda mungkin suka</h3>${sg.map((t, i) => `<div class="tks-r" data-s="${esc(t)}"><i class="tks-dot" style="background:${dots[i] || '#b5b5b5'}"></i><span>${esc(t)}</span></div>`).join('')}`;
+    };
+    const typing = () => {
+      const t = inp.value.trim(); q('.tks-cl').classList.toggle('hidden', !t); if (!t) return home();
+      clearTimeout(timer); timer = setTimeout(async () => {
+        const ks = await this.loadKeys(), m = this.rankKeys(ks, userKey(t)).slice(0, 6); if (inp.value.trim() !== t) return;
+        body.innerHTML = `<div class="tks-r" data-s="${esc(t)}"><i class="fa-solid fa-magnifying-glass"></i><span>${esc(t)}</span></div>` + m.map(k => `<div class="tks-r" data-k="${esc(k)}"><span class="tks-av">${esc(k.charAt(0).toUpperCase())}</span><span>@${esc(k)}</span></div>`).join('');
+      }, 180);
+    };
+    const run = async t => {
+      t = String(t || '').trim(); if (!t) return; inp.value = t; q('.tks-cl').classList.remove('hidden'); this.histAdd(t); inp.blur(); body.innerHTML = '<div class="tk-empty dk"><div class="tk-spin dk"></div></div>';
+      const ks = await this.loadKeys(), m = this.rankKeys(ks, userKey(t)).slice(0, 15);
+      const acc = (await Promise.all(m.map(async k => { try { const uid = await this.db('keys/' + k); if (!uid) return null; let u = null; try { u = await this.db('users/' + uid + '/u'); } catch (e) {} return { k, uid, u: u || k }; } catch (e) { return null; } }))).filter(Boolean);
+      const low = t.toLowerCase(), vs = this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(low));
+      if (inp.value.trim() !== t) return;
+      body.innerHTML = (acc.length ? `<h3 class="tks-t">Akun</h3>${acc.map(a => `<div class="tks-ac" data-k="${esc(a.k)}" data-uid="${esc(a.uid)}" data-u="${esc(a.u)}"><span class="tks-av" data-pp="${esc(a.uid)}">${esc(String(a.u).charAt(0).toUpperCase())}</span><div><b>${esc(a.u)}<i class="tks-vf"></i></b><small>@${esc(a.k)}</small></div>${a.uid === me ? '' : `<button class="tks-fb${this.fol[a.uid] ? ' on' : ''}" data-f="${esc(a.uid)}" data-u="${esc(a.u)}">${this.fol[a.uid] ? 'Mengikuti' : 'Ikuti'}</button>`}</div>`).join('')}` : '') +
+        (vs.length ? `<h3 class="tks-t">Video</h3><div class="tkp-gr tks-gr">${vs.map(v => `<button data-v="${esc(v.id)}">${this.thumb(v)}</button>`).join('')}</div>` : '') +
+        (!acc.length && !vs.length ? `<div class="tkp-em"><i class="fa-solid fa-magnifying-glass"></i><p>Tidak ada hasil untuk "${esc(t)}". Coba cari dengan username lengkap.</p></div>` : '');
+      this.fillPP(body); this.q = low;
+      acc.forEach(a => this.isVf(a.uid, userKey(a.u)).then(v => { const x = body.querySelector(`.tks-ac[data-uid="${a.uid}"] .tks-vf`); if (x && v) x.innerHTML = VF_SVG; }));
+    };
+    body.onclick = e => {
+      const x = e.target.closest('[data-x]'); if (x) { LS.set('tk_sh', this.hist().filter(t => t !== x.dataset.x)); return home(); }
+      if (e.target.closest('[data-more]')) { all = true; return home(); }
+      const f = e.target.closest('[data-f]'); if (f) { this.follow(f.dataset.f, f.dataset.u); const on = !!this.fol[f.dataset.f]; f.textContent = on ? 'Mengikuti' : 'Ikuti'; f.classList.toggle('on', on); return; }
+      const v = e.target.closest('[data-v]'); if (v) { el.remove(); this.tab = 'q'; this.setTab('q'); setTimeout(() => { const it = r.querySelector(`.tk-item[data-id="${v.dataset.v}"]`); if (it) it.scrollIntoView(); }, 80); return; }
+      const a = e.target.closest('[data-k]'); if (a) { const k = a.dataset.k; if (a.dataset.uid) return this.userPage(a.dataset.uid, a.dataset.u); return this.db('keys/' + k).then(uid => uid ? this.userPage(uid, k) : UI.toast('Akun tidak ditemukan', 'warn')).catch(() => {}); }
+      const s = e.target.closest('[data-s]'); if (s) run(s.dataset.s);
+    };
+    q('.tks-bk').onclick = close; q('.tks-go').onclick = () => run(inp.value); q('.tks-cl').onclick = () => { inp.value = ''; typing(); inp.focus(); };
+    inp.oninput = typing; inp.onkeydown = e => { if (e.key === 'Enter') run(inp.value); };
+    home(); setTimeout(() => inp.focus(), 60);
+  },
+  async userPage(uid, name) {
+    const r = this.root, me = FB.st.uid; r.querySelectorAll('.tku').forEach(x => x.remove());
+    const playing = [...r.querySelectorAll('#tk-feed video')].filter(v => !v.paused); this.pauseAll();
+    if (!name) { try { name = await this.db('users/' + uid + '/u'); } catch (e) {} } name = String(name || 'user'); const key = userKey(name);
+    const el = document.createElement('div'); el.className = 'tku';
+    el.innerHTML = `<div class="tkp-top"><button id="tku-bk" aria-label="Kembali"><i class="fa-solid fa-arrow-left"></i></button><b>@${esc(key)}</b><span></span></div><div class="tkp-sc"><div class="tkp-pf"><div class="tkp-av xl ring" data-pp="${esc(uid)}"><span>${esc(name.charAt(0).toUpperCase())}</span></div><div class="tkp-nm"><b>${esc(name)}</b><span id="tku-vf"></span></div><small class="mut">@${esc(key)}</small><div class="tku-vs" id="tku-vs"><span class="no">Memeriksa centang biru…</span></div>
+      <div class="tkp-sts"><div><b id="tku-a">…</b><small>Mengikuti</small></div><div><b id="tku-b">…</b><small>Pengikut</small></div><div><b id="tku-c">…</b><small>Suka</small></div></div>${uid !== me ? '<button class="tku-fb" id="tku-fb"></button>' : ''}<div id="tku-dvw"></div><p class="tku-bio" id="tku-bio"></p></div><div class="tkp-tabs"><button class="on"><i class="fa-solid fa-table-cells"></i></button></div><div id="tku-gr"></div></div>`;
+    r.appendChild(el); this.fillPP(el);
+    const q = s => el.querySelector(s), mine = this.vids.filter(v => v.uid === uid);
+    q('#tku-bk').onclick = () => { el.remove(); if (!r.querySelector('.tks')) playing.forEach(v => v.play().catch(() => {})); };
+    q('#tku-gr').innerHTML = mine.length ? `<div class="tkp-gr">${mine.map(v => `<button data-v="${esc(v.id)}">${this.thumb(v)}</button>`).join('')}</div>` : '<div class="tkp-em"><i class="fa-solid fa-film"></i><p>Belum ada video</p></div>';
+    q('#tku-gr').onclick = e => { const v = e.target.closest('[data-v]'); if (!v) return; r.querySelectorAll('.tks,.tku').forEach(x => x.remove()); this.uT = uid; this.tab = 'u'; this.setTab('u'); setTimeout(() => { const it = r.querySelector(`.tk-item[data-id="${v.dataset.v}"]`); if (it) it.scrollIntoView(); }, 80); };
+    const fb = q('#tku-fb'), paintF = () => { if (!fb) return; const on = !!this.fol[uid]; fb.textContent = on ? 'Mengikuti' : 'Ikuti'; fb.classList.toggle('on', on); };
+    if (fb) { paintF(); fb.onclick = async () => { await this.follow(uid, name); paintF(); const b = q('#tku-b'), n = parseInt(b.textContent); if (!isNaN(n)) b.textContent = Math.max(0, n + (this.fol[uid] ? 1 : -1)); }; }
+    const paint = async () => {
+      const v = await this.isVf(uid, key), dev = String(this.roleC[uid] || '').toLowerCase() === 'developer';
+      q('#tku-vf').innerHTML = v ? VF_SVG : ''; q('#tku-vs').innerHTML = v ? `<span class="ok">${VF_SVG} Centang biru: Sudah${dev ? ' (Developer)' : ''}</span>` : '<span class="no">Centang biru: Belum</span>';
+      const w = q('#tku-dvw'); w.innerHTML = App.isDev() && !dev ? `<button class="tku-dv${this.verif[key] ? ' off' : ''}" id="tku-dv">${this.verif[key] ? 'Cabut centang biru' : 'Beri centang biru'}</button>` : '';
+      const b = w.querySelector('#tku-dv'); if (b) b.onclick = async () => {
+        const on = !this.verif[key]; b.disabled = true;
+        try { await this.db('tok/verif/' + key, null, on ? 'PUT' : 'DELETE', on ? true : undefined); if (on) this.verif[key] = true; else delete this.verif[key]; UI.toast(on ? 'Centang biru diberikan' : 'Centang biru dicabut', 'ok'); }
+        catch (e) { UI.toast('Gagal — hanya Developer yang boleh mengubah centang biru', 'err'); } paint();
+      };
+    };
+    try { this.verif = await this.db('tok/verif') || {}; } catch (e) {} paint();
+    try {
+      const [fo, fa, pf] = await Promise.all([this.db('tok/fol/' + uid, { shallow: true }), this.db('tok/fans/' + uid, { shallow: true }), this.db('tok/prof/' + uid)]);
+      q('#tku-a').textContent = Object.keys(fo || {}).length; q('#tku-b').textContent = Object.keys(fa || {}).length; if (pf && pf.bio) q('#tku-bio').textContent = pf.bio;
+      let tot = 0; await Promise.all(mine.map(v => this.db('tok/likes/' + v.id, { shallow: true }).then(k => { tot += Object.keys(k || {}).length; }).catch(() => {}))); q('#tku-c').textContent = tot;
+    } catch (e) {}
   }
 });

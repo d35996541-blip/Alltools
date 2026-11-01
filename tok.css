@@ -185,3 +185,31 @@
 .tk-hearts{position:absolute;z-index:7;right:12px;bottom:calc(var(--safe-b,0px) + 66px);width:60px;height:280px;pointer-events:none}
 .tk-fh{position:absolute;bottom:0;right:12px;font-size:26px;animation:tkfh 1.9s ease-out forwards;filter:drop-shadow(0 2px 4px #0006)}
 @keyframes tkfh{0%{transform:translate(0,0) scale(.4);opacity:0}15%{opacity:1}100%{transform:translate(var(--dx,0),-250px) scale(1.25);opacity:0}}
+
+/* ===== Pencarian ala TikTok + halaman akun ===== */
+.tks,.tku{position:absolute;inset:0;z-index:90;background:#fff;color:#111;display:flex;flex-direction:column;animation:fadein .15s both}
+.tks button,.tku button{color:#111}
+.tks-top{display:flex;align-items:center;gap:10px;padding:calc(var(--safe-t,0px) + 8px) 12px 6px;flex:none}
+.tks-bk{font-size:22px;width:34px;height:40px;text-align:left;background:none}
+.tks-in{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:#f1f1f2;border-radius:6px;padding:0 10px;height:42px}.tks-in>i{color:#777}
+.tks-in input{flex:1;min-width:0;border:0;background:none;outline:0;font-size:16px;color:#111}.tks-in input::placeholder{color:#aaa}
+.tks-cl{color:#999!important;font-size:16px;background:none}
+.tks-go{color:#fe2c55!important;font-weight:700;font-size:16px;padding:0 4px;background:none}
+.tks-body{flex:1;overflow-y:auto;padding:0 16px calc(var(--safe-b,0px) + 20px)}
+.tks-r{display:flex;align-items:center;gap:12px;padding:13px 0;font-size:16px;cursor:pointer}
+.tks-r>i:first-child{width:20px;text-align:center;font-size:18px;flex:none}.tks-r>i.tks-dot{width:7px;height:7px;border-radius:50%;margin:0 6px 0 7px;font-size:0}
+.tks-r>span:not(.tks-av){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tks-r button{color:#666!important;font-size:18px;padding:4px 2px;background:none}
+.tks-more{display:block;margin:2px auto 8px;color:#888!important;font-weight:600;font-size:15px;background:none}
+.tks-t{font-size:18px;font-weight:800;margin:16px 0 4px}
+.tks-av{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#7c3aed,#ec4899)}
+.tks-ac{display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer}.tks-ac>div{flex:1;min-width:0}
+.tks-ac b{display:flex;align-items:center;gap:4px;font-size:15px}.tks-ac small{color:#777;font-size:13px}
+.tks-vf .tk-vf,.tkp-nm .tk-vf{width:15px;height:15px;display:block}
+.tks-fb,.tku-fb{background:#fe2c55;color:#fff!important;border-radius:6px;padding:.45rem 1rem;font-weight:700;font-size:14px}.tks-fb.on,.tku-fb.on{background:#f1f1f2;color:#111!important}
+.tku-fb{padding:.6rem 2.4rem;font-weight:800;font-size:15px;margin-top:6px}
+.tku-vs{font-size:13px;font-weight:700;display:flex;justify-content:center}.tku-vs .ok{display:inline-flex;align-items:center;gap:5px;color:#1d9bf0}.tku-vs .no{color:#888}.tku-vs .tk-vf{width:16px;height:16px}
+.tku-dv{margin-top:6px;border:1.5px solid #1d9bf0;color:#1d9bf0!important;border-radius:8px;padding:.5rem 1.2rem;font-weight:700;font-size:13px;background:none}.tku-dv.off{border-color:#e11d48;color:#e11d48!important}
+.tku-bio{font-size:14px;text-align:center;margin:4px 0;color:#333}
+.tkp-gr img{width:100%;height:100%;object-fit:cover}.tkp-gr button>i{color:#fff;display:grid;height:100%;place-items:center;font-size:22px}
+.tks .tk-empty,.tks .tk-empty p{color:#777}
