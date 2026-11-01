@@ -59,7 +59,7 @@ const GRADS = [
   ['Sakura', 'linear-gradient(160deg,#ffd1dc,#f8b6d1 55%,#cdb4db)'], ['Hutan', 'linear-gradient(160deg,#134e5e,#2f8f6b 60%,#a8e063)'], ['Malam', 'linear-gradient(160deg,#0f172a,#1e1b4b 60%,#4c1d95)'],
   ['Mentari', 'linear-gradient(160deg,#ff9a9e,#fecfef 55%,#fad0c4)'], ['Es', 'linear-gradient(160deg,#e0eafc,#cfdef3 60%,#a1c4fd)']
 ];
-const GLASS_BG = 'radial-gradient(60% 50% at 12% 8%,rgba(124,58,237,.8),transparent 62%),radial-gradient(55% 45% at 92% 18%,rgba(14,165,233,.65),transparent 62%),radial-gradient(65% 50% at 72% 96%,rgba(236,72,153,.6),transparent 62%),linear-gradient(160deg,#0b1020,#141a3a)';
+const GLASS_BG = 'radial-gradient(60% 50% at 10% 6%,rgba(36,90,81,.85),transparent 62%),radial-gradient(50% 40% at 94% 20%,rgba(242,176,30,.16),transparent 62%),linear-gradient(160deg,#08171a,#0c211d)';
 const Wall = {
   get() { return LS.get('wall', { type: 'gradient', value: GLASS_BG, dim: 0, dark: true }); },
   isDark(w, cb) { if (w.type === 'gradient') return cb(w.dark !== undefined ? !!w.dark : /#0f|#13|#2c|#302|#1e/i.test(w.value)); if (w.type === 'video') return cb(true); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { try { const c = document.createElement('canvas'); c.width = c.height = 12; const g = c.getContext('2d'); g.drawImage(im, 0, 0, 12, 12); const d = g.getImageData(0, 0, 12, 12).data; let l = 0; for (let i = 0; i < d.length; i += 4) l += .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]; cb(l / 144 < 120); } catch (e) { cb(!!w.dark); } }; im.onerror = () => cb(!!w.dark); im.src = w.value; },
