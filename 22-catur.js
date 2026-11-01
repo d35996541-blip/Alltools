@@ -410,9 +410,10 @@ Object.assign(Chess, {
           return `<button class="ch-tr" data-t="${esc(t.id)}"><i class="fa-solid fa-trophy"></i><div><b>${esc(t.m.n)}</b><small>${n}/${t.m.max} pemain · ${esc(tcName(t.m.tc))} · oleh ${esc(t.m.bu)}</small></div><span class="${t.z ? 'dn' : t.b ? 'lv' : 'op'}">${st}</span></button>`; }).join('') : '<div class="ch-load">Belum ada turnamen. Buat yang pertama!</div>';
         el.querySelectorAll('[data-t]').forEach(b => b.onclick = () => this.tourView(b.dataset.t));
       } catch (e) { const el = $('lst'); if (!el) return; const denied = e && (e.status === 401 || e.status === 403 || e.permission); let why = denied ? 'Database menolak akses.' : 'Cek koneksi lalu coba lagi.';
-        if (denied) { let old = false; try { await this.q('chess/st', { shallow: true }); old = true; } catch (_) {}
-          why = old ? 'Rules yang aktif di database ini masih versi lama: bagian turnamen belum ada. Tempel ulang seluruh isi firebase-rules.json lalu tekan Publikasikan.' : 'Rules chess belum aktif di database ini. Tempel seluruh isi firebase-rules.json di Realtime Database, lalu tekan Publikasikan.'; }
-        el.innerHTML = `<div class="ch-load err"><b>Daftar turnamen tidak terbaca</b><p>${why}</p><small>Kode ${esc(String(e && (e.status || e.message) || '?'))} · database ${esc(String((FB.st.dbUrl || '').replace('https://', '')))}</small></div>`; }
+        const probe = async (path) => { try { await this.q(path, { shallow: true }); return 'ok'; } catch (x) { return (x.status || '?') + ' ' + String(x.message || '').slice(0, 60); } };
+        const rows = [['Akunmu', 'users/' + this.uid()], ['Peringkat', 'chess/st'], ['Lobi online', 'chess/rooms'], ['Turnamen', 'chess/tour']], res = [];
+        for (const [n, pth] of rows) res.push([n, await probe(pth)]);
+        el.innerHTML = `<div class="ch-load err"><b>Daftar turnamen tidak terbaca</b><p>${why}</p><div class="ch-dg">${res.map(([n, r]) => `<div><span>${esc(n)}</span><i class="${r === 'ok' ? 'ok' : 'no'}">${esc(r === 'ok' ? 'terbaca' : r)}</i></div>`).join('')}</div><small>Database ${esc(String((FB.st.dbUrl || '').replace('https://', '')))} · uid ${esc(String(this.uid() || '').slice(0, 8))}…</small></div>`; }
     };
     this.timer(load, 6000); load();
   },

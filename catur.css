@@ -137,3 +137,6 @@
 .ch-rank{display:grid;grid-template-columns:repeat(8,1fr);border-radius:4px;overflow:hidden;box-shadow:0 0 0 4px #4a2f1b,0 10px 24px #0008;margin:6px 4px 10px}
 .ch-rank i{font-style:normal;aspect-ratio:1;display:grid;place-items:center;font-size:clamp(20px,7vw,34px);line-height:1;color:#1c120a;background:#a97649}
 .ch-rank i:nth-child(odd){background:#e6cfa5}
+
+.ch-dg{margin:6px 0 10px;border-top:1px solid var(--line)}.ch-dg div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ch-dg i{font-style:normal;font-weight:700}.ch-dg i.ok{color:var(--moss)}.ch-dg i.no{color:var(--lac2)}
