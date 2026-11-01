@@ -115,3 +115,13 @@
 .tkp-tabs{display:flex;border-bottom:1px solid #eee;margin-top:14px}.tkp-tabs button{flex:1;padding:12px;font-size:19px;opacity:.4;border-bottom:2px solid transparent}.tkp-tabs button.on{opacity:1;border-color:#111}
 .tkp-gr{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}.tkp-gr button{aspect-ratio:3/4;background:#111;overflow:hidden}.tkp-gr video{width:100%;height:100%;object-fit:cover;pointer-events:none}
 .tkp-em{display:flex;flex-direction:column;align-items:center;gap:12px;padding:46px 24px;text-align:center}.tkp-em>i{font-size:44px;color:#ccc}.tkp-em p{margin:0;font-weight:700;font-size:15px}.tkp-cta{background:#fe2c55;color:#fff!important;border-radius:10px;padding:.7rem 1.6rem;font-weight:800;font-size:15px}
+.tk-nav{display:grid;grid-template-columns:repeat(5,1fr);justify-items:center;align-items:center}
+.tk-nav>button{min-width:0;width:100%}
+
+/* ===== Pencarian di atas ===== */
+.tk-top{z-index:30;flex-direction:column;align-items:stretch;gap:10px;padding:calc(var(--safe-t,0px) + 8px) 12px 18px;background:linear-gradient(#000d 60%,transparent);display:flex}
+.tk-tr{display:flex;align-items:center;justify-content:space-between}.tk-sp{width:40px}
+.tk-top .tk-sb{position:static;height:40px;border-radius:99px;background:rgba(255,255,255,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0 14px;border:1px solid rgba(255,255,255,.12)!important;display:flex;align-items:center;gap:10px;width:100%;font-size:14px;font-weight:600;z-index:auto;right:auto;bottom:auto}
+.tk-top .tk-sb span{opacity:.75}
+.tk-rail{bottom:calc(var(--safe-b,0px) + 90px)}.tk-info{bottom:calc(var(--safe-b,0px) + 70px)}.tk-prog{bottom:calc(var(--safe-b,0px) + 56px)}
+.tk-livebox{padding-top:calc(var(--safe-t,0px) + 120px);padding-bottom:90px}

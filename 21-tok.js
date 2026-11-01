@@ -17,12 +17,12 @@ const Tok = {
     Sheet.open({
       id: 'tok', title: 'Dimzz Play', full: true, cls: 'tk-panel', bodyCls: 'tk-bodywrap',
       body: `<div class="tk" id="tk"><div class="tk-aur"></div>
-        <div class="tk-top"><button class="tk-lvb" data-t="lv" aria-label="LIVE"><span>LIVE</span></button>
-          <div class="tk-tabs"><b data-t="fo">Mengikuti</b><b data-t="fy" class="on">Saran</b><span class="tk-ind"></span></div>
-          <button class="tk-sr" id="tk-s" aria-label="Cari"><i class="fa-solid fa-magnifying-glass"></i></button></div>
+        <div class="tk-top"><div class="tk-tr"><button class="tk-lvb" data-t="lv" aria-label="LIVE"><span>LIVE</span></button>
+          <div class="tk-tabs"><b data-t="fo">Mengikuti</b><b data-t="fy" class="on">Saran</b><span class="tk-ind"></span></div><span class="tk-sp"></span></div>
+          <button class="tk-sb" id="tk-sb"><i class="fa-solid fa-magnifying-glass"></i><span>Cari video atau akun</span></button></div>
         <div class="tk-feed" id="tk-feed"></div><div class="tk-livebox hidden" id="tk-lvbox"></div>
-        <button class="tk-sb" id="tk-sb"><i class="fa-solid fa-magnifying-glass"></i><span>Cari video atau akun</span><i class="fa-solid fa-chevron-right"></i></button>
-        <nav class="tk-nav"><button data-n="home" class="on"><i class="fa-solid fa-house"></i><span>Beranda</span></button><button class="tk-plus" id="tk-plus" aria-label="Buat"><b><i class="fa-solid fa-plus"></i></b></button><button data-n="inbox"><i class="fa-regular fa-message"></i><span>Kotak Masuk</span><em class="tk-bd hidden"></em></button><button data-n="me"><i class="fa-regular fa-user"></i><span>Saya</span></button></nav>
+        
+        <nav class="tk-nav"><button data-n="home" class="on"><i class="fa-solid fa-house"></i><span>Beranda</span></button><button data-n="live"><i class="fa-solid fa-tower-broadcast"></i><span>LIVE</span></button><button class="tk-plus" id="tk-plus" aria-label="Buat"><b><i class="fa-solid fa-plus"></i></b></button><button data-n="inbox"><i class="fa-regular fa-message"></i><span>Kotak Masuk</span><em class="tk-bd hidden"></em></button><button data-n="me"><i class="fa-regular fa-user"></i><span>Saya</span></button></nav>
         <div class="tk-pgbox hidden" id="tk-pg"></div><div class="tk-ov hidden" id="tk-ov"></div></div>`,
       onOpen: el => { this.root = el.querySelector('#tk'); this.bind(); this.load(); },
       onClose: () => { this.stopAll(); }
@@ -31,7 +31,7 @@ const Tok = {
   bind() {
     const r = this.root, q = s => r.querySelector(s);
     const go = () => { const t = prompt('Cari video atau akun:', this.q || ''); if (t === null) return; this.q = t.trim().toLowerCase(); this.setTab(this.q ? 'q' : 'fy'); };
-    q('#tk-s').onclick = go; q('#tk-sb').onclick = go;
+    q('#tk-sb').onclick = go;
     r.querySelectorAll('.tk-tabs b,.tk-lvb').forEach(b => b.onclick = () => this.setTab(b.dataset.t));
     r.querySelectorAll('.tk-nav [data-n]').forEach(b => b.onclick = () => {
       const n = b.dataset.n; if (n === 'shop' || n === 'inbox') return UI.toast((n === 'shop' ? 'Toko' : 'Kotak Masuk') + ' segera hadir', 'info');
@@ -346,6 +346,7 @@ Object.assign(Tok, {
     r.querySelectorAll('.tk-nav [data-n]').forEach(b => b.onclick = () => {
       const n = b.dataset.n;
       if (n === 'inbox' || n === 'me') return this.showPage(n);
+      if (n === 'live') { if (r.classList.contains('pg')) this.showPage('home'); return this.setTab('lv'); }
       if (r.classList.contains('pg')) { this.showPage('home'); this.setTab(this.tab === 'lv' ? 'lv' : 'fy', false); return; }
       if (this.tab === 'fy') return Sheet.close('tok'); this.setTab('fy');
     });
