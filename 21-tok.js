@@ -22,8 +22,8 @@ const Tok = {
           <button class="tk-sr" id="tk-s" aria-label="Cari"><i class="fa-solid fa-magnifying-glass"></i></button></div>
         <div class="tk-feed" id="tk-feed"></div><div class="tk-livebox hidden" id="tk-lvbox"></div>
         <button class="tk-sb" id="tk-sb"><i class="fa-solid fa-magnifying-glass"></i><span>Cari video atau akun</span><i class="fa-solid fa-chevron-right"></i></button>
-        <nav class="tk-nav"><button data-n="home" class="on"><i class="fa-solid fa-house"></i><span>Beranda</span></button><button data-n="shop"><i class="fa-solid fa-bag-shopping"></i><span>Toko</span></button><button class="tk-plus" id="tk-plus" aria-label="Buat"><b><i class="fa-solid fa-plus"></i></b></button><button data-n="inbox"><i class="fa-regular fa-message"></i><span>Kotak Masuk</span></button><button data-n="me"><i class="fa-regular fa-user"></i><span>Saya</span></button></nav>
-        <div class="tk-ov hidden" id="tk-ov"></div></div>`,
+        <nav class="tk-nav"><button data-n="home" class="on"><i class="fa-solid fa-house"></i><span>Beranda</span></button><button class="tk-plus" id="tk-plus" aria-label="Buat"><b><i class="fa-solid fa-plus"></i></b></button><button data-n="inbox"><i class="fa-regular fa-message"></i><span>Kotak Masuk</span><em class="tk-bd hidden"></em></button><button data-n="me"><i class="fa-regular fa-user"></i><span>Saya</span></button></nav>
+        <div class="tk-pgbox hidden" id="tk-pg"></div><div class="tk-ov hidden" id="tk-ov"></div></div>`,
       onOpen: el => { this.root = el.querySelector('#tk'); this.bind(); this.load(); },
       onClose: () => { this.stopAll(); }
     });
@@ -122,7 +122,7 @@ const Tok = {
       let c = {}; try { c = await this.db('tok/cm/' + id) || {}; } catch (e) {}
       const l = Object.values(c).sort((a, b) => a.ts - b.ts); box.innerHTML = l.length ? l.map(x => `<div class="tk-c"><span class="tk-ring sm">${esc(String(x.u).charAt(0).toUpperCase())}</span><div><b>${esc(x.u)}</b><p>${esc(x.t)}</p></div></div>`).join('') : '<p class="tk-mt">Belum ada komentar. Mulai percakapan!</p>';
     }; await draw();
-    const send = async () => { const i = ov.querySelector('#tk-ci'), t = i.value.trim(); if (!t) return; i.value = ''; try { await this.db('tok/cm/' + id, null, 'POST', { u: App.user.username, uid: FB.st.uid, t, ts: Date.now() }); await draw(); } catch (e) { UI.toast('Gagal mengirim', 'err'); } };
+    const send = async () => { const i = ov.querySelector('#tk-ci'), t = i.value.trim(); if (!t) return; i.value = ''; try { await this.db('tok/cm/' + id, null, 'POST', { u: App.user.username, uid: FB.st.uid, t, ts: Date.now() }); const vv = this.vids.find(x => x.id === id); if (vv && vv.uid !== FB.st.uid) this.db('tok/act/' + vv.uid, null, 'POST', { type: 'cm', u: App.user.username, uid: FB.st.uid, t: t.slice(0, 60), ts: Date.now() }).catch(() => {}); await draw(); } catch (e) { UI.toast('Gagal mengirim', 'err'); } };
     ov.querySelector('#tk-cs').onclick = send; ov.querySelector('#tk-ci').onkeydown = e => { if (e.key === 'Enter') send(); };
   },
   menu() {
@@ -244,3 +244,112 @@ const Tok = {
 Features.reg({ id: 'tok', name: 'Dimzz Play', cat: 'media', icon: 'fa-clapperboard', grad: 'linear-gradient(135deg,#7c3aed,#ec4899)', open: () => Tok.open() });
 (function () { const o = Rank.badge; Rank.badge = function (role, sm) { const h = o.call(this, role, sm); return String(role).toLowerCase() === 'developer' ? h + VF_SVG : h; }; })();
 (function () { let t = 0; const iv = setInterval(() => { if (Tok.decorate() || ++t > 80) clearInterval(iv); }, 1500); })();
+
+/* ---------- Kotak Masuk (chat antar-akun), Saya (profil), notifikasi ---------- */
+Object.assign(Tok, {
+  fmt(ts) { const d = new Date(ts), n = new Date(); return d.toDateString() === n.toDateString() ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); },
+  av(n, c) { return `<span class="tkp-av ${c || ''}">${esc(String(n || '?').charAt(0).toUpperCase())}</span>`; },
+  async follow(uid) {
+    const on = !this.fol[uid], nm = (this.vids.find(v => v.uid === uid) || {}).u || 'user';
+    if (on) this.fol[uid] = nm; else delete this.fol[uid];
+    this.root.querySelectorAll(`.tk-item[data-uid="${uid}"] .tk-fol`).forEach(x => { x.classList.toggle('on', on); x.innerHTML = `<i class="fa-solid ${on ? 'fa-check' : 'fa-plus'}"></i>`; });
+    try {
+      await this.db('tok/fol/' + FB.st.uid + '/' + uid, null, on ? 'PUT' : 'DELETE', on ? nm : undefined);
+      await this.db('tok/fans/' + uid + '/' + FB.st.uid, null, on ? 'PUT' : 'DELETE', on ? App.user.username : undefined);
+      if (on) this.db('tok/act/' + uid, null, 'POST', { type: 'follow', u: App.user.username, uid: FB.st.uid, ts: Date.now() }).catch(() => {});
+    } catch (e) { UI.toast('Gagal mengikuti', 'err'); }
+  },
+  async showPage(n) {
+    const r = this.root, box = r.querySelector('#tk-pg'), pg = n === 'inbox' || n === 'me'; clearInterval(this.pt); this.pt = null;
+    r.classList.toggle('pg', pg); box.classList.toggle('hidden', !pg);
+    r.querySelectorAll('.tk-nav [data-n]').forEach(x => x.classList.toggle('on', x.dataset.n === n));
+    if (pg) { this.pauseAll(); n === 'inbox' ? this.inbox(box) : this.profile(box); }
+  },
+  async inbox(box) {
+    const me = FB.st.uid; box.innerHTML = '<div class="tkp-top"><button id="tkp-new" aria-label="Chat baru"><i class="fa-regular fa-circle-plus"></i></button><b>Kotak Masuk</b><span></span></div><div class="tkp-sc"><div class="tk-spin dk"></div></div>';
+    let ib = {}, ac = {}, fans = {}; try { [ib, ac, fans] = await Promise.all([this.db('tok/inbox/' + me), this.db('tok/act/' + me, { orderBy: 'ts', limitToLast: 1 }), this.db('tok/fans/' + me, { shallow: true })]); } catch (e) {}
+    ib = ib || {}; ac = ac || {}; fans = fans || {};
+    const chats = Object.entries(ib).map(([uid, x]) => Object.assign({ uid }, x)).sort((a, b) => b.ts - a.ts), la = Object.values(ac)[0], nf = Object.keys(fans).length;
+    const stories = Object.entries(this.fol || {}).slice(0, 12);
+    box.querySelector('.tkp-sc').innerHTML = `<div class="tkp-st"><button data-new><span class="tkp-av big add">${'<i class="fa-solid fa-plus"></i>'}</span><small>Buat</small></button>${stories.map(([u, n]) => `<button data-c="${esc(u)}" data-n="${esc(typeof n === 'string' ? n : 'user')}">${this.av(typeof n === 'string' ? n : 'user', 'big ring')}<small>${esc(typeof n === 'string' ? n : 'user')}</small></button>`).join('')}</div>
+      <button class="tkp-r" data-act="a"><span class="tkp-ic" style="background:#fe2c55"><i class="fa-solid fa-bell"></i></span><div><b>Aktivitas</b><p>${la ? esc(la.u) + (la.type === 'cm' ? ' mengomentari: ' + esc(la.t || '') : ' mulai mengikuti Anda.') : 'Belum ada aktivitas.'}</p></div></button>
+      <button class="tkp-r" data-act="f"><span class="tkp-ic" style="background:#20a4f3"><i class="fa-solid fa-user-group"></i></span><div><b>Pengikut baru</b><p>${nf} orang mengikutimu.</p></div><i class="fa-solid fa-chevron-right mut"></i></button>
+      ${chats.map(c => `<button class="tkp-r" data-c="${esc(c.uid)}" data-n="${esc(c.u)}">${this.av(c.u)}<div><b>${esc(c.u)}</b><p>${esc(c.last || '')} · ${this.fmt(c.ts)}</p></div>${c.unread ? `<em class="tkp-bg">${c.unread}</em>` : ''}</button>`).join('') || '<p class="tkp-mt">Belum ada percakapan. Ketuk + untuk mulai chat.</p>'}`;
+    const nw = async () => { const t = prompt('Chat dengan username:'); if (!t) return; let uid = null; try { uid = await this.db('keys/' + userKey(t.trim())); } catch (e) {} if (!uid) return UI.toast('Username tidak ditemukan', 'warn'); if (uid === me) return UI.toast('Itu akunmu sendiri', 'warn'); this.chat(uid, t.trim()); };
+    box.querySelector('#tkp-new').onclick = nw;
+    box.onclick = e => { const b = e.target.closest('[data-new],[data-c],[data-act]'); if (!b) return; if (b.dataset.new !== undefined) nw(); else if (b.dataset.c) this.chat(b.dataset.c, b.dataset.n); else this.acts(box, b.dataset.act); };
+    this.unread();
+  },
+  async acts(box, k) {
+    const me = FB.st.uid; box.innerHTML = `<div class="tkp-top"><button data-b><i class="fa-solid fa-chevron-left"></i></button><b>${k === 'f' ? 'Pengikut baru' : 'Aktivitas'}</b><span></span></div><div class="tkp-sc"><div class="tk-spin dk"></div></div>`;
+    let a = {}; try { a = await this.db('tok/act/' + me, { orderBy: 'ts', limitToLast: 40 }) || {}; } catch (e) {}
+    const l = Object.values(a).filter(x => k !== 'f' || x.type === 'follow').sort((x, y) => y.ts - x.ts);
+    box.querySelector('.tkp-sc').innerHTML = l.map(x => `<div class="tkp-r">${this.av(x.u)}<div><b>${esc(x.u)}</b><p>${x.type === 'cm' ? 'mengomentari: ' + esc(x.t || '') : 'mulai mengikuti Anda.'} · ${this.fmt(x.ts)}</p></div></div>`).join('') || '<p class="tkp-mt">Belum ada.</p>';
+    box.onclick = e => { if (e.target.closest('[data-b]')) this.inbox(box); };
+  },
+  async chat(peer, name) {
+    const box = this.root.querySelector('#tk-pg'), me = FB.st.uid, cid = [me, peer].sort().join('_'); clearInterval(this.pt);
+    box.innerHTML = `<div class="tkp-top"><button data-b><i class="fa-solid fa-chevron-left"></i></button><b>${esc(name)}<span id="tkp-vf"></span></b><span></span></div><div class="tkp-ms" id="tkp-ms"></div><div class="tkp-in"><input id="tkp-i" maxlength="500" placeholder="Kirim pesan…"/><button id="tkp-s"><i class="fa-solid fa-paper-plane"></i></button></div>`;
+    this.isVf(peer, userKey(name)).then(v => { const e = box.querySelector('#tkp-vf'); if (v && e) e.innerHTML = VF_SVG; });
+    this.db('tok/inbox/' + me + '/' + peer + '/unread', null, 'PUT', 0).catch(() => {});
+    const ms = box.querySelector('#tkp-ms'); let last = '';
+    const draw = async () => { try { const m = await this.db('tok/dm/' + cid, { orderBy: 'ts', limitToLast: 60 }) || {}, l = Object.values(m).sort((a, b) => a.ts - b.ts), h = l.map(x => `<div class="tkp-m ${x.uid === me ? 'me' : ''}">${esc(x.t)}<small>${this.fmt(x.ts)}</small></div>`).join('') || '<p class="tkp-mt">Mulai percakapan dengan ' + esc(name) + '</p>'; if (h !== last) { last = h; ms.innerHTML = h; ms.scrollTop = ms.scrollHeight; } } catch (e) {} };
+    await draw(); this.pt = setInterval(draw, 2000);
+    const inp = box.querySelector('#tkp-i'), send = async () => {
+      const t = inp.value.trim(); if (!t) return; inp.value = ''; const ts = Date.now();
+      try {
+        await this.db('tok/dm/' + cid, null, 'POST', { uid: me, u: App.user.username, t, ts });
+        let n = 0; try { n = Number(await this.db('tok/inbox/' + peer + '/' + me + '/unread')) || 0; } catch (e) {}
+        await this.db('tok/inbox/' + me + '/' + peer, null, 'PUT', { u: name, last: t.slice(0, 60), ts, unread: 0 });
+        await this.db('tok/inbox/' + peer + '/' + me, null, 'PUT', { u: App.user.username, last: t.slice(0, 60), ts, unread: n + 1 });
+        draw();
+      } catch (e) { UI.toast('Pesan gagal terkirim', 'err'); }
+    };
+    box.querySelector('#tkp-s').onclick = send; inp.onkeydown = e => { if (e.key === 'Enter') send(); };
+    box.onclick = e => { if (e.target.closest('[data-b]')) { clearInterval(this.pt); this.inbox(box); } };
+  },
+  async unread() {
+    if (!this.root) return; try { const ib = await this.db('tok/inbox/' + FB.st.uid) || {}, n = Object.values(ib).reduce((a, x) => a + (Number(x.unread) || 0), 0), b = this.root.querySelector('.tk-bd'); if (b) { b.textContent = n > 99 ? '99+' : n; b.classList.toggle('hidden', !n); } } catch (e) {}
+  },
+  async profile(box, tabSel) {
+    const me = FB.st.uid, u = App.user.username, tb = tabSel || 'g';
+    const mine = this.vids.filter(v => v.uid === me), bm = LS.get('tk_bm', {}) || {}, saved = this.vids.filter(v => bm[v.id]), list = tb === 'g' ? mine : saved;
+    box.innerHTML = `<div class="tkp-top"><button id="tkp-up"><i class="fa-solid fa-user-plus"></i></button><span></span><button id="tkp-lo" title="Keluar dari Dimzz Play"><i class="fa-solid fa-xmark"></i></button></div><div class="tkp-sc"><div class="tkp-pf"><div class="tkp-av xl ring"><span>${esc(u.charAt(0).toUpperCase())}</span><button class="tkp-ad" id="tkp-ad"><i class="fa-solid fa-plus"></i></button></div>
+      <div class="tkp-nm"><b>${esc(u)}</b><span id="tkp-vf"></span><button class="tkp-ed" id="tkp-ed">Edit</button></div><small class="mut">@${esc(userKey(u))}</small>
+      <div class="tkp-sts"><div><b id="tkp-a">…</b><small>Mengikuti</small></div><div><b id="tkp-b">…</b><small>Pengikut</small></div><div><b id="tkp-c">…</b><small>Suka</small></div></div>
+      <button class="tkp-bio" id="tkp-bio">+ Tambahkan bio</button></div>
+      <div class="tkp-tabs"><button data-g="g" class="${tb === 'g' ? 'on' : ''}"><i class="fa-solid fa-table-cells"></i></button><button data-g="s" class="${tb === 's' ? 'on' : ''}"><i class="fa-regular fa-bookmark"></i></button></div>
+      ${list.length ? `<div class="tkp-gr">${list.map(v => `<button data-v="${esc(v.id)}"><video muted preload="metadata" playsinline src="${esc(v.url)}#t=0.1"></video></button>`).join('')}</div>` : `<div class="tkp-em"><i class="fa-solid fa-film"></i><p>${tb === 'g' ? 'Unggah momenmu untuk mengosongkan penyimpanan' : 'Belum ada video tersimpan'}</p>${tb === 'g' ? '<button class="tkp-cta" id="tkp-try">Coba sekarang</button>' : ''}</div>`}</div>`;
+    this.isVf(me, userKey(u)).then(v => { const e = box.querySelector('#tkp-vf'); if (v && e) e.innerHTML = VF_SVG; });
+    const q = s => box.querySelector(s);
+    box.onclick = e => {
+      const g = e.target.closest('[data-g]'), v = e.target.closest('[data-v]');
+      if (g) this.profile(box, g.dataset.g); else if (v) { this.showPage('home'); this.setTab('me', true); this.tab = tb === 'g' ? 'me' : 'fy'; this.renderFeed(); setTimeout(() => { const it = this.root && this.root.querySelector(`.tk-item[data-id="${v.dataset.v}"]`); if (it) it.scrollIntoView(); }, 60); }
+    };
+    q('#tkp-lo').onclick = () => Sheet.close('tok'); q('#tkp-up').onclick = () => { this.showPage('home'); this.upload(); };
+    const t = q('#tkp-try'); if (t) t.onclick = () => { this.showPage('home'); this.upload(); };
+    q('#tkp-ad').onclick = () => { this.showPage('home'); this.upload(); };
+    const bioSet = async () => { const cur = (q('#tkp-bio').dataset.b || ''), t = prompt('Bio kamu:', cur); if (t === null) return; try { await this.db('tok/prof/' + me, null, 'PUT', { bio: t.trim().slice(0, 80) }); this.profile(box, tb); } catch (e) { UI.toast('Gagal menyimpan bio', 'err'); } };
+    q('#tkp-ed').onclick = bioSet; q('#tkp-bio').onclick = bioSet;
+    try {
+      const [fo, fa, pf] = await Promise.all([this.db('tok/fol/' + me, { shallow: true }), this.db('tok/fans/' + me, { shallow: true }), this.db('tok/prof/' + me)]);
+      q('#tkp-a').textContent = Object.keys(fo || {}).length; q('#tkp-b').textContent = Object.keys(fa || {}).length;
+      if (pf && pf.bio) { const b = q('#tkp-bio'); b.textContent = pf.bio; b.dataset.b = pf.bio; b.classList.add('has'); }
+      let tot = 0; await Promise.all(mine.map(v => this.db('tok/likes/' + v.id, { shallow: true }).then(k => { tot += Object.keys(k || {}).length; }).catch(() => {}))); q('#tkp-c').textContent = tot;
+    } catch (e) {}
+  }
+});
+(function () {
+  const ob = Tok.bind, os = Tok.stopAll;
+  Tok.bind = function () {
+    ob.call(this); const r = this.root;
+    r.querySelectorAll('.tk-nav [data-n]').forEach(b => b.onclick = () => {
+      const n = b.dataset.n;
+      if (n === 'inbox' || n === 'me') return this.showPage(n);
+      if (r.classList.contains('pg')) { this.showPage('home'); this.setTab(this.tab === 'lv' ? 'lv' : 'fy', false); return; }
+      if (this.tab === 'fy') return Sheet.close('tok'); this.setTab('fy');
+    });
+    this.ut = setInterval(() => this.unread(), 12000); this.unread();
+  };
+  Tok.stopAll = function () { clearInterval(this.pt); clearInterval(this.ut); os.call(this); };
+})();
