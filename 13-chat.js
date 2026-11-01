@@ -45,7 +45,7 @@ const Chat = {
   },
   rules() {
     Sheet.open({ id: 'chrules', title: 'Aturan Chat', icon: 'fa-gavel', grad: 'linear-gradient(135deg,#7c3aed,#5b21b6)', cls: 'chatp',
-      body: `<ol class="gc-rules"><li>Hormati semua anggota. Dilarang menghina, SARA, atau menyerang pribadi.</li><li>Dilarang jualan atau promosi tanpa izin Developer/Admin.</li><li>Dilarang spam, flood, atau mengirim link berbahaya.</li><li>Dilarang konten dewasa, kekerasan, dan perjudian.</li><li>Jangan menyebarkan data pribadi orang lain.</li><li>Pelanggaran: peringatan 1/3, 2/3, 3/3, lalu akun diblokir.</li></ol>` });
+      body: `<ol class="gc-rules"><li>Hormati semua anggota. Dilarang menghina, SARA, atau menyerang pribadi.</li><li>Jualan dan promosi boleh, asal tidak berulang-ulang (spam) dan tidak menipu.</li><li>Dilarang spam, flood, atau mengirim link berbahaya.</li><li>Dilarang konten dewasa, kekerasan, dan perjudian.</li><li>Jangan menyebarkan data pribadi orang lain.</li><li>Pelanggaran: peringatan 1/3, 2/3, 3/3, lalu akun diblokir.</li></ol>` });
   },
   menu() {
     const old = document.querySelector('.gc-menu'); if (old) return old.remove(); const dev = App.isDev(), sh = document.getElementById('sheet-chat'); if (!sh) return;
