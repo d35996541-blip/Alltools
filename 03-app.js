@@ -5,7 +5,7 @@
 const HeroVid = {
   on: null, vis: true,
   init() {
-    const v = $('hero-video'), h = document.querySelector('.hero'); if (!v || !h) return;
+    const v = $('hero-video'), h = document.querySelector('.sky'); if (!v || !h) return;
     v.muted = true; if (navigator.connection && navigator.connection.saveData) return;
     const upd = () => { const go = this.vis && !document.hidden && !(window.Sheet && Sheet.stack.length); if (go === this.on) return; this.on = go; if (go) v.play().catch(() => {}); else v.pause(); };
     if ('IntersectionObserver' in window) new IntersectionObserver(es => { this.vis = es[0].isIntersecting; upd(); }, { threshold: .15 }).observe(h);
