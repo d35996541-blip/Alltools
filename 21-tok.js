@@ -576,7 +576,14 @@ Object.assign(Tok, {
 /* ---------- Pencarian ala TikTok + halaman akun orang lain + centang biru (hanya Developer yang bisa memberi) ---------- */
 Object.assign(Tok, {
   uT: null, keyList: null,
-  async loadKeys() { if (this.keyList) return this.keyList; try { this.keyList = Object.keys(await this.db('keys', { shallow: true }) || {}); } catch (e) { this.keyList = []; } return this.keyList; },
+  nk(t) { return userKey(String(t || '').trim().replace(/^@+/, '')); },
+  /* daftar akun: dari users (boleh dibaca semua yang login) + keys; tanda @ diabaikan */
+  async loadKeys() {
+    if (this.keyMap && this.keyList.length) return this.keyList; const map = {}; this.keyErr = '';
+    try { const us = await FB.request('users', null, 'GET', undefined, 20000) || {}; for (const [uid, p] of Object.entries(us)) if (p && p.u) map[userKey(p.u)] = { uid, u: String(p.u) }; } catch (e) { this.keyErr = (e && e.message) || 'gagal'; }
+    try { const ks = await this.db('keys', { shallow: true }) || {}; Object.keys(ks).forEach(k => { if (!map[k]) map[k] = { uid: null, u: k }; }); } catch (e) {}
+    this.keyMap = map; this.keyList = Object.keys(map); return this.keyList;
+  },
   hist() { const h = LS.get('tk_sh', []); return Array.isArray(h) ? h : []; },
   histAdd(t) { const h = this.hist().filter(x => x !== t); h.unshift(t); LS.set('tk_sh', h.slice(0, 20)); },
   sugList() {
@@ -602,19 +609,20 @@ Object.assign(Tok, {
     const typing = () => {
       const t = inp.value.trim(); q('.tks-cl').classList.toggle('hidden', !t); if (!t) return home();
       clearTimeout(timer); timer = setTimeout(async () => {
-        const ks = await this.loadKeys(), m = this.rankKeys(ks, userKey(t)).slice(0, 6); if (inp.value.trim() !== t) return;
-        body.innerHTML = `<div class="tks-r" data-s="${esc(t)}"><i class="fa-solid fa-magnifying-glass"></i><span>${esc(t)}</span></div>` + m.map(k => `<div class="tks-r" data-k="${esc(k)}"><span class="tks-av">${esc(k.charAt(0).toUpperCase())}</span><span>@${esc(k)}</span></div>`).join('');
+        const ks = await this.loadKeys(), m = this.rankKeys(ks, this.nk(t)).slice(0, 6); if (inp.value.trim() !== t) return;
+        body.innerHTML = `<div class="tks-r" data-s="${esc(t)}"><i class="fa-solid fa-magnifying-glass"></i><span>${esc(t)}</span></div>` + m.map(k => { const e = this.keyMap[k] || {}; return `<div class="tks-r" data-k="${esc(k)}" data-uid="${esc(e.uid || '')}" data-u="${esc(e.u || k)}"><span class="tks-av">${esc(String(e.u || k).charAt(0).toUpperCase())}</span><span>${esc(e.u || k)} <small style="color:#888">@${esc(k)}</small></span></div>`; }).join('');
       }, 180);
     };
     const run = async t => {
       t = String(t || '').trim(); if (!t) return; inp.value = t; q('.tks-cl').classList.remove('hidden'); this.histAdd(t); inp.blur(); body.innerHTML = '<div class="tk-empty dk"><div class="tk-spin dk"></div></div>';
-      const ks = await this.loadKeys(), m = this.rankKeys(ks, userKey(t)).slice(0, 15);
-      const acc = (await Promise.all(m.map(async k => { try { const uid = await this.db('keys/' + k); if (!uid) return null; let u = null; try { u = await this.db('users/' + uid + '/u'); } catch (e) {} return { k, uid, u: u || k }; } catch (e) { return null; } }))).filter(Boolean);
-      const low = t.toLowerCase(), vs = this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(low));
+      const ks = await this.loadKeys(), n = this.nk(t), m = this.rankKeys(ks, n).slice(0, 15);
+      if (n && !m.includes(n)) { try { const uid = await this.db('keys/' + n); if (uid) { let u = null; try { u = await this.db('users/' + uid + '/u'); } catch (e) {} this.keyMap[n] = { uid, u: u || n }; m.unshift(n); } } catch (e) {} }
+      const acc = (await Promise.all(m.map(async k => { const e = this.keyMap[k] || {}; let uid = e.uid; if (!uid) { try { uid = await this.db('keys/' + k); } catch (x) {} } if (!uid) return null; let u = e.u; if (!u || u === k) { try { u = await this.db('users/' + uid + '/u'); } catch (x) {} } return { k, uid, u: u || k }; }))).filter(Boolean);
+      const low = String(t).replace(/^@+/, '').toLowerCase(), vs = this.vids.filter(v => (String(v.u) + ' ' + String(v.cap || '')).toLowerCase().includes(low));
       if (inp.value.trim() !== t) return;
       body.innerHTML = (acc.length ? `<h3 class="tks-t">Akun</h3>${acc.map(a => `<div class="tks-ac" data-k="${esc(a.k)}" data-uid="${esc(a.uid)}" data-u="${esc(a.u)}"><span class="tks-av" data-pp="${esc(a.uid)}">${esc(String(a.u).charAt(0).toUpperCase())}</span><div><b>${esc(a.u)}<i class="tks-vf"></i></b><small>@${esc(a.k)}</small></div>${a.uid === me ? '' : `<button class="tks-fb${this.fol[a.uid] ? ' on' : ''}" data-f="${esc(a.uid)}" data-u="${esc(a.u)}">${this.fol[a.uid] ? 'Mengikuti' : 'Ikuti'}</button>`}</div>`).join('')}` : '') +
         (vs.length ? `<h3 class="tks-t">Video</h3><div class="tkp-gr tks-gr">${vs.map(v => `<button data-v="${esc(v.id)}">${this.thumb(v)}</button>`).join('')}</div>` : '') +
-        (!acc.length && !vs.length ? `<div class="tkp-em"><i class="fa-solid fa-magnifying-glass"></i><p>Tidak ada hasil untuk "${esc(t)}". Coba cari dengan username lengkap.</p></div>` : '');
+        (!acc.length && !vs.length ? `<div class="tkp-em"><i class="fa-solid fa-magnifying-glass"></i><p>${this.keyList.length ? 'Tidak ada hasil untuk &quot;' + esc(t) + '&quot;. Coba cari dengan username lengkap.' : 'Daftar akun tidak bisa dibaca dari Firebase' + (this.keyErr ? ' (' + esc(this.keyErr) + ')' : '') + '. Publikasikan ulang Rules Realtime Database (firebase-rules-tambahan.json), lalu coba lagi.'}</p></div>` : '');
       this.fillPP(body); this.q = low;
       acc.forEach(a => this.isVf(a.uid, userKey(a.u)).then(v => { const x = body.querySelector(`.tks-ac[data-uid="${a.uid}"] .tks-vf`); if (x && v) x.innerHTML = VF_SVG; }));
     };
